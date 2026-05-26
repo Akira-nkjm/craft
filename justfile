@@ -99,6 +99,14 @@ check: fmt lint-fix typecheck
 codegraph-init:
     npx -y @colbymchenry/codegraph init -i
 
+# CodeGraph index を完全に再インデックスする
+codegraph-index:
+    npx -y @colbymchenry/codegraph index
+
+# CodeGraph index を差分更新する
+codegraph-sync:
+    npx -y @colbymchenry/codegraph sync
+
 # CodeGraph の健康確認
 codegraph-status:
     npx -y @colbymchenry/codegraph status
