@@ -8,18 +8,18 @@ from typing import Any
 
 from fastapi import APIRouter, Body, Header, Response
 
-from api.errors import ConflictError, NotFoundError
+from api.error_mapping import apply_api_result
+from api.errors import NotFoundError
 from core.instances import (
-    InstanceAlreadyExists,
     InstanceNotFound,
-    SharedSpecConflict,
-    SingletonNotInstanceable,
-    create_instance,
-    delete_instance,
     get_instance,
     list_instances,
-    patch_instance,
-    replace_instance,
+)
+from core.operations import (
+    create_component_op,
+    delete_component_op,
+    patch_component_op,
+    replace_component_op,
 )
 from core.paths import system_data_path
 from core.toml_io import read_toml
@@ -70,18 +70,9 @@ def create_component_instance(
     response: Response,
     payload: dict[str, Any] = Body(...),
 ) -> dict[str, Any]:
-    try:
-        created, etag = create_instance(system, component, instance, payload)
-    except InstanceAlreadyExists as e:
-        raise ConflictError(str(e)) from e
-    except SingletonNotInstanceable as e:
-        raise ConflictError(str(e)) from e
-    except SharedSpecConflict as e:
-        raise ConflictError(str(e)) from e
-    except InstanceNotFound as e:
-        raise NotFoundError(str(e)) from e
-    response.headers["ETag"] = etag
-    return created
+    result = create_component_op(system, component, instance, payload)
+    apply_api_result(result, response)
+    return result.payload
 
 
 @router.put("/{system}/{component}/{instance}")
@@ -93,16 +84,9 @@ def replace_component_instance(
     payload: dict[str, Any] = Body(...),
     if_match: str | None = Header(default=None, alias="If-Match"),
 ) -> dict[str, Any]:
-    try:
-        updated, etag = replace_instance(
-            system, component, instance, payload, expected_etag=if_match
-        )
-    except InstanceNotFound as e:
-        raise NotFoundError(str(e)) from e
-    except SharedSpecConflict as e:
-        raise ConflictError(str(e)) from e
-    response.headers["ETag"] = etag
-    return updated
+    result = replace_component_op(system, component, instance, payload, expected_etag=if_match)
+    apply_api_result(result, response)
+    return result.payload
 
 
 @router.patch("/{system}/{component}/{instance}")
@@ -114,14 +98,9 @@ def patch_component_instance(
     delta: dict[str, Any] = Body(...),
     if_match: str | None = Header(default=None, alias="If-Match"),
 ) -> dict[str, Any]:
-    try:
-        updated, etag = patch_instance(system, component, instance, delta, expected_etag=if_match)
-    except InstanceNotFound as e:
-        raise NotFoundError(str(e)) from e
-    except SharedSpecConflict as e:
-        raise ConflictError(str(e)) from e
-    response.headers["ETag"] = etag
-    return updated
+    result = patch_component_op(system, component, instance, delta, expected_etag=if_match)
+    apply_api_result(result, response)
+    return result.payload
 
 
 @router.delete("/{system}/{component}/{instance}", status_code=204)
@@ -131,10 +110,6 @@ def delete_component_instance(
     instance: str,
     if_match: str | None = Header(default=None, alias="If-Match"),
 ) -> Response:
-    try:
-        delete_instance(system, component, instance, expected_etag=if_match)
-    except InstanceNotFound as e:
-        raise NotFoundError(str(e)) from e
-    except SingletonNotInstanceable as e:
-        raise ConflictError(str(e)) from e
+    result = delete_component_op(system, component, instance, expected_etag=if_match)
+    apply_api_result(result)
     return Response(status_code=204)

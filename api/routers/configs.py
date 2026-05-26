@@ -13,17 +13,19 @@ from typing import Any
 
 from fastapi import APIRouter, Body, Header, Response
 
-from api.errors import ConflictError, NotFoundError
+from api.error_mapping import apply_api_result
+from api.errors import NotFoundError
 from core.instances import (
     InstanceNotFound,
-    SingletonNotInstanceable,
-    delete_config_instance,
     get_config_instance,
     get_singleton_config,
     list_config_instances,
-    patch_config_instance,
-    set_config_instance,
-    set_singleton_config,
+)
+from core.operations import (
+    delete_config_instance_op,
+    patch_config_instance_op,
+    set_config_instance_op,
+    set_singleton_config_op,
 )
 from schema import default_registry
 
@@ -59,12 +61,9 @@ def set_config(
     defn = default_registry._configs.get((system, config))
     if defn is None:
         raise NotFoundError(f"Config '{system}.{config}' not found in registry")
-    try:
-        updated, etag = set_singleton_config(system, config, payload, expected_etag=if_match)
-    except SingletonNotInstanceable as e:
-        raise ConflictError(str(e)) from e
-    response.headers["ETag"] = etag
-    return updated
+    result = set_singleton_config_op(system, config, payload, expected_etag=if_match)
+    apply_api_result(result, response)
+    return result.payload
 
 
 @router.get("/{system}/{config}/{key}")
@@ -86,14 +85,9 @@ def set_config_entry(
     payload: dict[str, Any] = Body(...),
     if_match: str | None = Header(default=None, alias="If-Match"),
 ) -> dict[str, Any]:
-    try:
-        updated, etag = set_config_instance(system, config, key, payload, expected_etag=if_match)
-    except SingletonNotInstanceable as e:
-        raise ConflictError(str(e)) from e
-    except InstanceNotFound as e:
-        raise NotFoundError(str(e)) from e
-    response.headers["ETag"] = etag
-    return updated
+    result = set_config_instance_op(system, config, key, payload, expected_etag=if_match)
+    apply_api_result(result, response)
+    return result.payload
 
 
 @router.patch("/{system}/{config}/{key}")
@@ -105,12 +99,9 @@ def patch_config_entry(
     delta: dict[str, Any] = Body(...),
     if_match: str | None = Header(default=None, alias="If-Match"),
 ) -> dict[str, Any]:
-    try:
-        updated, etag = patch_config_instance(system, config, key, delta, expected_etag=if_match)
-    except InstanceNotFound as e:
-        raise NotFoundError(str(e)) from e
-    response.headers["ETag"] = etag
-    return updated
+    result = patch_config_instance_op(system, config, key, delta, expected_etag=if_match)
+    apply_api_result(result, response)
+    return result.payload
 
 
 @router.delete("/{system}/{config}/{key}", status_code=204)
@@ -120,10 +111,6 @@ def delete_config_entry(
     key: str,
     if_match: str | None = Header(default=None, alias="If-Match"),
 ) -> Response:
-    try:
-        delete_config_instance(system, config, key, expected_etag=if_match)
-    except InstanceNotFound as e:
-        raise NotFoundError(str(e)) from e
-    except SingletonNotInstanceable as e:
-        raise ConflictError(str(e)) from e
+    result = delete_config_instance_op(system, config, key, expected_etag=if_match)
+    apply_api_result(result)
     return Response(status_code=204)
