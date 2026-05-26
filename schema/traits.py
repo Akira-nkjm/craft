@@ -3,16 +3,26 @@
 trait は marker class。`Component.__init_subclass__` が `__mro__` を走査して
 trait を検出し、各 trait が宣言した field を Spec / Design / Requirements
 にマージする。
+
+新しい trait を書く場合は `_Trait` を継承し、必要に応じて以下の ClassVar をオーバーライドする:
+- ``cardinality``: ``"single"`` | ``"multi"``  — instances 数の制約
+- ``design_extra``: ``{name: (type, FieldInfo)}``  — Design モデルに追加するフィールド
+- ``spec_only``: ``bool``  — ``True`` の場合 Design を持たない
 """
 
 from typing import Any, ClassVar
 
 from schema.common import OperationMode
 from schema.fields import fld
+from schema.placement import Placement
 
 
 class _Trait:
     """全 trait の基底マーカー。Component と区別するため。"""
+
+    cardinality: ClassVar[str] = "single"
+    design_extra: ClassVar[dict[str, Any]] = {}
+    spec_only: ClassVar[bool] = False
 
 
 class MultiInstance(_Trait):
@@ -21,7 +31,7 @@ class MultiInstance(_Trait):
     default は Singleton（trait 不要）。
     """
 
-    __cardinality__: ClassVar[str] = "multi"
+    cardinality: ClassVar[str] = "multi"
 
 
 class PowerConsuming(_Trait):
@@ -38,7 +48,7 @@ class PowerConsuming(_Trait):
         desc="単位あたりの想定消費電力",
     )
 
-    __trait_design_extra__: ClassVar[dict[str, Any]] = {
+    design_extra: ClassVar[dict[str, Any]] = {
         "power_modes": (
             dict[OperationMode, bool],
             fld(
@@ -65,4 +75,12 @@ class TemperatureSensitive(_Trait):
 class SpecOnly(_Trait):
     """Design を持たない component（datasheet 型）。"""
 
-    __trait_no_design__: ClassVar[bool] = True
+    spec_only: ClassVar[bool] = True
+
+
+class Placeable(_Trait):
+    """搭載位置情報を持つ component。opt-in で ``placement`` フィールドを Design に追加する。"""
+
+    design_extra: ClassVar[dict[str, Any]] = {
+        "placement": (Placement | None, fld(default=None, desc="搭載位置・CAD パラメータ")),
+    }

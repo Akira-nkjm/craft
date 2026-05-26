@@ -42,7 +42,7 @@ class Config:
         for base in cls.__mro__:
             if base is cls:
                 continue
-            if _is_trait(base) and getattr(base, "__cardinality__", None) == "multi":
+            if _is_trait(base) and getattr(base, "cardinality", "single") == "multi":
                 cardinality = "multi"
 
         if plural is None:

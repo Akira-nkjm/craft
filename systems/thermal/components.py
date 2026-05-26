@@ -3,13 +3,14 @@
 from schema import (
     Component,
     MultiInstance,
+    Placeable,
     PowerConsuming,
     SpecOnly,
     fld,
 )
 
 
-class Heater(Component, MultiInstance, PowerConsuming):
+class Heater(Component, MultiInstance, PowerConsuming, Placeable):
     """搭載ヒータ。PowerConsuming → 自動で power_modes 付き。"""
 
     rated_power_w: float = fld(ge=0, unit="W", desc="定格電力")

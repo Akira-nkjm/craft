@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 
-from schema import Component, PowerConsuming, TemperatureSensitive, fld
+from schema import Component, Placeable, PowerConsuming, TemperatureSensitive, fld
 
 
 class BusInterface(BaseModel):
@@ -13,7 +13,7 @@ class BusInterface(BaseModel):
     protocol: str = "CAN"
 
 
-class OBC(Component, PowerConsuming, TemperatureSensitive):
+class OBC(Component, PowerConsuming, TemperatureSensitive, Placeable):
     """On-Board Computer。中心計算機、1 機構成（default Singleton）。"""
 
     clock_mhz: int = fld(ge=0, unit="MHz")
