@@ -1,8 +1,11 @@
 # Craft — Concept Registry for Automated spacecraFT design
 
+[![CI](https://github.com/Akira-nkjm/craft/actions/workflows/ci.yml/badge.svg)](https://github.com/Akira-nkjm/craft/actions/workflows/ci.yml)
+[![Docs](https://github.com/Akira-nkjm/craft/actions/workflows/docs.yml/badge.svg)](https://Akira-nkjm.github.io/craft/)
+
 宇宙機（衛星・深宇宙機含む）の概念設計を **「型付き計算グラフ」** として宣言的に記述し、CLI / FastAPI / Swagger UI / MCP（LLM agent）が同じ Pydantic 定義から自動派生する基盤。veriq による検証パイプラインとシームレスに統合する。
 
-詳細な設計目標と背景は [`plan/Craft/Craft.md`](plan/Craft/Craft.md) を参照。
+**ドキュメント: https://Akira-nkjm.github.io/craft/**
 
 ---
 
@@ -152,6 +155,7 @@ depth_of_discharge = 0.6
 ## 関連ドキュメント
 
 ### 開発者向け
+- [Web ドキュメント](https://Akira-nkjm.github.io/craft/) — Zensical でホストされた全ドキュメント
 - [`docs/concepts.md`](docs/concepts.md) — Component / Config / Analysis / Traits / data.toml の概念説明
 - [`docs/tutorial.md`](docs/tutorial.md) — 新しい subsystem をゼロから追加するチュートリアル
 
