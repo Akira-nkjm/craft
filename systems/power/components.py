@@ -6,13 +6,14 @@
 from schema import (
     Component,
     MultiInstance,
+    Placeable,
     PowerConsuming,
     TemperatureSensitive,
     fld,
 )
 
 
-class Battery(Component, MultiInstance, TemperatureSensitive):
+class Battery(Component, MultiInstance, TemperatureSensitive, Placeable):
     """二次電池。eclipse 中の電力供給を担う。"""
 
     capacity_wh: float = fld(ge=0, unit="Wh", desc="Battery capacity")
@@ -26,7 +27,7 @@ class Battery(Component, MultiInstance, TemperatureSensitive):
         depth_of_discharge_max: float = fld(default=0.8, gt=0, le=1, desc="要求 DoD 上限")
 
 
-class SolarPanel(Component, MultiInstance, TemperatureSensitive):
+class SolarPanel(Component, MultiInstance, TemperatureSensitive, Placeable):
     """太陽電池パドル。"""
 
     area_m2: float = fld(ge=0, unit="m^2", desc="Panel area")
@@ -42,7 +43,7 @@ class SolarPanel(Component, MultiInstance, TemperatureSensitive):
         string_count: int = fld(ge=1)
 
 
-class PDM(Component, MultiInstance, PowerConsuming):
+class PDM(Component, MultiInstance, PowerConsuming, Placeable):
     """Power Distribution Module。"""
 
     rated_current_a: float = fld(ge=0, unit="A")
