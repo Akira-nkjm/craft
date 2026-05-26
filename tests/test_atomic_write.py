@@ -58,9 +58,11 @@ def test_atomic_write_bytes_cleans_temp_on_error(tmp_path: Path) -> None:
     p = tmp_path / "test.bin"
     p.write_bytes(b"original")
 
-    with patch("core.atomic_write.os.replace", side_effect=OSError("disk full")):
-        with pytest.raises(OSError, match="disk full"):
-            atomic_write_bytes(p, b"new content")
+    with (
+        patch("core.atomic_write.os.replace", side_effect=OSError("disk full")),
+        pytest.raises(OSError, match="disk full"),
+    ):
+        atomic_write_bytes(p, b"new content")
 
     assert p.read_bytes() == b"original"
     assert list(tmp_path.glob("*.tmp")) == []
@@ -71,9 +73,11 @@ def test_atomic_write_text_cleans_temp_on_error(tmp_path: Path) -> None:
     p = tmp_path / "test.txt"
     p.write_text("original", encoding="utf-8")
 
-    with patch("core.atomic_write.os.replace", side_effect=OSError("disk full")):
-        with pytest.raises(OSError, match="disk full"):
-            atomic_write_text(p, "new content")
+    with (
+        patch("core.atomic_write.os.replace", side_effect=OSError("disk full")),
+        pytest.raises(OSError, match="disk full"),
+    ):
+        atomic_write_text(p, "new content")
 
     assert p.read_text(encoding="utf-8") == "original"
     assert list(tmp_path.glob("*.tmp")) == []
@@ -133,9 +137,11 @@ def test_atomic_write_bytes_closes_fd_on_fdopen_error(tmp_path: Path) -> None:
         with contextlib.suppress(OSError):
             original_close(fd)
 
-    with patch("core.atomic_write.os.fdopen", side_effect=OSError("fdopen failed")):
-        with patch("core.atomic_write.os.close", side_effect=tracking_close):
-            with pytest.raises(OSError, match="fdopen failed"):
-                atomic_write_bytes(p, b"data")
+    with (
+        patch("core.atomic_write.os.fdopen", side_effect=OSError("fdopen failed")),
+        patch("core.atomic_write.os.close", side_effect=tracking_close),
+        pytest.raises(OSError, match="fdopen failed"),
+    ):
+        atomic_write_bytes(p, b"data")
 
     assert len(closed_fds) == 1
