@@ -182,8 +182,8 @@ class Battery(Component):
 class ThermalRadiator(Component):
     area_m2: float = fld(ge=0, unit="m^2", desc="放熱面積")
     emissivity: float = fld(ge=0, le=1, desc="表面放射率")
-    operating_temperature_min_c: float = fld(unit="degC", desc="最低動作温度")
-    operating_temperature_max_c: float = fld(unit="degC", desc="最高動作温度")
+    temp_min_c: float = fld(unit="degC", desc="最低動作温度")
+    temp_max_c: float = fld(unit="degC", desc="最高動作温度")
 ```
 
 ### グループ・表示順付きフィールド
@@ -228,7 +228,7 @@ class TemperatureLimits(Component):
 
 !!! tip "TemperatureSensitive trait"
     動作温度の上下限が必要なだけなら `TemperatureSensitive` trait を使うと
-    `operating_temperature_min_c` / `operating_temperature_max_c` が自動追加される。
+    `temp_min_c` / `temp_max_c` が自動追加される。
     詳細は [Traits リファレンス](traits.md) を参照。
 
 ### 電力フィールド
@@ -242,7 +242,7 @@ class PowerComponent(Component):
 
 !!! tip "PowerConsuming trait"
     電力消費コンポーネントには `PowerConsuming` trait を使うと
-    `default_power_consumption_per_unit_w` と `power_modes` が自動追加される。
+    `power_per_unit_w` と `power_modes` が自動追加される。
     詳細は [Traits リファレンス](traits.md) を参照。
 
 ### 比率・効率フィールド（0〜1）

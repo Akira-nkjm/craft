@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from schema.common import OperationMode
 
 class HeaterSpec(BaseModel):
-    default_power_consumption_per_unit_w: float
+    power_per_unit_w: float
     rated_power_w: float
     target_temperature_c: float
 

@@ -6,7 +6,7 @@
 [heaters.battery_pack.spec]
 rated_power_w = 5.0
 target_temperature_c = -10.0
-default_power_consumption_per_unit_w = 5.0
+power_per_unit_w = 5.0
 
 [heaters.battery_pack.design]
 hysteresis_c = 2.0
@@ -21,7 +21,7 @@ safe_hold = false
 [heaters.obc_radiator.spec]
 rated_power_w = 3.0
 target_temperature_c = 5.0
-default_power_consumption_per_unit_w = 3.0
+power_per_unit_w = 3.0
 
 [heaters.obc_radiator.design]
 hysteresis_c = 1.5

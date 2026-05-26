@@ -144,8 +144,8 @@ def test_spec_set(runner, power_data_backup):
             "capacity_wh": 120.0,
             "nominal_voltage_v": 3.7,
             "manufacturer": "Panasonic",
-            "operating_temperature_min_c": -20.0,
-            "operating_temperature_max_c": 60.0,
+            "temp_min_c": -20.0,
+            "temp_max_c": 60.0,
         }
     )
     result = runner.invoke(app, ["spec", "set", "power", "battery", "--json", payload])

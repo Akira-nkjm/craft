@@ -18,7 +18,7 @@ def total_pdm_power_w(
 ) -> float:
     """nominal mode で on の PDM の消費電力合計。"""
     return sum(
-        p.spec.default_power_consumption_per_unit_w
+        p.spec.power_per_unit_w
         for p in pdms.values()
         if p.design.power_modes.get("nominal", False)
     )

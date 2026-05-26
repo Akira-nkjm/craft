@@ -34,11 +34,11 @@ def test_scaffold_format_only_does_not_add_fields(power_data_backup):
 def test_scaffold_format_only_reorders_fields(power_data_backup):
     """format-only: 既存 field の順序を registry の宣言順に並び替える。"""
     # registry の宣言順:
-    #   operating_temperature_min_c,
-    #   operating_temperature_max_c,
+    #   temp_min_c,
+    #   temp_max_c,
     #   capacity_wh, nominal_voltage_v, manufacturer
     # 元 data.toml は (capacity_wh, nominal_voltage_v, manufacturer,
-    # operating_temperature_min_c, operating_temperature_max_c) で
+    # temp_min_c, temp_max_c) で
     # registry 順とズレている状態。
 
     # 念のため明示的に逆順にしておく
@@ -56,8 +56,8 @@ def test_scaffold_format_only_reorders_fields(power_data_backup):
     after = read_toml(power_data_backup)
     keys = list(after["batteries"]["spec"].keys())
     expected = [
-        "operating_temperature_min_c",
-        "operating_temperature_max_c",
+        "temp_min_c",
+        "temp_max_c",
         "capacity_wh",
         "nominal_voltage_v",
         "manufacturer",

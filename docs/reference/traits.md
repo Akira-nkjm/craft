@@ -32,8 +32,8 @@ class Battery(Component, MultiInstance, TemperatureSensitive):
 | Trait | 追加先 | 追加フィールド |
 |---|---|---|
 | `MultiInstance` | — | フィールドなし（カーディナリティ制御のみ） |
-| `PowerConsuming` | Spec + Design | `default_power_consumption_per_unit_w` (Spec), `power_modes` (Design) |
-| `TemperatureSensitive` | Spec | `operating_temperature_min_c`, `operating_temperature_max_c` |
+| `PowerConsuming` | Spec + Design | `power_per_unit_w` (Spec), `power_modes` (Design) |
+| `TemperatureSensitive` | Spec | `temp_min_c`, `temp_max_c` |
 | `SpecOnly` | — | フィールドなし（Design を無効化） |
 
 ---
@@ -83,7 +83,7 @@ depth_of_discharge = 0.65
 
 ```python
 class PowerConsuming(_Trait):
-    default_power_consumption_per_unit_w: float = fld(
+    power_per_unit_w: float = fld(
         ge=0, unit="W", desc="単位あたりの想定消費電力"
     )
     __trait_design_extra__: ClassVar[dict] = {
@@ -100,7 +100,7 @@ class PowerConsuming(_Trait):
 
 | フィールド | 追加先 | 型 | 説明 |
 |---|---|---|---|
-| `default_power_consumption_per_unit_w` | **Spec** | `float` (ge=0) | 1 ユニットあたりの想定消費電力 (W) |
+| `power_per_unit_w` | **Spec** | `float` (ge=0) | 1 ユニットあたりの想定消費電力 (W) |
 | `power_modes` | **Design** | `dict[OperationMode, bool]` | 運用モード別の電源 on/off |
 
 `power_modes` のキーは `OperationMode` enum:
@@ -129,7 +129,7 @@ class PDM(Component, MultiInstance, PowerConsuming):
 
 ```toml
 [power.pdm.spec]
-default_power_consumption_per_unit_w = 2.5
+power_per_unit_w = 2.5
 rated_current_a = 10.0
 
 [power.pdm.pdm_main.design]
@@ -148,8 +148,8 @@ power_modes = { nominal = true, science = true, safe = false, safe_hold = false 
 
 ```python
 class TemperatureSensitive(_Trait):
-    operating_temperature_min_c: float = fld(unit="degC", desc="動作温度下限")
-    operating_temperature_max_c: float = fld(unit="degC", desc="動作温度上限")
+    temp_min_c: float = fld(unit="degC", desc="動作温度下限")
+    temp_max_c: float = fld(unit="degC", desc="動作温度上限")
 ```
 
 動作温度範囲を持つコンポーネントに付与する。
@@ -158,8 +158,8 @@ class TemperatureSensitive(_Trait):
 
 | フィールド | 型 | 単位 | 説明 |
 |---|---|---|---|
-| `operating_temperature_min_c` | `float` | degC | 動作温度下限 |
-| `operating_temperature_max_c` | `float` | degC | 動作温度上限 |
+| `temp_min_c` | `float` | degC | 動作温度下限 |
+| `temp_max_c` | `float` | degC | 動作温度上限 |
 
 ### 使用例
 
@@ -178,8 +178,8 @@ class Battery(Component, MultiInstance, TemperatureSensitive):
 [power.battery.spec]
 capacity_wh = 100.0
 nominal_voltage_v = 28.0
-operating_temperature_min_c = -20.0
-operating_temperature_max_c = 40.0
+temp_min_c = -20.0
+temp_max_c = 40.0
 ```
 
 !!! tip "Spec のみへの注入"

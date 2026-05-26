@@ -5,9 +5,9 @@ from schema.common import OperationMode
 from subsystems.cdh.components import BusInterface
 
 class OBCSpec(BaseModel):
-    operating_temperature_min_c: float
-    operating_temperature_max_c: float
-    default_power_consumption_per_unit_w: float
+    temp_min_c: float
+    temp_max_c: float
+    power_per_unit_w: float
     clock_mhz: int
     ram_mb: int
     storage_gb: float

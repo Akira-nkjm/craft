@@ -49,9 +49,9 @@ def test_obc_bus_interface_validation_error_on_missing():
                 "ram_mb": 512,
                 "storage_gb": 32.0,
                 "architecture": "X",
-                "default_power_consumption_per_unit_w": 3.5,
-                "operating_temperature_min_c": -40.0,
-                "operating_temperature_max_c": 85.0,
+                "power_per_unit_w": 3.5,
+                "temp_min_c": -40.0,
+                "temp_max_c": 85.0,
                 "bus_interface": {"voltage_v": 28.0},  # rated_current_a 欠落
             }
         )

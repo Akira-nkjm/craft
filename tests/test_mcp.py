@@ -180,8 +180,8 @@ async def test_set_batteries_spec(mcp_server, power_data_backup):
             "capacity_wh": 150.0,
             "nominal_voltage_v": 3.7,
             "manufacturer": "Saft",
-            "operating_temperature_min_c": -20.0,
-            "operating_temperature_max_c": 60.0,
+            "temp_min_c": -20.0,
+            "temp_max_c": 60.0,
         }
         result = await client.call_tool("set_batteries_spec", {"spec": new_spec})
         body = _decode(result)

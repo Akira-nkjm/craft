@@ -4,8 +4,8 @@ from pydantic import BaseModel
 from schema.common import OperationMode
 
 class BatterySpec(BaseModel):
-    operating_temperature_min_c: float
-    operating_temperature_max_c: float
+    temp_min_c: float
+    temp_max_c: float
     capacity_wh: float
     nominal_voltage_v: float
     manufacturer: str
@@ -23,7 +23,7 @@ class BatteryEntry(BaseModel):
     meta: dict[str, object] | None
 
 class PDMSpec(BaseModel):
-    default_power_consumption_per_unit_w: float
+    power_per_unit_w: float
     rated_current_a: float
 
 class PDMDesign(BaseModel):
@@ -36,8 +36,8 @@ class PDMEntry(BaseModel):
     meta: dict[str, object] | None
 
 class SolarPanelSpec(BaseModel):
-    operating_temperature_min_c: float
-    operating_temperature_max_c: float
+    temp_min_c: float
+    temp_max_c: float
     area_m2: float
     default_power_generation_per_unit_w: float
     efficiency: float

@@ -27,11 +27,11 @@ class MultiInstance(_Trait):
 class PowerConsuming(_Trait):
     """電力を消費する component。
 
-    Spec: `default_power_consumption_per_unit_w`
+    Spec: `power_per_unit_w`
     Design: `power_modes` (OperationMode 別の on/off)
     """
 
-    default_power_consumption_per_unit_w: float = fld(
+    power_per_unit_w: float = fld(
         ge=0,
         unit="W",
         desc="単位あたりの想定消費電力",
@@ -48,8 +48,8 @@ class PowerConsuming(_Trait):
 class TemperatureSensitive(_Trait):
     """動作温度範囲を持つ component。"""
 
-    operating_temperature_min_c: float = fld(unit="degC", desc="動作温度下限")
-    operating_temperature_max_c: float = fld(unit="degC", desc="動作温度上限")
+    temp_min_c: float = fld(unit="degC", desc="動作温度下限")
+    temp_max_c: float = fld(unit="degC", desc="動作温度上限")
 
 
 class SpecOnly(_Trait):

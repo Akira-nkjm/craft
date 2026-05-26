@@ -16,7 +16,7 @@ def test_components_registered():
 def test_battery_models_built():
     battery = default_registry.component("power", "battery")
     assert "capacity_wh" in battery.spec.model_fields
-    assert "operating_temperature_min_c" in battery.spec.model_fields  # trait 経由
+    assert "temp_min_c" in battery.spec.model_fields  # trait 経由
     assert battery.design is not None
     assert "depth_of_discharge" in battery.design.model_fields
     assert battery.requirements is not None
@@ -26,7 +26,7 @@ def test_battery_models_built():
 def test_pdm_has_power_consuming_fields():
     pdm = default_registry.component("power", "pdm")
     # PowerConsuming trait 由来
-    assert "default_power_consumption_per_unit_w" in pdm.spec.model_fields
+    assert "power_per_unit_w" in pdm.spec.model_fields
     assert pdm.design is not None
     assert "power_modes" in pdm.design.model_fields
 

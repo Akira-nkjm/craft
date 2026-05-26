@@ -10,8 +10,8 @@
 capacity_wh = 100.0
 nominal_voltage_v = 3.7
 manufacturer = "Panasonic"
-operating_temperature_min_c = -20.0
-operating_temperature_max_c = 60.0
+temp_min_c = -20.0
+temp_max_c = 60.0
 
 [batteries.main.design]
 depth_of_discharge = 0.7
@@ -36,8 +36,8 @@ depth_of_discharge_max = 0.8
 area_m2 = 0.5
 default_power_generation_per_unit_w = 30.0
 efficiency = 0.28
-operating_temperature_min_c = -100.0
-operating_temperature_max_c = 120.0
+temp_min_c = -100.0
+temp_max_c = 120.0
 
 [solar_panels.main_paddle.design]
 cell_count = 32
@@ -48,7 +48,7 @@ string_count = 4
 
 [pdms.spec]
 rated_current_a = 5.0
-default_power_consumption_per_unit_w = 8.0
+power_per_unit_w = 8.0
 
 [pdms.main.design]
 efficiency = 0.95
