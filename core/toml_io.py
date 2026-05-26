@@ -9,15 +9,14 @@
 `tomlkit.TOMLDocument` を返し、書き戻し時にコメントを温存する。
 """
 
-import contextlib
-import os
-import tempfile
 import tomllib
 from pathlib import Path
 from typing import Any
 
 import tomlkit
 from tomlkit import TOMLDocument
+
+from core.atomic_write import atomic_write_text
 
 
 def read_toml(path: Path) -> dict[str, Any]:
@@ -41,26 +40,13 @@ def write_toml_atomic(path: Path, data: dict[str, Any] | TOMLDocument | str) -> 
     `data` が str ならそのまま書く。dict なら tomli_w 相当の最小整形。
     TOMLDocument なら tomlkit のフォーマットをそのまま温存。
     """
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_path = tempfile.mkstemp(
-        prefix=path.name + ".",
-        suffix=".tmp",
-        dir=str(path.parent),
-    )
-    try:
-        if isinstance(data, str):
-            content = data
-        elif isinstance(data, TOMLDocument):
-            content = tomlkit.dumps(data)
-        else:
-            content = tomlkit.dumps(_dict_to_doc(data))
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(content)
-        os.replace(tmp_path, path)
-    except Exception:
-        with contextlib.suppress(OSError):
-            os.unlink(tmp_path)
-        raise
+    if isinstance(data, str):
+        content = data
+    elif isinstance(data, TOMLDocument):
+        content = tomlkit.dumps(data)
+    else:
+        content = tomlkit.dumps(_dict_to_doc(data))
+    atomic_write_text(path, content)
 
 
 def _dict_to_doc(data: dict[str, Any]) -> TOMLDocument:

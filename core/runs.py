@@ -27,6 +27,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from core.atomic_write import atomic_write_bytes, atomic_write_json, atomic_write_text
+
 merge_mod = importlib.import_module("core.merge")
 
 
@@ -106,26 +108,19 @@ def write_run_artifacts(
     if not d.exists():
         raise FileNotFoundError(f"Run directory not found: {d}")
     if result_toml is not None:
-        _write_text_or_bytes(d / "result.toml", result_toml)
+        if isinstance(result_toml, bytes):
+            atomic_write_bytes(d / "result.toml", result_toml)
+        else:
+            atomic_write_text(d / "result.toml", result_toml)
     if input_toml is not None:
-        _write_text_or_bytes(d / "input.toml", input_toml)
+        if isinstance(input_toml, bytes):
+            atomic_write_bytes(d / "input.toml", input_toml)
+        else:
+            atomic_write_text(d / "input.toml", input_toml)
     if meta is not None:
-        (d / "meta.json").write_text(
-            json.dumps(meta, indent=2, ensure_ascii=False, default=str),
-            encoding="utf-8",
-        )
+        atomic_write_json(d / "meta.json", meta)
     if trace is not None:
-        (d / "trace.json").write_text(
-            json.dumps(trace, indent=2, ensure_ascii=False, default=str),
-            encoding="utf-8",
-        )
-
-
-def _write_text_or_bytes(path: Path, content: bytes | str) -> None:
-    if isinstance(content, bytes):
-        path.write_bytes(content)
-    else:
-        path.write_text(content, encoding="utf-8")
+        atomic_write_json(d / "trace.json", trace)
 
 
 def update_latest(run_id: str) -> None:

@@ -1,16 +1,15 @@
 """File-backed background jobs."""
 
 import asyncio
-import contextlib
 import importlib
 import json
 import os
-import tempfile
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from core.atomic_write import atomic_write_json
 from core.verify import run_verify_core
 
 merge_mod = importlib.import_module("core.merge")
@@ -123,15 +122,7 @@ def _write_job(job: Job) -> None:
     directory = jobs_dir()
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / f"{job.id}.json"
-    fd, tmp_path = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(directory))
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(asdict(job), f, indent=2, ensure_ascii=False, default=str)
-        os.replace(tmp_path, path)
-    except Exception:
-        with contextlib.suppress(OSError):
-            os.unlink(tmp_path)
-        raise
+    atomic_write_json(path, asdict(job))
 
 
 def _job_from_dict(payload: dict[str, Any]) -> Job:
