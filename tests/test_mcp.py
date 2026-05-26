@@ -117,3 +117,94 @@ async def test_unknown_tool_returns_error(mcp_server):
         result = await client.call_tool("does_not_exist", {})
     body = _decode(result)
     assert "error" in body
+
+
+# ─── write / history tools ─────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_add_battery_creates_instance(mcp_server, power_data_backup):
+    async with create_connected_server_and_client_session(mcp_server) as client:
+        add_result = await client.call_tool(
+            "add_battery",
+            {
+                "name": "spare",
+                "design": {"depth_of_discharge": 0.6},
+                "requirements": {"depth_of_discharge_max": 0.8},
+            },
+        )
+        body = _decode(add_result)
+        assert "etag" in body, body
+        # view には shared spec が merge される
+        assert body["spec"]["capacity_wh"] == 100.0
+
+        # 後続 get で確認
+        got = await client.call_tool("get_battery", {"name": "spare"})
+        got_body = _decode(got)
+        assert got_body["design"]["depth_of_discharge"] == 0.6
+
+
+@pytest.mark.asyncio
+async def test_patch_battery(mcp_server, power_data_backup):
+    async with create_connected_server_and_client_session(mcp_server) as client:
+        result = await client.call_tool(
+            "patch_battery",
+            {
+                "name": "main",
+                "delta": {"design": {"depth_of_discharge": 0.55}},
+            },
+        )
+    body = _decode(result)
+    assert "etag" in body, body
+    assert body["design"]["depth_of_discharge"] == 0.55
+    # shared spec が merge されているので capacity_wh は保持
+    assert body["spec"]["capacity_wh"] == 100.0
+
+
+@pytest.mark.asyncio
+async def test_delete_battery(mcp_server, power_data_backup):
+    async with create_connected_server_and_client_session(mcp_server) as client:
+        result = await client.call_tool("delete_battery", {"name": "aux"})
+        body = _decode(result)
+        assert body.get("deleted") is True
+
+        got = await client.call_tool("get_battery", {"name": "aux"})
+        got_body = _decode(got)
+        assert "error" in got_body
+
+
+@pytest.mark.asyncio
+async def test_set_batteries_spec(mcp_server, power_data_backup):
+    async with create_connected_server_and_client_session(mcp_server) as client:
+        new_spec = {
+            "capacity_wh": 150.0,
+            "nominal_voltage_v": 3.7,
+            "manufacturer": "Saft",
+            "operating_temperature_min_c": -20.0,
+            "operating_temperature_max_c": 60.0,
+        }
+        result = await client.call_tool("set_batteries_spec", {"spec": new_spec})
+        body = _decode(result)
+        assert "etag" in body, body
+        assert body["capacity_wh"] == 150.0
+
+        got = await client.call_tool("get_battery", {"name": "main"})
+        got_body = _decode(got)
+        assert got_body["spec"]["capacity_wh"] == 150.0
+
+
+@pytest.mark.asyncio
+async def test_history_tool(mcp_server):
+    async with create_connected_server_and_client_session(mcp_server) as client:
+        result = await client.call_tool("history", {"limit": 3})
+    body = _decode(result)
+    assert "entries" in body, body
+    assert len(body["entries"]) <= 3
+
+
+@pytest.mark.asyncio
+async def test_diff_tool_bad_sha(mcp_server):
+    async with create_connected_server_and_client_session(mcp_server) as client:
+        result = await client.call_tool("diff", {"from": "nonexistent_sha_xyz", "to": "HEAD"})
+    body = _decode(result)
+    assert "error" in body, body
