@@ -167,3 +167,4 @@ depth_of_discharge = 0.6
 - [`AGENTS.md`](AGENTS.md) — AI エージェント向け統一ガイダンス
 - [`CLAUDE.md`](CLAUDE.md) — Claude Code 向け追加情報
 - [`.claude/rules/`](.claude/rules/) — 詳細ルール（アーキテクチャ / コマンド / Git / セキュリティ）
+# CI trigger
