@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import pytest
 from pydantic import BaseModel
 
 from core.serialization import to_jsonable
