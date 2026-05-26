@@ -1,4 +1,4 @@
-"""共通の enum・型。"""
+"""ユーザー定義の共通 enum・型。"""
 
 from enum import StrEnum
 

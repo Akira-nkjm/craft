@@ -4,7 +4,7 @@
 """
 
 from schema.analysis import analysis
-from schema.common import OperationMode
+from systems.common import OperationMode
 from schema.component import Component
 from schema.config import Config
 from schema.fields import fld

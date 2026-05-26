@@ -7,7 +7,7 @@ trait を検出し、各 trait が宣言した field を Spec / Design / Require
 
 from typing import Any, ClassVar
 
-from schema.common import OperationMode
+from systems.common import OperationMode
 from schema.fields import fld
 
 
