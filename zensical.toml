@@ -1,0 +1,75 @@
+[project]
+site_name = "Craft"
+site_description = "Concept Registry for Automated spacecraFT design"
+site_url = "https://Akira-nkjm.github.io/craft/"
+repo_url = "https://github.com/Akira-nkjm/craft"
+repo_name = "Akira-nkjm/craft"
+copyright = "Copyright &copy; 2026 Akira-nkjm"
+
+nav = [
+  { "Home" = "index.md" },
+  { "ガイド" = [
+    { "コア概念" = "concepts.md" },
+    { "チュートリアル" = "tutorial.md" },
+    { "Analysis の書き方" = "guide/analysis.md" },
+  ]},
+  { "リファレンス" = [
+    { "CLI" = [
+      { "概要" = "reference/cli/index.md" },
+      { "Schema" = "reference/cli/schema.md" },
+      { "Instances" = "reference/cli/instances.md" },
+      { "Pipeline" = "reference/cli/pipeline.md" },
+      { "Analysis" = "reference/cli/analysis.md" },
+      { "Tools" = "reference/cli/tools.md" },
+    ]},
+    { "fld()" = "reference/fld.md" },
+    { "Traits" = "reference/traits.md" },
+  ]},
+]
+
+[project.theme]
+language = "ja"
+features = [
+  "content.code.annotate",
+  "content.code.copy",
+  "content.code.select",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+]
+
+[[project.theme.palette]]
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.attr_list]
+[project.markdown_extensions.def_list]
+[project.markdown_extensions.toc]
+permalink = true
+[project.markdown_extensions.pymdownx.highlight]
+anchor_linenums = true
+line_spans = "__span"
+pygments_lang_class = true
+[project.markdown_extensions.pymdownx.inlinehilite]
+[project.markdown_extensions.pymdownx.snippets]
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" }
+]
+[project.markdown_extensions.pymdownx.tabbed]
+alternate_style = true
+[project.markdown_extensions.pymdownx.tasklist]
+custom_checkbox = true

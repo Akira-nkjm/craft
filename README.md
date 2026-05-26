@@ -151,8 +151,15 @@ depth_of_discharge = 0.6
 
 ## 関連ドキュメント
 
+### 開発者向け
+- [`docs/concepts.md`](docs/concepts.md) — Component / Config / Analysis / Traits / data.toml の概念説明
+- [`docs/tutorial.md`](docs/tutorial.md) — 新しい subsystem をゼロから追加するチュートリアル
+
+### 設計資料
 - [`plan/Craft/Craft.md`](plan/Craft/Craft.md) — プロジェクト全体の入口
 - [`plan/Craft/最終構成.md`](plan/Craft/最終構成.md) — 目標アーキテクチャ（唯一の真）
+
+### エージェント向け
 - [`AGENTS.md`](AGENTS.md) — AI エージェント向け統一ガイダンス
 - [`CLAUDE.md`](CLAUDE.md) — Claude Code 向け追加情報
 - [`.claude/rules/`](.claude/rules/) — 詳細ルール（アーキテクチャ / コマンド / Git / セキュリティ）

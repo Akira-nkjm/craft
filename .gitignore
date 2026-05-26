@@ -16,6 +16,9 @@
 generated/merged.toml
 generated/runs/
 
+# Zensical ビルド成果物
+site/
+
 # codegraph の SQLite DB は .codegraph/.gitignore で管理される（リポジトリ自体は追跡）
 
 # =========================
