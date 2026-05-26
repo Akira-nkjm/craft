@@ -1,6 +1,6 @@
 """TOML 上のインスタンス CRUD ヘルパ。
 
-`subsystems/<sub>/data.toml` の簡略形式（`<sub>.model.` プレフィックス省略）を
+`systems/<sub>/data.toml` の簡略形式（`<sub>.model.` プレフィックス省略）を
 読み書きする。
 
 shared_spec=True (MultiInstance):
@@ -17,7 +17,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from core.paths import subsystem_data_path
+from core.paths import system_data_path
 from core.toml_io import read_toml, write_toml_atomic
 from schema import default_registry
 from schema.registry import ComponentDefinition
@@ -39,10 +39,10 @@ class SharedSpecConflict(Exception):  # noqa: N818
     """payload の spec が shared と矛盾している。"""
 
 
-def _component_defn(subsystem: str, component: str) -> ComponentDefinition:
-    defn = default_registry.component_or_none(subsystem, component)
+def _component_defn(system: str, component: str) -> ComponentDefinition:
+    defn = default_registry.component_or_none(system, component)
     if defn is None:
-        raise InstanceNotFound(f"Component '{subsystem}.{component}' is not registered")
+        raise InstanceNotFound(f"Component '{system}.{component}' is not registered")
     return defn
 
 
@@ -124,20 +124,20 @@ def _instance_view(
     return view
 
 
-def get_instance(subsystem: str, component: str, instance: str) -> tuple[dict[str, Any], str]:
-    defn = _component_defn(subsystem, component)
-    data = read_toml(subsystem_data_path(subsystem))
+def get_instance(system: str, component: str, instance: str) -> tuple[dict[str, Any], str]:
+    defn = _component_defn(system, component)
+    data = read_toml(system_data_path(system))
     view = _instance_view(defn, data, instance)
     if view is None:
         raise InstanceNotFound(
-            f"Instance '{subsystem}.{component}.{instance}' not found in data.toml"
+            f"Instance '{system}.{component}.{instance}' not found in data.toml"
         )
     return view, compute_etag(view)
 
 
-def list_instances(subsystem: str, component: str) -> dict[str, Any]:
-    defn = _component_defn(subsystem, component)
-    data = read_toml(subsystem_data_path(subsystem))
+def list_instances(system: str, component: str) -> dict[str, Any]:
+    defn = _component_defn(system, component)
+    data = read_toml(system_data_path(system))
     if defn.cardinality == "multi":
         section = _dig(data, [defn.plural]) or {}
         return {
@@ -188,21 +188,21 @@ def _check_spec_matches_shared(
 
 
 def create_instance(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     payload: dict[str, Any],
 ) -> tuple[dict[str, Any], str]:
-    defn = _component_defn(subsystem, component)
+    defn = _component_defn(system, component)
     if defn.cardinality != "multi":
         raise SingletonNotInstanceable(
-            f"Singleton component '{subsystem}.{component}' does not support instance creation"
+            f"Singleton component '{system}.{component}' does not support instance creation"
         )
 
-    data = read_toml(subsystem_data_path(subsystem))
+    data = read_toml(system_data_path(system))
     inst_keys = _instance_path(defn, instance)
     if _dig(data, inst_keys) is not None:
-        raise InstanceAlreadyExists(f"Instance '{subsystem}.{component}.{instance}' already exists")
+        raise InstanceAlreadyExists(f"Instance '{system}.{component}.{instance}' already exists")
 
     # shared_spec=True: payload に spec が無ければ既存 shared を補完して検証
     shared = _dig(data, _shared_spec_path(defn))
@@ -220,26 +220,26 @@ def create_instance(
 
     parent = _ensure_dig(data, inst_keys[:-1])
     parent[inst_keys[-1]] = rest
-    write_toml_atomic(subsystem_data_path(subsystem), data)
+    write_toml_atomic(system_data_path(system), data)
 
     view = _instance_view(defn, data, instance) or rest
     return view, compute_etag(view)
 
 
 def replace_instance(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     payload: dict[str, Any],
     *,
     expected_etag: str | None,
 ) -> tuple[dict[str, Any], str]:
-    defn = _component_defn(subsystem, component)
-    data = read_toml(subsystem_data_path(subsystem))
+    defn = _component_defn(system, component)
+    data = read_toml(system_data_path(system))
     inst_keys = _instance_path(defn, instance)
     current = _instance_view(defn, data, instance)
     if current is None:
-        raise InstanceNotFound(f"Instance '{subsystem}.{component}.{instance}' not found")
+        raise InstanceNotFound(f"Instance '{system}.{component}.{instance}' not found")
     _check_etag(current, expected_etag)
 
     enriched = dict(payload)
@@ -257,25 +257,25 @@ def replace_instance(
     else:
         parent = _ensure_dig(data, inst_keys[:-1])
         parent[inst_keys[-1]] = validated
-    write_toml_atomic(subsystem_data_path(subsystem), data)
+    write_toml_atomic(system_data_path(system), data)
 
     view = _instance_view(defn, data, instance) or validated
     return view, compute_etag(view)
 
 
 def patch_instance(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     delta: dict[str, Any],
     *,
     expected_etag: str | None,
 ) -> tuple[dict[str, Any], str]:
-    defn = _component_defn(subsystem, component)
-    data = read_toml(subsystem_data_path(subsystem))
+    defn = _component_defn(system, component)
+    data = read_toml(system_data_path(system))
     current = _instance_view(defn, data, instance)
     if current is None:
-        raise InstanceNotFound(f"Instance '{subsystem}.{component}.{instance}' not found")
+        raise InstanceNotFound(f"Instance '{system}.{component}.{instance}' not found")
     _check_etag(current, expected_etag)
 
     merged = _deep_merge(current, delta)
@@ -290,47 +290,47 @@ def patch_instance(
     else:
         parent = _ensure_dig(data, inst_keys[:-1])
         parent[inst_keys[-1]] = validated
-    write_toml_atomic(subsystem_data_path(subsystem), data)
+    write_toml_atomic(system_data_path(system), data)
 
     view = _instance_view(defn, data, instance) or validated
     return view, compute_etag(view)
 
 
 def delete_instance(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     *,
     expected_etag: str | None,
 ) -> None:
-    defn = _component_defn(subsystem, component)
+    defn = _component_defn(system, component)
     if defn.cardinality != "multi":
         raise SingletonNotInstanceable(
-            f"Singleton component '{subsystem}.{component}' does not support deletion"
+            f"Singleton component '{system}.{component}' does not support deletion"
         )
 
-    data = read_toml(subsystem_data_path(subsystem))
+    data = read_toml(system_data_path(system))
     inst_keys = _instance_path(defn, instance)
     current = _instance_view(defn, data, instance)
     if current is None:
-        raise InstanceNotFound(f"Instance '{subsystem}.{component}.{instance}' not found")
+        raise InstanceNotFound(f"Instance '{system}.{component}.{instance}' not found")
     _check_etag(current, expected_etag)
 
     _pop_dig(data, inst_keys)
-    write_toml_atomic(subsystem_data_path(subsystem), data)
+    write_toml_atomic(system_data_path(system), data)
 
 
 # ─── shared spec dedicated helpers ─────────────────────────────────
 
 
-def get_shared_spec(subsystem: str, component: str) -> tuple[dict[str, Any], str]:
+def get_shared_spec(system: str, component: str) -> tuple[dict[str, Any], str]:
     """MultiInstance の shared spec を取得。"""
-    defn = _component_defn(subsystem, component)
+    defn = _component_defn(system, component)
     if defn.cardinality != "multi":
         raise SingletonNotInstanceable(
-            f"Component '{subsystem}.{component}' is Singleton; no shared spec"
+            f"Component '{system}.{component}' is Singleton; no shared spec"
         )
-    data = read_toml(subsystem_data_path(subsystem))
+    data = read_toml(system_data_path(system))
     shared = _dig(data, _shared_spec_path(defn))
     if shared is None:
         raise InstanceNotFound(f"Shared spec at [{defn.plural}.spec] not present yet")
@@ -338,19 +338,19 @@ def get_shared_spec(subsystem: str, component: str) -> tuple[dict[str, Any], str
 
 
 def set_shared_spec(
-    subsystem: str,
+    system: str,
     component: str,
     spec_payload: dict[str, Any],
     *,
     expected_etag: str | None = None,
 ) -> tuple[dict[str, Any], str]:
     """shared spec を更新。ETag があれば検査。"""
-    defn = _component_defn(subsystem, component)
+    defn = _component_defn(system, component)
     if defn.cardinality != "multi":
         raise SingletonNotInstanceable(
-            f"Component '{subsystem}.{component}' is Singleton; no shared spec"
+            f"Component '{system}.{component}' is Singleton; no shared spec"
         )
-    data = read_toml(subsystem_data_path(subsystem))
+    data = read_toml(system_data_path(system))
     keys = _shared_spec_path(defn)
     existing = _dig(data, keys)
     if existing is not None and expected_etag is not None:
@@ -363,7 +363,7 @@ def set_shared_spec(
     new_spec = validated.model_dump(exclude_none=True)
     parent = _ensure_dig(data, keys[:-1])
     parent[keys[-1]] = new_spec
-    write_toml_atomic(subsystem_data_path(subsystem), data)
+    write_toml_atomic(system_data_path(system), data)
     return new_spec, compute_etag(new_spec)
 
 

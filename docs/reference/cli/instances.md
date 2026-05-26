@@ -6,7 +6,7 @@
 
 ## craft get
 
-### `craft get <subsystem> <component> [<instance>]`
+### `craft get <system> <component> [<instance>]`
 
 インスタンスを取得する。`<instance>` を省略すると全インスタンスを返す。
 
@@ -22,7 +22,7 @@ uv run craft get power battery main
 
 | 引数 | 必須 | 説明 |
 |---|---|---|
-| `subsystem` | はい | 対象の subsystem 名 |
+| `system` | はい | 対象の system 名 |
 | `component` | はい | 対象の component 名 |
 | `instance` | いいえ | 省略時は全件返す |
 
@@ -67,7 +67,7 @@ uv run craft get power battery main
 
 ---
 
-### `craft create <subsystem> <component> <instance>`
+### `craft create <system> <component> <instance>`
 
 新規インスタンスを作成する。**MultiInstance コンポーネントにのみ有効**。
 
@@ -80,7 +80,7 @@ uv run craft create power battery aux \
 
 ---
 
-### `craft put <subsystem> <component> <instance>`
+### `craft put <system> <component> <instance>`
 
 既存インスタンスを完全置換する。省略したフィールドはデフォルト値にリセットされる。
 
@@ -101,7 +101,7 @@ uv run craft put power battery main \
 
 ---
 
-### `craft patch <subsystem> <component> <instance>`
+### `craft patch <system> <component> <instance>`
 
 既存インスタンスを部分更新する。指定したフィールドのみ更新し、他は保持（深いマージ）。
 
@@ -122,7 +122,7 @@ uv run craft patch power battery main \
 
 ---
 
-### `craft delete <subsystem> <component> <instance>`
+### `craft delete <system> <component> <instance>`
 
 インスタンスを削除する。
 
@@ -144,7 +144,7 @@ MultiInstance コンポーネントの **共有 spec** を操作する。
 共有 spec は同型の複数インスタンスで `spec` セクションを共通化する仕組み
 （例: 同型バッテリ × 3 台が同じ spec を持つ場合）。
 
-### `craft spec get <subsystem> <component>`
+### `craft spec get <system> <component>`
 
 共有 spec を取得する。
 
@@ -163,7 +163,7 @@ uv run craft spec get power battery
 
 ---
 
-### `craft spec set <subsystem> <component>`
+### `craft spec set <system> <component>`
 
 共有 spec を更新する。セクション全体を置換する（部分更新は `get` → 編集 → `set`）。
 

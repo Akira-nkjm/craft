@@ -9,7 +9,7 @@ Craft CLI (`craft`) は宇宙機概念設計レジストリを操作するコマ
 
 | コマンド | 説明 | ページ |
 |---|---|---|
-| `craft schema list` | 登録済み subsystem / component を一覧 | [Schema](schema.md) |
+| `craft schema list` | 登録済み system / component を一覧 | [Schema](schema.md) |
 | `craft schema show <sub> <comp>` | component の JSON Schema を表示 | [Schema](schema.md) |
 | `craft get <sub> <comp> [<inst>]` | インスタンスを取得（ETag 付き） | [Instances](instances.md) |
 | `craft create <sub> <comp> <inst>` | 新規インスタンスを作成 | [Instances](instances.md) |
@@ -27,8 +27,8 @@ Craft CLI (`craft`) は宇宙機概念設計レジストリを操作するコマ
 | `craft runs artifact <run_id> <name>` | run のアーティファクトを stdout に出力 | [Pipeline](pipeline.md) |
 | `craft analysis list` | 登録済み @analysis 関数の一覧 | [Analysis](analysis.md) |
 | `craft analysis run <sub\|_> <name>` | analysis を実行 | [Analysis](analysis.md) |
-| `craft gen-stubs` | subsystem ごとに `_stubs.pyi` を生成 | [Tools](tools.md) |
-| `craft init subsystem <name>` | subsystem の雛形ディレクトリを生成 | [Tools](tools.md) |
+| `craft gen-stubs` | system ごとに `_stubs.pyi` を生成 | [Tools](tools.md) |
+| `craft init system <name>` | system の雛形ディレクトリを生成 | [Tools](tools.md) |
 | `craft history [<path>]` | git log を JSON で出力 | [Tools](tools.md) |
 | `craft diff <from> <to> [<path>]` | 2 つの ref 間の差分を表示 | [Tools](tools.md) |
 
@@ -40,7 +40,7 @@ Craft CLI (`craft`) は宇宙機概念設計レジストリを操作するコマ
 
 - **[Schema](schema.md)**
 
-    Registry に登録された subsystem・component のメタ情報を確認する。
+    Registry に登録された system・component のメタ情報を確認する。
     新しい Component を追加した後の確認に使う。
 
 - **[Instances](instances.md)**

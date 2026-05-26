@@ -10,7 +10,7 @@ def test_post_merge(clean_generated_dir):
         r = client.post("/merge")
     assert r.status_code == 200
     body = r.json()
-    assert "power" in body["subsystems"]
+    assert "power" in body["systems"]
     assert body["written"] is True
     assert body["stale"] is False
 
@@ -33,14 +33,14 @@ def test_post_scaffold_dry(power_data_backup):
     with TestClient(app) as client:
         r = client.post("/scaffold?dry_run=true")
     assert r.status_code == 200
-    assert any(res["subsystem"] == "power" for res in r.json()["results"])
+    assert any(res["system"] == "power" for res in r.json()["results"])
 
 
-def test_post_scaffold_subsystem(power_data_backup):
+def test_post_scaffold_system(power_data_backup):
     with TestClient(app) as client:
         r = client.post("/scaffold/power?dry_run=true")
     assert r.status_code == 200
-    assert r.json()["subsystem"] == "power"
+    assert r.json()["system"] == "power"
 
 
 def test_post_scaffold_unknown_404():
@@ -56,4 +56,4 @@ def test_verify_via_merged(clean_generated_dir):
     assert r.status_code == 200
     body = r.json()
     assert body["success"] is True
-    assert "power" in body["merge"]["subsystems"]
+    assert "power" in body["merge"]["systems"]

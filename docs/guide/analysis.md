@@ -7,9 +7,9 @@
 
 ## 2種類の Analysis
 
-| 種類 | `subsystem` | 実行方法 | 用途 |
+| 種類 | `system` | 実行方法 | 用途 |
 |---|---|---|---|
-| **veriq バインド型** | subsystem 名（自動推論） | `craft verify` / `craft analysis run <sub> <name>` | 設計検証・計算 |
+| **veriq バインド型** | system 名（自動推論） | `craft verify` / `craft analysis run <sub> <name>` | 設計検証・計算 |
 | **ad-hoc 型** | `None`（明示指定） | `craft analysis run _ <name> --payload '{...}'` | 独立した計算ユーティリティ |
 
 ---
@@ -81,7 +81,7 @@ def required_orbit_energy_wh(
     return pdm_power * eclipse_s / 3600.0
 ```
 
-1. `imports=["orbital"]` — 他 subsystem のデータを使う場合に宣言
+1. `imports=["orbital"]` — 他 system のデータを使う場合に宣言
 2. `@total_pdm_power_w` — 同スコープの calculation 結果を参照
 3. `scope="orbital"` — 別スコープのフィールドを参照
 
@@ -116,11 +116,11 @@ def verify_battery_capacity(
 
 ## ad-hoc 型 Analysis
 
-veriq に依存しない独立した計算関数。`subsystem=None` で登録し、CLI から直接引数を渡して実行できる。
+veriq に依存しない独立した計算関数。`system=None` で登録し、CLI から直接引数を渡して実行できる。
 
 ```python
 @analysis(
-    subsystem=None,         # (1)
+    system=None,         # (1)
     desc="バッテリ EOL 容量推定",
     cache=True,             # (2)
 )
@@ -135,7 +135,7 @@ def battery_eol_capacity(
     return initial_capacity_wh * (1.0 - degradation)
 ```
 
-1. `subsystem=None` — veriq 非登録、`craft verify` には含まれない
+1. `system=None` — veriq 非登録、`craft verify` には含まれない
 2. `cache=True` — 同じ引数での再実行はキャッシュから返す
 3. 生のパラメータ — `--payload` JSON で渡す
 
@@ -166,7 +166,7 @@ def my_calc(
     ...
 
 # ─── ad-hoc 型 ────────────────────────────────────────────────────────
-@analysis(subsystem=None, desc="独立ユーティリティ")
+@analysis(system=None, desc="独立ユーティリティ")
 def my_util(
     capacity: float,        # CLI --payload で渡す
     factor: float = 0.9,
@@ -230,7 +230,7 @@ def verify_total_capacity(
 
 ```python
 # scope.py が自動で行う処理
-for adef in default_registry.analyses(subsystem="power"):
+for adef in default_registry.analyses(system="power"):
     if adef.verify:
         power.verification(adef.name, imports=adef.imports)(adef.func)
     else:

@@ -10,7 +10,7 @@ data.toml → merge → merged.toml → verify → 検証結果 → runs
 
 ## craft merge
 
-各 subsystem の `data.toml` を結合して `generated/merged.toml` を生成する。
+各 system の `data.toml` を結合して `generated/merged.toml` を生成する。
 
 ### `craft merge [--dry-run] [--check]`
 
@@ -34,7 +34,7 @@ uv run craft merge --check
 
 **動作の詳細**
 
-- `subsystems/<name>/data.toml` を読み込み、veriq 規約（`[<scope>.model.<...>]`）に変換しながら結合する
+- `systems/<name>/data.toml` を読み込み、veriq 規約（`[<scope>.model.<...>]`）に変換しながら結合する
 - `tomlkit` を使用してコメント・空行・順序を保持する
 - 出力先: `generated/merged.toml`（ロックファイル: `generated/merged.lock`）
 
@@ -50,13 +50,13 @@ uv run craft merge --check
 
 Registry に登録された Component の定義から `data.toml` の雛形を生成する。**既存の値は保持される**。
 
-### `craft scaffold [<subsystem>] [--dry-run]`
+### `craft scaffold [<system>] [--dry-run]`
 
 ```bash
-# すべての subsystem を対象
+# すべての system を対象
 uv run craft scaffold
 
-# 特定 subsystem のみ
+# 特定 system のみ
 uv run craft scaffold power
 
 # ファイルを変更せず差分を確認
@@ -67,7 +67,7 @@ uv run craft scaffold power --dry-run
 
 | 引数 / オプション | 説明 |
 |---|---|
-| `subsystem` | 省略時は全 subsystem |
+| `system` | 省略時は全 system |
 | `--dry-run` | 変更内容を stdout に出力するだけ |
 
 !!! note "欠けているキーのみ追加する"

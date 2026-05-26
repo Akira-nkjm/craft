@@ -1,7 +1,7 @@
 """Subsystem root model 動的構築。
 
-`build_subsystem_root_model(subsystem, data_path)`:
-1. registry の `subsystem` 配下の component / config を走査
+`build_system_root_model(system, data_path)`:
+1. registry の `system` 配下の component / config を走査
 2. 各 MultiInstance component の `plural` をキーに `vq.Table[NameEnum, Entry]`、
    Singleton component には `<name>: Entry`、Config には `<name>: Model` を生やす
 3. instance キーの enum (`<Plural>Name`) は data.toml の現在キーから動的構築
@@ -79,10 +79,10 @@ def _make_root_base(multi_plurals: list[str]) -> type[BaseModel]:
     return _RootBase
 
 
-def build_subsystem_root_model(subsystem: str, data_path: Path) -> type[BaseModel]:
-    """subsystem 配下の component / config から root model を組み立てる。"""
-    components = default_registry.components(subsystem=subsystem)
-    configs = default_registry.configs(subsystem=subsystem)
+def build_system_root_model(system: str, data_path: Path) -> type[BaseModel]:
+    """system 配下の component / config から root model を組み立てる。"""
+    components = default_registry.components(system=system)
+    configs = default_registry.configs(system=system)
 
     fields: dict[str, tuple[Any, Any]] = {}
     multi_plurals: list[str] = []
@@ -100,7 +100,7 @@ def build_subsystem_root_model(subsystem: str, data_path: Path) -> type[BaseMode
     for cfg in configs:
         fields[cfg.name] = (cfg.model, ...)
 
-    model_name = f"{subsystem.capitalize()}RootModel"
+    model_name = f"{system.capitalize()}RootModel"
     base_cls = _make_root_base(multi_plurals)
     return create_model(  # pyrefly: ignore[no-matching-overload]
         model_name,

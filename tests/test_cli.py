@@ -122,14 +122,14 @@ def test_init_subsystem(runner):
     with tempfile.TemporaryDirectory() as tmp:
         # macOS では /var → /private/var の symlink があるので resolve
         tmp_path = Path(tmp).resolve()
-        (tmp_path / "subsystems").mkdir()
+        (tmp_path / "systems").mkdir()
         prev_cwd = Path.cwd()
         try:
             os.chdir(tmp_path)
-            result = runner.invoke(app, ["init", "subsystem", "demo", "--kind", "hardware"])
+            result = runner.invoke(app, ["init", "system", "demo", "--kind", "hardware"])
         finally:
             os.chdir(prev_cwd)
-        created_dir = tmp_path / "subsystems" / "demo"
+        created_dir = tmp_path / "systems" / "demo"
         assert result.exit_code == 0, result.stdout
         assert (created_dir / "components.py").exists()
         assert (created_dir / "scope.py").exists()
@@ -139,5 +139,5 @@ def test_init_subsystem(runner):
 
 def test_init_subsystem_already_exists(runner):
     """既存ディレクトリへ init は失敗する。"""
-    result = runner.invoke(app, ["init", "subsystem", "power"])
+    result = runner.invoke(app, ["init", "system", "power"])
     assert result.exit_code == 1

@@ -40,7 +40,7 @@ date_updated: 2026-05-22
 ### Python
 
 ```python
-# subsystems/power/components.py
+# systems/power/components.py
 from craft.schema import Component, MultiInstance, fld
 
 
@@ -59,7 +59,7 @@ class Battery(Component, MultiInstance):
 - `Battery.Design` (`depth_of_discharge`)
 - `Battery.Requirements` = None
 - `Battery.Entry`
-- `Battery.__subsystem__ = "power"` (自動推論)
+- `Battery.__system__ = "power"` (自動推論)
 - `Battery.__plural__ = "batteries"` (自動推論)
 - `Battery.__shared_spec__ = True` (default)
 
@@ -364,7 +364,7 @@ serial = "BS-2026-001"
 ### Python
 
 ```python
-# subsystems/mission/configs.py
+# systems/mission/configs.py
 from craft.schema import Config, fld
 
 
@@ -450,11 +450,11 @@ single_event_upset_rate_per_day = 0.001
 ### Python
 
 ```python
-# subsystems/power/analyses.py
+# systems/power/analyses.py
 from typing import Annotated
 import veriq as vq
 from craft.schema import analysis
-from craft.subsystems.power.components import Battery, PDM
+from craft.systems.power.components import Battery, PDM
 from craft.schema.common import OperationMode
 
 
@@ -481,7 +481,7 @@ def verify_battery_capacity(
     })
 
 
-@analysis(subsystem=None, desc="バッテリー EOL 容量")
+@analysis(system=None, desc="バッテリー EOL 容量")
 def battery_eol_capacity(
     spec: Annotated[Battery.Entry, vq.Ref("$.batteries.main")],
     years: float = 5.0,
@@ -504,14 +504,14 @@ def battery_eol_capacity(
 ```
 POST /api/analyses/power/total_power_by_mode    { "mode": "safe" }
 GET  /api/analyses                              # 一覧
-GET  /api/analyses/power                        # subsystem 配下
+GET  /api/analyses/power                        # system 配下
 ```
 
 ---
 
-## 完全な subsystem 例: `subsystems/power/data.toml`
+## 完全な system 例: `systems/power/data.toml`
 
-実際の subsystem の data.toml は混在パターンになる:
+実際の system の data.toml は混在パターンになる:
 
 ```toml
 # === Battery (P1/P2: shared spec) ===
@@ -641,7 +641,7 @@ Analysis → TOML 無関係 ............ P9
 | 引数 | デフォルト | 効果 |
 |---|---|---|
 | `shared_spec` | `True` (MultiInstance のみ有効、Singleton では無視) | `False` で instance ごとに spec を持つ |
-| `subsystem` | (ファイル名自動推論) | 明示で上書き |
+| `system` | (ファイル名自動推論) | 明示で上書き |
 | `plural` | (クラス名自動推論、MultiInstance のみ有効) | 略語等で明示推奨 |
 | `key` | (クラス名 lowercase、Singleton のみ有効) | Singleton 時の TOML キー上書き |
 

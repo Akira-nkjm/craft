@@ -53,7 +53,7 @@ tags: [project, dev, satellite]
 - [[API設計]] — FastAPI ルーティング、`@analysis` の自動 API 化、veriq pass-through
 - [[MCP設計]] — MCP サーバ仕様（tool 命名規約、registry 派生、stdio 接続）
 - [[データパイプライン]] — TOML merge (`generated/merged.toml`) と scaffold（registry → data.toml 雛形）
-- [[プロジェクト初期化]] — `craft init` CLI（project / subsystem / component / config / analysis）
+- [[プロジェクト初期化]] — `craft init` CLI（project / system / component / config / analysis）
 - [[テスト戦略]] — テストピラミッドと E2E（CLI / HTTP / MCP）
 
 ### 02_リファレンス/ — 外部仕様・早見表
@@ -67,7 +67,7 @@ tags: [project, dev, satellite]
 
 ### archive/ — 取り込み済み・古い案（履歴参照用、現役ではない）
 - [[設計書]] — 旧アーキテクチャ概要（最終構成に統合済み）
-- [[構成見直し案]] — subsystem 中心レイアウト提案（採用済み）
+- [[構成見直し案]] — system 中心レイアウト提案（採用済み）
 - [[設計レビュー]] — 旧状態の横断レビュー（指摘は最終構成・各仕様に反映済み）
 - [[未決事項解説]] — §10 論点の解説（論点は全て決着済み）
 - [[型検証と宣言方式]] — 方式 A/B/C 比較の詳細記録（結論は [[コンポーネントデコレータ仕様]] §9 に統合）
@@ -75,7 +75,7 @@ tags: [project, dev, satellite]
 - [[Datasheet設計]] — `WithDatasheet` trait 案（採用見送り、`shared_spec=True` default で代替）
 
 ### 📁 [[実装テンプレート/README|実装テンプレート/]]
-- Component base class + subsystem 中心レイアウトの最小例集
+- Component base class + system 中心レイアウトの最小例集
 
 ---
 
@@ -92,12 +92,12 @@ tags: [project, dev, satellite]
 
 | グループ | 主要エンドポイント | 役割 |
 |---|---|---|
-| Schema | `GET /schema/{subsystem}/{component}` | Pydantic JSON Schema を配信（フォーム自動生成の元） |
-| Instances | `GET/POST/PUT/PATCH/DELETE /components/{subsystem}/{component}/{instance}` | TOML 上のインスタンス CRUD（ETag / If-Match で楽観的ロック） |
-| Analyses | `POST /analyses/{subsystem}/{name}` | `@analysis` 関数を自動 API 化（[[Analysis詳細仕様]]） |
-| Merge | `POST /merge` / `GET /merged` | 全 subsystems/*/data.toml を `generated/merged.toml` に統合（[[データパイプライン]]） |
-| Scaffold | `POST /scaffold[/{subsystem}]` / `GET /scaffold/preview/{subsystem}` | registry から data.toml の雛形を生成・整形（既存値は破壊しない） |
-| Verification | `POST /verify` / `POST /verify/{subsystem}` | veriq 検証を非同期 job として実行（実行前に merge 自動再生成） |
+| Schema | `GET /schema/{system}/{component}` | Pydantic JSON Schema を配信（フォーム自動生成の元） |
+| Instances | `GET/POST/PUT/PATCH/DELETE /components/{system}/{component}/{instance}` | TOML 上のインスタンス CRUD（ETag / If-Match で楽観的ロック） |
+| Analyses | `POST /analyses/{system}/{name}` | `@analysis` 関数を自動 API 化（[[Analysis詳細仕様]]） |
+| Merge | `POST /merge` / `GET /merged` | 全 systems/*/data.toml を `generated/merged.toml` に統合（[[データパイプライン]]） |
+| Scaffold | `POST /scaffold[/{system}]` / `GET /scaffold/preview/{system}` | registry から data.toml の雛形を生成・整形（既存値は破壊しない） |
+| Verification | `POST /verify` / `POST /verify/{system}` | veriq 検証を非同期 job として実行（実行前に merge 自動再生成） |
 | Runs | `GET /runs` / `GET /runs/{id}` / `GET /runs/latest` | 検証結果の参照 |
 | History | `GET /history` / `GET /diff` | TOML 変更履歴（git 由来） |
 | Meta | `GET /projects` / `GET /healthz` / `GET /version` | プロジェクト一覧・死活・スキーマ版数 |
@@ -121,7 +121,7 @@ tags: [project, dev, satellite]
 - [ ] **Swagger UI** をプロジェクト主 UI として正式採用、tags / examples の整備
 - [ ] **MCP サーバ**実装（LLM 連携）
 - [ ] **merge / scaffold** 実装 — `core/{merge,scaffold,toml_formatter}.py` + CLI / API（[[データパイプライン]]）
-- [ ] **craft init** CLI 実装 — project/subsystem/component/config/analysis、テンプレート 3 種（[[プロジェクト初期化]]）
+- [ ] **craft init** CLI 実装 — project/system/component/config/analysis、テンプレート 3 種（[[プロジェクト初期化]]）
 
 ### In Progress
 - [ ] `experiment/` PoC の継続検証
@@ -135,5 +135,5 @@ tags: [project, dev, satellite]
 ---
 
 ## 参考資料（コードベース）
-- 既存スタック: `design/scopes/subsystem/power/models.py`
-- 新スタック: `experiment/schema/subsystems/power.py`
+- 既存スタック: `design/scopes/system/power/models.py`
+- 新スタック: `experiment/schema/systems/power.py`

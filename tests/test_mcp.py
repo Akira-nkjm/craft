@@ -32,7 +32,7 @@ async def test_list_tools_exposes_registry(mcp_server):
         result = await client.list_tools()
     names = {t.name for t in result.tools}
     # introspection
-    assert {"list_subsystems", "list_components", "list_configs", "list_analyses"} <= names
+    assert {"list_systems", "list_components", "list_configs", "list_analyses"} <= names
     # multi-instance
     assert {"list_batteries", "get_battery", "list_pdms", "list_heaters"} <= names
     # singleton
@@ -47,9 +47,9 @@ async def test_list_tools_exposes_registry(mcp_server):
 
 
 @pytest.mark.asyncio
-async def test_list_subsystems_tool(mcp_server):
+async def test_list_systems_tool(mcp_server):
     async with create_connected_server_and_client_session(mcp_server) as client:
-        result = await client.call_tool("list_subsystems", {})
+        result = await client.call_tool("list_systems", {})
     body = _decode(result)
     assert set(body) == {"power", "cdh", "thermal", "mission", "orbital"}
 
@@ -104,7 +104,7 @@ async def test_get_schema_tool(mcp_server):
     async with create_connected_server_and_client_session(mcp_server) as client:
         result = await client.call_tool(
             "get_schema",
-            {"subsystem": "power", "component": "battery"},
+            {"system": "power", "component": "battery"},
         )
     body = _decode(result)
     assert "properties" in body

@@ -223,7 +223,7 @@ margin = 10.0
 #### 本プロジェクトでの適用
 
 - `scope = vq.Scope("power")` の TOML 入力 → `[power.model.<field>...]`
-- subsystem 名 = scope 名 を **小文字統一** することを推奨
+- system 名 = scope 名 を **小文字統一** することを推奨
 - `<root_model_field>` は registry から auto-derive される（[[最終構成]] §2 Subsystem Model）
 - 詳細は [[データパイプライン]] §2 を参照
 

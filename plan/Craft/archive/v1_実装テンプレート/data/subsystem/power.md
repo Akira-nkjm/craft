@@ -1,9 +1,9 @@
 ---
 tags: [project, dev, satellite, template, data]
-mirror: design/data/subsystem/power.toml
+mirror: design/data/system/power.toml
 ---
 
-# design/data/subsystem/power.toml
+# design/data/system/power.toml
 
 > 親: [[実装テンプレート/README|実装テンプレート]]
 

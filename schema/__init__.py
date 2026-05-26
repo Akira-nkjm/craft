@@ -15,7 +15,7 @@ from schema.registry import (
     UnifiedRegistry,
     default_registry,
 )
-from schema.root_model_builder import build_subsystem_root_model
+from schema.root_model_builder import build_system_root_model
 from schema.traits import (
     MultiInstance,
     PowerConsuming,
@@ -36,7 +36,7 @@ __all__ = [
     "TemperatureSensitive",
     "UnifiedRegistry",
     "analysis",
-    "build_subsystem_root_model",
+    "build_system_root_model",
     "default_registry",
     "fld",
 ]

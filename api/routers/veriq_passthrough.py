@@ -20,13 +20,13 @@ router = APIRouter(prefix="/veriq", tags=["veriq"])
 
 
 def _build_project() -> vq.Project:
-    """登録済み subsystem の scope を集めて Project を組み立てる。
+    """登録済み system の scope を集めて Project を組み立てる。
 
     `api.routers.verify._build_project` と同等の動的 import パターン。
     """
     project = vq.Project("Craft")
-    for sub in sorted(default_registry.subsystems()):
-        mod = importlib.import_module(f"subsystems.{sub}.scope")
+    for sub in sorted(default_registry.systems()):
+        mod = importlib.import_module(f"systems.{sub}.scope")
         scope = getattr(mod, sub, None)
         if scope is None:
             continue

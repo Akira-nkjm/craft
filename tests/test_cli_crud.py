@@ -64,10 +64,10 @@ def test_create_singleton_fails(runner, power_data_backup):
     """Singleton (orbit など) は instance 作成不可。pdms は multi なので bus を試す。
 
     pdms.spec / pdms.main の構造を見るかぎり pdm も multi。
-    instead use a singleton: 例として subsystems に singleton が無ければスキップ。
+    instead use a singleton: 例として systems に singleton が無ければスキップ。
     """
-    # subsystems/power の component はすべて multi の可能性が高い。
-    # 代わりに不正な subsystem を試して 1 を確認するテストを書く。
+    # systems/power の component はすべて multi の可能性が高い。
+    # 代わりに不正な system を試して 1 を確認するテストを書く。
     payload = json.dumps({"design": {"depth_of_discharge": 0.5}})
     result = runner.invoke(app, ["create", "unknown", "battery", "x", "--json", payload])
     assert result.exit_code == 1

@@ -1,15 +1,15 @@
 """Registry auto-registration の確認。"""
 
-import subsystems.power.scope  # noqa: F401 — トリガ
+import systems.power.scope  # noqa: F401 — トリガ
 from schema import default_registry
 
 
 def test_power_subsystem_registered():
-    assert "power" in default_registry.subsystems()
+    assert "power" in default_registry.systems()
 
 
 def test_components_registered():
-    names = {c.name for c in default_registry.components(subsystem="power")}
+    names = {c.name for c in default_registry.components(system="power")}
     assert names == {"battery", "solarpanel", "pdm"}
 
 
@@ -38,7 +38,7 @@ def test_battery_is_multi_instance():
 
 
 def test_analyses_registered():
-    analyses = default_registry.analyses(subsystem="power")
+    analyses = default_registry.analyses(system="power")
     names = {a.name for a in analyses}
     assert names == {
         "total_pdm_power_w",

@@ -48,7 +48,7 @@ class MissionProfile(Component):     # default Singleton
 ## 2. `Config` base class の使い方
 
 ```python
-# subsystems/mission/configs.py
+# systems/mission/configs.py
 
 from craft.schema import Config, fld
 
@@ -73,9 +73,9 @@ class OrbitalParameters(Config):
     mean_anomaly_deg: float = fld(ge=0, lt=360, unit="deg")
 ```
 
-### subsystem 自動推論
+### system 自動推論
 
-ファイルパス `subsystems/mission/configs.py` から `subsystem="mission"` を自動推論。Component と同じロジック。
+ファイルパス `systems/mission/configs.py` から `system="mission"` を自動推論。Component と同じロジック。
 
 ### Singleton が default（強制）
 
@@ -141,13 +141,13 @@ approved_by = "akira"
 
 ```python
 class UnifiedRegistry:
-    components: dict[(str, str), ComponentDefinition]   # (subsystem, name)
-    configs:    dict[(str, str), ConfigDefinition]      # (subsystem, name)
+    components: dict[(str, str), ComponentDefinition]   # (system, name)
+    configs:    dict[(str, str), ConfigDefinition]      # (system, name)
     analyses:   dict[(str|None, str), AnalysisDefinition]
 
     def register_config(self, defn: ConfigDefinition) -> None: ...
-    def config(self, subsystem: str, name: str) -> ConfigDefinition: ...
-    def configs(self, *, subsystem: str | None = None) -> list[ConfigDefinition]: ...
+    def config(self, system: str, name: str) -> ConfigDefinition: ...
+    def configs(self, *, system: str | None = None) -> list[ConfigDefinition]: ...
 ```
 
 ### ConfigDefinition
@@ -155,7 +155,7 @@ class UnifiedRegistry:
 ```python
 @dataclass(frozen=True, slots=True)
 class ConfigDefinition:
-    subsystem: str
+    system: str
     name: str                          # "mission_profile"
     model: type[BaseModel]             # MissionProfile 自身
     desc: str | None
@@ -201,10 +201,10 @@ class MissionRootModel(BaseModel):
 
 ## 6. ディレクトリ配置
 
-### subsystem-centric を踏襲
+### system-centric を踏襲
 
 ```
-subsystems/
+systems/
 ├── power/                # hardware 主体
 │   ├── components.py     # Battery, SolarPanel, PDM
 │   ├── analyses.py
@@ -212,7 +212,7 @@ subsystems/
 │   └── data.toml
 │
 ├── mission/              # 非 hardware 主体
-│   ├── configs.py        # MissionProfile, OrbitalParameters (subsystem 名は "mission")
+│   ├── configs.py        # MissionProfile, OrbitalParameters (system 名は "mission")
 │   ├── analyses.py       # ミッション系の集計関数
 │   ├── scope.py
 │   └── data.toml
@@ -237,7 +237,7 @@ subsystems/
 - **`scope.py`** — veriq Scope 定義
 - **`data.toml`** — インスタンス + Config 値
 
-Component と Config の **両方を持つ subsystem** もあり得る（例: power に `EPSConfig` を足す）。その場合は両ファイルを置く。
+Component と Config の **両方を持つ system** もあり得る（例: power に `EPSConfig` を足す）。その場合は両ファイルを置く。
 
 ---
 
@@ -252,10 +252,10 @@ Component と Config の **両方を持つ subsystem** もあり得る（例: po
 
 ---
 
-## 8. 例: `subsystems/cdh/components.py`
+## 8. 例: `systems/cdh/components.py`
 
 ```python
-"""Command & Data Handling subsystem."""
+"""Command & Data Handling system."""
 
 from craft.schema import Component, fld
 from craft.schema.traits import (
@@ -307,7 +307,7 @@ heritage = "S950-XR"
 
 ---
 
-## 9. 例: `subsystems/mission/configs.py`
+## 9. 例: `systems/mission/configs.py`
 
 ```python
 """Mission-level configurations."""
@@ -382,9 +382,9 @@ craft config list                     # 全 Config 一覧
 | Config 概念 | ✅ 別 base class として導入 |
 | Config の cardinality | **常に Singleton**（trait 不要） |
 | Config の構造 | フラット (Spec/Design/Requirements 無し) |
-| Config の subsystem 帰属 | ファイルパスから自動推論 |
-| TOML 配置 | subsystem の `data.toml` に同居 |
-| API endpoint prefix | `/api/configs/{subsystem}/{name}` |
+| Config の system 帰属 | ファイルパスから自動推論 |
+| TOML 配置 | system の `data.toml` に同居 |
+| API endpoint prefix | `/api/configs/{system}/{name}` |
 | CLI group | `craft config <verb> ...` |
 | veriq 連携 | root model に直接 field として含まれる |
 | `meta` フィールド | あり |
@@ -393,7 +393,7 @@ craft config list                     # 全 Config 一覧
 
 ## 13. 残る論点
 
-- **Config と Component を同 subsystem 内に混在** させる時の TOML 階層 — 同じ `data.toml` でいいか別ファイルがいいか
+- **Config と Component を同 system 内に混在** させる時の TOML 階層 — 同じ `data.toml` でいいか別ファイルがいいか
 - **Config に `Requirements` 概念は本当に不要か** — 「ミッション要求」は要求の塊なので、別構造が要らない理由を明確化
   - → MissionProfile 自体が「要求の宣言」、別の Requirements layer は不要、と整理
 - **`Config` に trait は適用可能か** — `meta` 以外で意味のある trait があるか（多分なし、`MultiInstance` は禁止）

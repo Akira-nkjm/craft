@@ -283,7 +283,7 @@ def battery_drain(
     return bat.spec.capacity_wh * 0.8       # spec は resolved 済みで OK
 ```
 
-`build_subsystem_root_model` 時に datasheet 参照を resolve してから validate。
+`build_system_root_model` 時に datasheet 参照を resolve してから validate。
 → veriq 側は WithDatasheet を意識しない。透過。
 
 ---
@@ -388,6 +388,6 @@ string_count = 4
 ## 13. 残る論点
 
 - **個体差オーバーライド** — 同型製品でも個体差ある場合 → **不可、別 datasheet エントリ作成** を推奨
-- **クロスサブシステム datasheet 共有** — 暫定: **subsystem ごと持つ**（rare case はコピペで運用）
+- **クロスサブシステム datasheet 共有** — 暫定: **system ごと持つ**（rare case はコピペで運用）
 - **datasheet → instance への fallback** — 「とりあえず inline spec で書いて、後で datasheet 化」の動線 → `craft migrate to-datasheet ...`
 - **datasheet revision** — `xyz_v1`, `xyz_v2` 等、キー命名で運用、framework 強制せず

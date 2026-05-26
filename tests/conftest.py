@@ -2,13 +2,13 @@
 
 import pytest
 
-from core.paths import subsystem_data_path
+from core.paths import system_data_path
 
 
 @pytest.fixture
 def power_data_backup():
     """テスト中に power/data.toml を変更する場合のバックアップ・復元 fixture。"""
-    path = subsystem_data_path("power")
+    path = system_data_path("power")
     backup = path.read_bytes()
     yield path
     path.write_bytes(backup)

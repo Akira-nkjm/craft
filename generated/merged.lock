@@ -1,16 +1,16 @@
 version = 1
 
-[sources."subsystems/cdh/data.toml"]
-sha256 = "97ac45aa6b284f050ee808b21e95844c883fe07b7527343ecdb1eab0916e8dd4"
+[sources."systems/cdh/data.toml"]
+sha256 = "a6f4c33f103fca146d8f43fb77c696d6e597751712c52035b133b6fa2ef21bcb"
 
-[sources."subsystems/mission/data.toml"]
-sha256 = "24c5db854f9a0af6a08c480facde76da362a6a61d686b106505fc2cb6545d323"
+[sources."systems/mission/data.toml"]
+sha256 = "a67678ab25b4353fb0e81ce9bc83fb6e19c4063d1fa2028ddde3ddc5c7548157"
 
-[sources."subsystems/orbital/data.toml"]
-sha256 = "2c1d11debb3cf158121db0e66ab1b10b184e18416cec06d5ba5c97d607dfaa37"
+[sources."systems/orbital/data.toml"]
+sha256 = "260b0e48c30d1de820b0156c509446509f48a5c653b2e3cd254c325a8ebb7388"
 
-[sources."subsystems/power/data.toml"]
-sha256 = "cc87080088a1dac6c30b3b6b01c9d3dc9480ef98b335b45fb3d1747f5cd60c52"
+[sources."systems/power/data.toml"]
+sha256 = "d7ada6a0cd093466b257064a2c134054276c99d8c09df162bb58aa17c2694395"
 
-[sources."subsystems/thermal/data.toml"]
-sha256 = "85dac53d931b71cc713519359c45b0f5ed3fb2a06d42eb76ed1bbd523ba609f7"
+[sources."systems/thermal/data.toml"]
+sha256 = "04261f6a5fa9bb3565ff6162f5513d28b29511b8ac130befddec040c12095d1a"

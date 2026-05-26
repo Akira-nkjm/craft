@@ -22,10 +22,10 @@ merge_mod = importlib.import_module("core.merge")
 
 
 def build_project() -> vq.Project:
-    """登録済み subsystem の scope を集めて Project を組み立てる。"""
+    """登録済み system の scope を集めて Project を組み立てる。"""
     project = vq.Project("Craft")
-    for sub in sorted(default_registry.subsystems()):
-        mod = importlib.import_module(f"subsystems.{sub}.scope")
+    for sub in sorted(default_registry.systems()):
+        mod = importlib.import_module(f"systems.{sub}.scope")
         scope = getattr(mod, sub, None)
         if scope is None:
             continue
@@ -68,7 +68,7 @@ def run_verify_core() -> dict[str, Any]:
         {
             "run_id": run_id,
             "merge": {
-                "subsystems": list(merge_result.subsystems),
+                "systems": list(merge_result.systems),
                 "source_files": merge_result.source_files,
             },
         }

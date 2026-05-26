@@ -19,7 +19,7 @@ from pydantic import BaseModel
 from tomlkit import TOMLDocument
 from tomlkit.items import Table
 
-from core.paths import subsystem_data_path
+from core.paths import system_data_path
 from core.toml_formatter import (
     apply_field_comments,
     default_value,
@@ -33,7 +33,7 @@ from schema.registry import ComponentDefinition, ConfigDefinition
 
 @dataclass(frozen=True, slots=True)
 class ScaffoldResult:
-    subsystem: str
+    system: str
     file_path: Path
     written: bool
     added_paths: tuple[str, ...] = ()
@@ -41,14 +41,14 @@ class ScaffoldResult:
     mode: str = "add-missing"
 
 
-def scaffold_subsystem(
-    subsystem: str,
+def scaffold_system(
+    system: str,
     *,
     dry_run: bool = False,
     format_only: bool = False,
     overwrite: bool = False,
 ) -> tuple[ScaffoldResult, TOMLDocument]:
-    """1 つの subsystem の data.toml を雛形と diff merge する。
+    """1 つの system の data.toml を雛形と diff merge する。
 
     Args:
         format_only: 既存値を触らず順序・コメントのみ整形
@@ -57,12 +57,12 @@ def scaffold_subsystem(
     Returns:
         (result, updated TOMLDocument)
     """
-    components = default_registry.components(subsystem=subsystem)
-    configs = default_registry.configs(subsystem=subsystem)
+    components = default_registry.components(system=system)
+    configs = default_registry.configs(system=system)
     if not components and not configs:
-        raise ValueError(f"No components/configs registered for subsystem '{subsystem}'")
+        raise ValueError(f"No components/configs registered for system '{system}'")
 
-    data_path = subsystem_data_path(subsystem)
+    data_path = system_data_path(system)
     doc = read_toml_doc(data_path)
 
     added: list[str] = []
@@ -75,7 +75,7 @@ def scaffold_subsystem(
         _scaffold_config(doc, cfg, added, removed, format_only=format_only, overwrite=overwrite)
 
     result = ScaffoldResult(
-        subsystem=subsystem,
+        system=system,
         file_path=data_path,
         written=not dry_run,
         added_paths=tuple(added),
@@ -96,8 +96,8 @@ def scaffold_all(
     overwrite: bool = False,
 ) -> list[ScaffoldResult]:
     out: list[ScaffoldResult] = []
-    for sub in sorted(default_registry.subsystems()):
-        result, _ = scaffold_subsystem(
+    for sub in sorted(default_registry.systems()):
+        result, _ = scaffold_system(
             sub, dry_run=dry_run, format_only=format_only, overwrite=overwrite
         )
         out.append(result)

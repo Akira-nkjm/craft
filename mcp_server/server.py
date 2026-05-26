@@ -14,13 +14,13 @@ import mcp.types as mcp_types
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 
-from core.discovery import discover_subsystems
+from core.discovery import discover_systems
 from mcp_server.tool_factory import build_handler_map, build_tool_specs
 
 
 def build_server() -> Server:
-    """全 subsystem を import → registry 確定 → MCP server 構築。"""
-    discover_subsystems()
+    """全 system を import → registry 確定 → MCP server 構築。"""
+    discover_systems()
 
     server: Server = Server("craft")
     tools = build_tool_specs()

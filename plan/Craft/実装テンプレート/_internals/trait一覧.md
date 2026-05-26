@@ -151,7 +151,7 @@ class Battery(Component, TemperatureSensitive):
 
 ## ユーザが新 trait を作りたい時
 
-`subsystems/` に trait は置かない。新 trait は **schema/traits.py に追加** する（共通基盤）。
+`systems/` に trait は置かない。新 trait は **schema/traits.py に追加** する（共通基盤）。
 
 最小サンプル:
 ```python
@@ -174,4 +174,4 @@ class Battery(Component, TemperatureSensitive, RadiationSensitive):
 - ❌ trait 内で `class Design:` / `class Requirements:` を書く（trait は flat な属性集合のみ）
 - ❌ trait に method を実装する（marker / field declaration のみ）
 - ❌ trait を `Component` 派生にする（trait の純粋性を保つ）
-- ❌ subsystem 配下で trait を定義（共通基盤に置く規約）
+- ❌ system 配下で trait を定義（共通基盤に置く規約）

@@ -1,4 +1,4 @@
-"""Merge engine — subsystems/*/data.toml → generated/merged.toml。
+"""Merge engine — systems/*/data.toml → generated/merged.toml。
 
 仕様: plan/Craft/01_仕様/データパイプライン.md §3
 """
@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from core.paths import REPO_ROOT, subsystem_data_path, subsystems_root
+from core.paths import REPO_ROOT, system_data_path, subsystems_root
 from core.toml_io import read_toml, write_toml_atomic
 
 GENERATED_DIR: Path = REPO_ROOT / "generated"
@@ -17,14 +17,14 @@ MERGED_LOCK: Path = GENERATED_DIR / "merged.lock"
 
 
 class MergeConflict(Exception):  # noqa: N818
-    """同一 top-level key が複数 subsystem で出現した。"""
+    """同一 top-level key が複数 system で出現した。"""
 
 
 @dataclass(frozen=True, slots=True)
 class MergeResult:
     output_path: Path
     source_files: dict[str, str] = field(default_factory=dict)
-    subsystems: tuple[str, ...] = ()
+    systems: tuple[str, ...] = ()
     written: bool = True
 
 
@@ -37,7 +37,7 @@ def _sha256_file(path: Path) -> str:
 
 
 def _discover_data_files(only: list[str] | None = None) -> list[tuple[str, Path]]:
-    """`subsystems/<name>/data.toml` が存在するものを返す（subsystem 名昇順）。"""
+    """`systems/<name>/data.toml` が存在するものを返す（system 名昇順）。"""
     root = subsystems_root()
     if not root.exists():
         return []
@@ -47,7 +47,7 @@ def _discover_data_files(only: list[str] | None = None) -> list[tuple[str, Path]
             continue
         if only is not None and sub_dir.name not in only:
             continue
-        data = subsystem_data_path(sub_dir.name)
+        data = system_data_path(sub_dir.name)
         if data.exists():
             pairs.append((sub_dir.name, data))
     return pairs
@@ -55,14 +55,14 @@ def _discover_data_files(only: list[str] | None = None) -> list[tuple[str, Path]
 
 def merge(
     *,
-    subsystems: list[str] | None = None,
+    systems: list[str] | None = None,
     output_path: Path | None = None,
     dry_run: bool = False,
 ) -> tuple[MergeResult, dict[str, Any]]:
-    """全 subsystem の data.toml を統合。
+    """全 system の data.toml を統合。
 
     Args:
-        subsystems: 対象 subsystem 名のリスト。None なら全件。
+        systems: 対象 system 名のリスト。None なら全件。
         output_path: 出力先（default `generated/merged.toml`）。
         dry_run: True なら書き込まず dict のみ返す。
 
@@ -70,7 +70,7 @@ def merge(
         (MergeResult, merged_dict)
     """
     out_path = output_path or MERGED_TOML
-    pairs = _discover_data_files(subsystems)
+    pairs = _discover_data_files(systems)
 
     merged: dict[str, Any] = {}
     source_files: dict[str, str] = {}
@@ -89,7 +89,7 @@ def merge(
     result = MergeResult(
         output_path=out_path,
         source_files=source_files,
-        subsystems=tuple(subsystem_names),
+        systems=tuple(subsystem_names),
         written=not dry_run,
     )
 

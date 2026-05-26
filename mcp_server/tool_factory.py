@@ -33,23 +33,23 @@ def _introspection_tools() -> list[mcp_types.Tool]:
     empty_schema: dict[str, Any] = {"type": "object", "properties": {}}
     return [
         mcp_types.Tool(
-            name="list_subsystems",
-            description="登録済み subsystem の一覧を返す。",
+            name="list_systems",
+            description="登録済み system の一覧を返す。",
             inputSchema=empty_schema,
         ),
         mcp_types.Tool(
             name="list_components",
-            description="全 component の (subsystem, name, plural, cardinality, traits) を返す。",
+            description="全 component の (system, name, plural, cardinality, traits) を返す。",
             inputSchema=empty_schema,
         ),
         mcp_types.Tool(
             name="list_configs",
-            description="全 config の (subsystem, name) を返す。",
+            description="全 config の (system, name) を返す。",
             inputSchema=empty_schema,
         ),
         mcp_types.Tool(
             name="list_analyses",
-            description="全 @analysis の (subsystem, name, verify, desc) を返す。",
+            description="全 @analysis の (system, name, verify, desc) を返す。",
             inputSchema=empty_schema,
         ),
         mcp_types.Tool(
@@ -58,10 +58,10 @@ def _introspection_tools() -> list[mcp_types.Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "subsystem": {"type": "string"},
+                    "system": {"type": "string"},
                     "component": {"type": "string"},
                 },
-                "required": ["subsystem", "component"],
+                "required": ["system", "component"],
             },
         ),
     ]
@@ -77,14 +77,14 @@ def _component_read_tools() -> list[mcp_types.Tool]:
             out.append(
                 mcp_types.Tool(
                     name=f"list_{cdef.plural}",
-                    description=f"{cdef.subsystem}.{cdef.name} の全インスタンス。",
+                    description=f"{cdef.system}.{cdef.name} の全インスタンス。",
                     inputSchema={"type": "object", "properties": {}},
                 )
             )
             out.append(
                 mcp_types.Tool(
                     name=f"get_{cdef.name}",
-                    description=f"{cdef.subsystem}.{cdef.name} の単一インスタンス（name 指定）。",
+                    description=f"{cdef.system}.{cdef.name} の単一インスタンス（name 指定）。",
                     inputSchema={
                         "type": "object",
                         "properties": {"name": {"type": "string"}},
@@ -96,7 +96,7 @@ def _component_read_tools() -> list[mcp_types.Tool]:
             out.append(
                 mcp_types.Tool(
                     name=f"get_{cdef.name}",
-                    description=f"{cdef.subsystem}.{cdef.name} (Singleton) を取得。",
+                    description=f"{cdef.system}.{cdef.name} (Singleton) を取得。",
                     inputSchema={"type": "object", "properties": {}},
                 )
             )
@@ -110,7 +110,7 @@ def _config_read_tools() -> list[mcp_types.Tool]:
     return [
         mcp_types.Tool(
             name=f"get_{cfg.name}",
-            description=f"{cfg.subsystem}.{cfg.name} (Config) を取得。",
+            description=f"{cfg.system}.{cfg.name} (Config) を取得。",
             inputSchema={"type": "object", "properties": {}},
         )
         for cfg in default_registry.configs()
@@ -138,7 +138,7 @@ def _analysis_tools() -> list[mcp_types.Tool]:
 
 def _analysis_input_schema(adef: Any) -> dict[str, Any]:
     """ad-hoc analysis のみ直接 input を受け取る。veriq 経由はデータ駆動。"""
-    if adef.subsystem is not None:
+    if adef.system is not None:
         return {"type": "object", "properties": {}}
     import inspect
 
@@ -178,12 +178,12 @@ def _verify_tools() -> list[mcp_types.Tool]:
     tools: list[mcp_types.Tool] = [
         mcp_types.Tool(
             name="verify_all",
-            description="全 subsystem の verification を実行。",
+            description="全 system の verification を実行。",
             inputSchema={"type": "object", "properties": {}},
         ),
     ]
     for adef in default_registry.analyses(verify=True):
-        if adef.subsystem is None:
+        if adef.system is None:
             continue
         tools.append(
             mcp_types.Tool(
@@ -205,7 +205,7 @@ def _component_write_tools() -> list[mcp_types.Tool]:
             out.append(
                 mcp_types.Tool(
                     name=f"add_{cdef.name}",
-                    description=f"Create a new {cdef.subsystem}.{cdef.name} instance.",
+                    description=f"Create a new {cdef.system}.{cdef.name} instance.",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -223,7 +223,7 @@ def _component_write_tools() -> list[mcp_types.Tool]:
                 mcp_types.Tool(
                     name=f"patch_{cdef.name}",
                     description=(
-                        f"Partial update for {cdef.subsystem}.{cdef.name} instance "
+                        f"Partial update for {cdef.system}.{cdef.name} instance "
                         "(name required, etag optional)."
                     ),
                     inputSchema={
@@ -240,7 +240,7 @@ def _component_write_tools() -> list[mcp_types.Tool]:
             out.append(
                 mcp_types.Tool(
                     name=f"delete_{cdef.name}",
-                    description=f"Delete a {cdef.subsystem}.{cdef.name} instance.",
+                    description=f"Delete a {cdef.system}.{cdef.name} instance.",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -254,7 +254,7 @@ def _component_write_tools() -> list[mcp_types.Tool]:
             out.append(
                 mcp_types.Tool(
                     name=f"set_{cdef.plural}_spec",
-                    description=(f"Replace the shared spec for {cdef.subsystem}.{cdef.plural}."),
+                    description=(f"Replace the shared spec for {cdef.system}.{cdef.plural}."),
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -269,7 +269,7 @@ def _component_write_tools() -> list[mcp_types.Tool]:
             out.append(
                 mcp_types.Tool(
                     name=f"patch_{cdef.name}",
-                    description=(f"Partial update for {cdef.subsystem}.{cdef.name} (Singleton)."),
+                    description=(f"Partial update for {cdef.system}.{cdef.name} (Singleton)."),
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -290,7 +290,7 @@ def _config_write_tools() -> list[mcp_types.Tool]:
     return [
         mcp_types.Tool(
             name=f"set_{cfg.name}",
-            description=f"Replace {cfg.subsystem}.{cfg.name} (Config) contents.",
+            description=f"Replace {cfg.system}.{cfg.name} (Config) contents.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -352,7 +352,7 @@ def build_handler_map() -> dict[str, Callable[[dict[str, Any]], Any]]:
     )
 
     handlers: dict[str, Callable[[dict[str, Any]], Any]] = {
-        "list_subsystems": lambda _: handle_list_introspection("subsystems"),
+        "list_systems": lambda _: handle_list_introspection("systems"),
         "list_components": lambda _: handle_list_introspection("components"),
         "list_configs": lambda _: handle_list_introspection("configs"),
         "list_analyses": lambda _: handle_list_introspection("analyses"),
@@ -363,108 +363,108 @@ def build_handler_map() -> dict[str, Callable[[dict[str, Any]], Any]]:
     }
     for cdef in default_registry.components():
         if cdef.cardinality == "multi":
-            handlers[f"list_{cdef.plural}"] = _make_list_handler(cdef.subsystem, cdef.name)
-            handlers[f"get_{cdef.name}"] = _make_get_multi_handler(cdef.subsystem, cdef.name)
-            handlers[f"add_{cdef.name}"] = _make_add_handler(cdef.subsystem, cdef.name)
-            handlers[f"patch_{cdef.name}"] = _make_patch_handler(cdef.subsystem, cdef.name)
-            handlers[f"delete_{cdef.name}"] = _make_delete_handler(cdef.subsystem, cdef.name)
+            handlers[f"list_{cdef.plural}"] = _make_list_handler(cdef.system, cdef.name)
+            handlers[f"get_{cdef.name}"] = _make_get_multi_handler(cdef.system, cdef.name)
+            handlers[f"add_{cdef.name}"] = _make_add_handler(cdef.system, cdef.name)
+            handlers[f"patch_{cdef.name}"] = _make_patch_handler(cdef.system, cdef.name)
+            handlers[f"delete_{cdef.name}"] = _make_delete_handler(cdef.system, cdef.name)
             handlers[f"set_{cdef.plural}_spec"] = _make_set_shared_spec_handler(
-                cdef.subsystem, cdef.name
+                cdef.system, cdef.name
             )
         else:
-            handlers[f"get_{cdef.name}"] = _make_get_singleton_handler(cdef.subsystem, cdef.name)
-            handlers[f"patch_{cdef.name}"] = _make_patch_handler(cdef.subsystem, cdef.name)
+            handlers[f"get_{cdef.name}"] = _make_get_singleton_handler(cdef.system, cdef.name)
+            handlers[f"patch_{cdef.name}"] = _make_patch_handler(cdef.system, cdef.name)
     for cfg in default_registry.configs():
-        handlers[f"get_{cfg.name}"] = _make_get_config_handler(cfg.subsystem, cfg.name)
-        handlers[f"set_{cfg.name}"] = _make_set_config_handler(cfg.subsystem, cfg.name)
+        handlers[f"get_{cfg.name}"] = _make_get_config_handler(cfg.system, cfg.name)
+        handlers[f"set_{cfg.name}"] = _make_set_config_handler(cfg.system, cfg.name)
     for adef in default_registry.analyses():
         if adef.verify:
-            handlers[f"verify_{adef.name}"] = lambda _payload, name=adef.name, sub=adef.subsystem: (
+            handlers[f"verify_{adef.name}"] = lambda _payload, name=adef.name, sub=adef.system: (
                 handle_verify_single(sub, name)
             )
         else:
-            handlers[f"analyze_{adef.name}"] = lambda payload, name=adef.name, sub=adef.subsystem: (
+            handlers[f"analyze_{adef.name}"] = lambda payload, name=adef.name, sub=adef.system: (
                 handle_analysis(sub, name, payload)
             )
     return handlers
 
 
-def _make_list_handler(subsystem: str, component: str):
+def _make_list_handler(system: str, component: str):
     from mcp_server.handlers import handle_list_component_instances
 
     def h(_payload: dict[str, Any]) -> Any:
-        return handle_list_component_instances(subsystem, component)
+        return handle_list_component_instances(system, component)
 
     return h
 
 
-def _make_get_multi_handler(subsystem: str, component: str):
+def _make_get_multi_handler(system: str, component: str):
     from mcp_server.handlers import handle_get_component
 
     def h(payload: dict[str, Any]) -> Any:
-        return handle_get_component(subsystem, component, payload.get("name", ""))
+        return handle_get_component(system, component, payload.get("name", ""))
 
     return h
 
 
-def _make_get_singleton_handler(subsystem: str, component: str):
+def _make_get_singleton_handler(system: str, component: str):
     from mcp_server.handlers import handle_get_component
 
     def h(_payload: dict[str, Any]) -> Any:
-        return handle_get_component(subsystem, component, None)
+        return handle_get_component(system, component, None)
 
     return h
 
 
-def _make_get_config_handler(subsystem: str, config_name: str):
+def _make_get_config_handler(system: str, config_name: str):
     from mcp_server.handlers import handle_get_config
 
     def h(_payload: dict[str, Any]) -> Any:
-        return handle_get_config(subsystem, config_name)
+        return handle_get_config(system, config_name)
 
     return h
 
 
-def _make_add_handler(subsystem: str, component: str):
+def _make_add_handler(system: str, component: str):
     from mcp_server.handlers import handle_add_instance
 
     def h(payload: dict[str, Any]) -> Any:
-        return handle_add_instance(subsystem, component, payload)
+        return handle_add_instance(system, component, payload)
 
     return h
 
 
-def _make_patch_handler(subsystem: str, component: str):
+def _make_patch_handler(system: str, component: str):
     from mcp_server.handlers import handle_patch_instance
 
     def h(payload: dict[str, Any]) -> Any:
-        return handle_patch_instance(subsystem, component, payload)
+        return handle_patch_instance(system, component, payload)
 
     return h
 
 
-def _make_delete_handler(subsystem: str, component: str):
+def _make_delete_handler(system: str, component: str):
     from mcp_server.handlers import handle_delete_instance
 
     def h(payload: dict[str, Any]) -> Any:
-        return handle_delete_instance(subsystem, component, payload)
+        return handle_delete_instance(system, component, payload)
 
     return h
 
 
-def _make_set_shared_spec_handler(subsystem: str, component: str):
+def _make_set_shared_spec_handler(system: str, component: str):
     from mcp_server.handlers import handle_set_shared_spec
 
     def h(payload: dict[str, Any]) -> Any:
-        return handle_set_shared_spec(subsystem, component, payload)
+        return handle_set_shared_spec(system, component, payload)
 
     return h
 
 
-def _make_set_config_handler(subsystem: str, config_name: str):
+def _make_set_config_handler(system: str, config_name: str):
     from mcp_server.handlers import handle_set_config
 
     def h(payload: dict[str, Any]) -> Any:
-        return handle_set_config(subsystem, config_name, payload)
+        return handle_set_config(system, config_name, payload)
 
     return h

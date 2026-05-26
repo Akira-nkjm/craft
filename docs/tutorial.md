@@ -1,9 +1,9 @@
-# チュートリアル：新しい subsystem を追加する
+# チュートリアル：新しい system を追加する
 
-ACS（姿勢制御）subsystem を例に、ゼロから subsystem を追加する手順を通して学ぶ。
+ACS（姿勢制御）system を例に、ゼロから system を追加する手順を通して学ぶ。
 
 !!! abstract "このチュートリアルで学ぶこと"
-    - `craft init subsystem` で雛形を生成する
+    - `craft init system` で雛形を生成する
     - `Component` クラスと `fld()` を定義する
     - `data.toml` にインスタンスデータを書く
     - `craft merge` / `craft verify` でパイプラインを通す
@@ -24,13 +24,13 @@ uv run pytest -q  # 既存テストが通ることを確認
 ## Step 1: 雛形を生成する
 
 ```bash
-uv run craft init subsystem acs
+uv run craft init system acs
 ```
 
-`subsystems/acs/` に以下が生成される：
+`systems/acs/` に以下が生成される：
 
 ```
-subsystems/acs/
+systems/acs/
 ├── __init__.py
 ├── components.py   # Component 定義（空の例付き）
 ├── scope.py        # veriq Scope（ボイラープレート）
@@ -41,14 +41,14 @@ subsystems/acs/
     | kind | 用途 |
     |---|---|
     | `hardware` (default) | センサ・アクチュエータ等のハードウェア |
-    | `config-only` | ミッションパラメータ等の Config だけを持つ subsystem |
+    | `config-only` | ミッションパラメータ等の Config だけを持つ system |
     | `default` | 最小限の空スケルトン |
 
 ---
 
 ## Step 2: Component を定義する
 
-`subsystems/acs/components.py` を編集する：
+`systems/acs/components.py` を編集する：
 
 ```python
 from schema import Component, MultiInstance, SpecOnly, fld
@@ -94,7 +94,7 @@ uv run craft schema list
 
 ## Step 3: data.toml にインスタンスを書く
 
-`subsystems/acs/data.toml` を編集する。先に `scaffold` で雛形を生成するのが便利：
+`systems/acs/data.toml` を編集する。先に `scaffold` で雛形を生成するのが便利：
 
 ```bash
 uv run craft scaffold acs --dry-run  # 差分を確認
@@ -104,7 +104,7 @@ uv run craft scaffold acs            # data.toml に追記
 値を埋める：
 
 ```toml
-# ACS subsystem instance data
+# ACS system instance data
 
 # === Reaction Wheels (MultiInstance: shared spec) ===
 
@@ -168,7 +168,7 @@ uv run craft get acs reaction_wheel x
 
 ## Step 5: Analysis を追加する（任意）
 
-`subsystems/acs/analyses.py` を新規作成する：
+`systems/acs/analyses.py` を新規作成する：
 
 ```python
 from typing import Annotated
@@ -266,10 +266,10 @@ uv run pytest tests/test_acs.py -v
 
 | ファイル | 変更内容 |
 |---|---|
-| `subsystems/acs/components.py` | Component クラスを定義 |
-| `subsystems/acs/data.toml` | インスタンスデータを記述 |
-| `subsystems/acs/analyses.py` | Analysis 関数を追加（任意） |
-| `subsystems/acs/scope.py` | 新 subsystem 追加時に生成（以降は編集不要） |
+| `systems/acs/components.py` | Component クラスを定義 |
+| `systems/acs/data.toml` | インスタンスデータを記述 |
+| `systems/acs/analyses.py` | Analysis 関数を追加（任意） |
+| `systems/acs/scope.py` | 新 system 追加時に生成（以降は編集不要） |
 | `tests/test_acs.py` | テスト |
 
 !!! success "api / cli / mcp_server は一切触らない"

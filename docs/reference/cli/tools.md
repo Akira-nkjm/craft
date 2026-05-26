@@ -6,7 +6,7 @@
 
 ## craft gen-stubs
 
-各 subsystem に型スタブファイル (`_stubs.pyi`) を生成する。エディタの補完や静的解析が改善される。
+各 system に型スタブファイル (`_stubs.pyi`) を生成する。エディタの補完や静的解析が改善される。
 
 ### `craft gen-stubs [--check]`
 
@@ -27,7 +27,7 @@ uv run craft gen-stubs --check
 **生成されるファイル**
 
 ```
-subsystems/<name>/_stubs.pyi   # Component / Config の型情報
+systems/<name>/_stubs.pyi   # Component / Config の型情報
 ```
 
 !!! tip "CI での使い方"
@@ -40,26 +40,26 @@ subsystems/<name>/_stubs.pyi   # Component / Config の型情報
 
 ## craft init
 
-新しい subsystem の雛形ディレクトリを生成する。
+新しい system の雛形ディレクトリを生成する。
 
-### `craft init subsystem <name> [--kind]`
+### `craft init system <name> [--kind]`
 
 ```bash
-# ハードウェア系 subsystem
-uv run craft init subsystem propulsion --kind hardware
+# ハードウェア系 system
+uv run craft init system propulsion --kind hardware
 
-# 設定専用 subsystem（Config のみ）
-uv run craft init subsystem mission_config --kind config-only
+# 設定専用 system（Config のみ）
+uv run craft init system mission_config --kind config-only
 
 # 最小スケルトン
-uv run craft init subsystem experimental --kind default
+uv run craft init system experimental --kind default
 ```
 
 **引数・オプション**
 
 | 引数 / オプション | デフォルト | 説明 |
 |---|---|---|
-| `name` | — | 新しい subsystem の名前 |
+| `name` | — | 新しい system の名前 |
 | `--kind` | `hardware` | `hardware` / `config-only` / `default` |
 
 **`--kind` の違い**
@@ -73,9 +73,9 @@ uv run craft init subsystem experimental --kind default
 **生成後の Next Steps**（コマンド実行時に表示される）
 
 ```
-1. edit subsystems/<name>/components.py (or configs.py)
+1. edit systems/<name>/components.py (or configs.py)
 2. craft scaffold <name>
-3. fill values in subsystems/<name>/data.toml
+3. fill values in systems/<name>/data.toml
 4. craft verify
 ```
 
@@ -94,7 +94,7 @@ git log を JSON 形式で出力する。
 uv run craft history
 
 # 特定ファイルの履歴
-uv run craft history subsystems/power/data.toml
+uv run craft history systems/power/data.toml
 
 # 最新 10 件のみ
 uv run craft history --limit 10
@@ -111,7 +111,7 @@ uv run craft history --limit 10
 
 ```json
 {
-  "path": "subsystems/power/data.toml",
+  "path": "systems/power/data.toml",
   "entries": [
     {
       "sha": "d39b1f0",
@@ -134,10 +134,10 @@ uv run craft history --limit 10
 uv run craft diff d39b1f0 9403cb4
 
 # 特定ファイルの差分のみ
-uv run craft diff d39b1f0 9403cb4 subsystems/power/data.toml
+uv run craft diff d39b1f0 9403cb4 systems/power/data.toml
 
 # 相対 ref も使える
-uv run craft diff HEAD~3 HEAD subsystems/power/data.toml
+uv run craft diff HEAD~3 HEAD systems/power/data.toml
 ```
 
 **引数**

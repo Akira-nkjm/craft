@@ -1,0 +1,60 @@
+# Power system instance data
+#
+# 簡略形式: `<sub>.model.` プレフィックスは省略（merge 時に自動付与）
+# shared_spec=True (MultiInstance): `[<plural>.spec]` に共有 spec、
+# instance ごとには design / requirements / meta のみ
+
+# === Batteries ===
+
+[batteries.spec]                        # 全 instance 共通の spec
+capacity_wh = 100.0
+nominal_voltage_v = 3.7
+manufacturer = "Panasonic"
+operating_temperature_min_c = -20.0
+operating_temperature_max_c = 60.0
+
+[batteries.main.design]
+depth_of_discharge = 0.7
+
+[batteries.main.requirements]
+depth_of_discharge_max = 0.8
+
+[batteries.main.meta]
+notes = "選定理由: 過去ミッション実績"
+
+
+[batteries.aux.design]
+depth_of_discharge = 0.6
+
+[batteries.aux.requirements]
+depth_of_discharge_max = 0.8
+
+
+# === Solar Panels ===
+
+[solar_panels.spec]
+area_m2 = 0.5
+default_power_generation_per_unit_w = 30.0
+efficiency = 0.28
+operating_temperature_min_c = -100.0
+operating_temperature_max_c = 120.0
+
+[solar_panels.main_paddle.design]
+cell_count = 32
+string_count = 4
+
+
+# === PDM ===
+
+[pdms.spec]
+rated_current_a = 5.0
+default_power_consumption_per_unit_w = 8.0
+
+[pdms.main.design]
+efficiency = 0.95
+
+[pdms.main.design.power_modes]
+safe = true
+nominal = true
+science = true
+safe_hold = false

@@ -9,23 +9,23 @@ import veriq as vq
 from fastapi.testclient import TestClient
 
 from api.main import app
-from core.discovery import discover_subsystems
+from core.discovery import discover_systems
 from core.merge import MERGED_TOML, merge
 from schema import default_registry
 
 
 def _ensure_discovered() -> None:
-    discover_subsystems()
+    discover_systems()
 
 
 def test_orbital_subsystem_registered():
     _ensure_discovered()
-    assert "orbital" in default_registry.subsystems()
+    assert "orbital" in default_registry.systems()
 
 
 def test_orbital_config_registered():
     _ensure_discovered()
-    names = {c.name for c in default_registry.configs(subsystem="orbital")}
+    names = {c.name for c in default_registry.configs(system="orbital")}
     assert "orbitalparams" in names
 
 
@@ -39,8 +39,8 @@ def test_required_orbit_energy_analysis_registered():
 
 def test_cross_scope_evaluate(clean_generated_dir):
     _ensure_discovered()
-    from subsystems.orbital.scope import orbital
-    from subsystems.power.scope import power
+    from systems.orbital.scope import orbital
+    from systems.power.scope import power
 
     project = vq.Project("Craft")
     project.add_scope(power)
@@ -66,6 +66,6 @@ def test_required_orbit_energy_via_api(clean_generated_dir):
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["analysis"] == "required_orbit_energy_wh"
-    assert body["subsystem"] == "power"
+    assert body["system"] == "power"
     assert body["verify"] is False
     assert body["value"] == pytest.approx(8.0 * 2100.0 / 3600.0)

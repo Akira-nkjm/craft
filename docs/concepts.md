@@ -22,7 +22,7 @@ graph LR
 `schema.Component` を継承するだけで Pydantic モデルが自動生成され、`UnifiedRegistry` に登録される。
 
 ```python
-# subsystems/power/components.py
+# systems/power/components.py
 from schema import Component, fld
 
 class Battery(Component):
@@ -113,7 +113,7 @@ class Battery(Component, MultiInstance, TemperatureSensitive):
 `schema.Config` を継承する。Component と異なり、Design / Requirements の分割はなくフラット。
 
 ```python
-# subsystems/mission/configs.py
+# systems/mission/configs.py
 from schema import Config, fld
 
 class MissionConfig(Config):
@@ -137,7 +137,7 @@ mission_lifetime_years = 3.0
 veriq の calculation / verification として登録される計算関数。`@analysis` デコレータを使う。
 
 ```python
-# subsystems/power/analyses.py
+# systems/power/analyses.py
 from typing import Annotated
 import veriq as vq
 from schema import analysis
@@ -166,19 +166,19 @@ def verify_battery_capacity(
 |---|---|
 | `verify=False` (default) | `scope.calculation` として登録 |
 | `verify=True` | `scope.verification` として登録（戻り値は `bool`） |
-| `imports=["orbital"]` | 他 subsystem のデータを参照する場合 |
+| `imports=["orbital"]` | 他 system のデータを参照する場合 |
 | `cache=True` | 結果をキャッシュ (ad-hoc analysis のみ有効) |
-| `subsystem=None` | veriq 非登録の ad-hoc analysis（直接実行のみ） |
+| `system=None` | veriq 非登録の ad-hoc analysis（直接実行のみ） |
 
 !!! note "scope.py は編集不要"
     `@analysis` を追加するだけで自動的に scope に登録される。
-    `scope.py` を編集するのは **新しい subsystem を追加するとき** だけ。
+    `scope.py` を編集するのは **新しい system を追加するとき** だけ。
 
 ---
 
 ## data.toml の書き方
 
-`subsystems/<sub>/data.toml` では `<sub>.model.` プレフィックスを省略して記述する（`craft merge` が自動付与）。
+`systems/<sub>/data.toml` では `<sub>.model.` プレフィックスを省略して記述する（`craft merge` が自動付与）。
 
 ### Singleton Component
 
@@ -223,9 +223,9 @@ depth_of_discharge = 0.6
 ```python
 from schema import default_registry
 
-default_registry.components(subsystem="power")  # power の全 Component 定義
-default_registry.analyses(subsystem="power")    # power の全 Analysis 定義
-default_registry.subsystems()                   # 登録済み subsystem 名一覧
+default_registry.components(system="power")  # power の全 Component 定義
+default_registry.analyses(system="power")    # power の全 Analysis 定義
+default_registry.systems()                   # 登録済み system 名一覧
 ```
 
 CLI での確認:
@@ -238,22 +238,22 @@ uv run craft schema list
 
 ## scope.py の役割
 
-veriq と Craft を橋渡しするボイラープレート。**新しい subsystem を追加するときだけ** 触る。
+veriq と Craft を橋渡しするボイラープレート。**新しい system を追加するときだけ** 触る。
 
 ```python
-# subsystems/power/scope.py
+# systems/power/scope.py
 import veriq as vq
-from core.paths import subsystem_data_path
-from schema import build_subsystem_root_model, default_registry
-from subsystems.power import analyses as _analyses  # noqa: F401
-from subsystems.power import components as _components  # noqa: F401
+from core.paths import system_data_path
+from schema import build_system_root_model, default_registry
+from systems.power import analyses as _analyses  # noqa: F401
+from systems.power import components as _components  # noqa: F401
 
 power = vq.Scope("power")
 
 def _build_and_attach():
-    root_model = build_subsystem_root_model("power", subsystem_data_path("power"))
+    root_model = build_system_root_model("power", system_data_path("power"))
     power.root_model()(root_model)
-    for adef in default_registry.analyses(subsystem="power"):
+    for adef in default_registry.analyses(system="power"):
         if adef.verify:
             power.verification(adef.name, imports=adef.imports)(adef.func)
         else:

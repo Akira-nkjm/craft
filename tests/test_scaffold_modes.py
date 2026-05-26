@@ -2,13 +2,13 @@
 
 import pytest
 
-import subsystems.cdh.scope  # noqa: F401
-import subsystems.mission.scope  # noqa: F401
-import subsystems.orbital.scope  # noqa: F401
-import subsystems.power.scope  # noqa: F401
-import subsystems.thermal.scope  # noqa: F401
-from core.paths import subsystem_data_path
-from core.scaffold import scaffold_subsystem
+import systems.cdh.scope  # noqa: F401
+import systems.mission.scope  # noqa: F401
+import systems.orbital.scope  # noqa: F401
+import systems.power.scope  # noqa: F401
+import systems.thermal.scope  # noqa: F401
+from core.paths import system_data_path
+from core.scaffold import scaffold_system
 from core.toml_io import read_toml, read_toml_doc, write_toml_atomic
 
 
@@ -20,7 +20,7 @@ def test_scaffold_format_only_does_not_add_fields(power_data_backup):
     data["batteries"]["spec"].pop("manufacturer")
     write_toml_atomic(power_data_backup, data)
 
-    result, _ = scaffold_subsystem("power", format_only=True)
+    result, _ = scaffold_system("power", format_only=True)
 
     # format-only は欠落 field を補わない
     assert result.added_paths == ()
@@ -51,7 +51,7 @@ def test_scaffold_format_only_reorders_fields(power_data_backup):
         spec[k] = saved[k]
     write_toml_atomic(power_data_backup, doc)
 
-    scaffold_subsystem("power", format_only=True)
+    scaffold_system("power", format_only=True)
 
     after = read_toml(power_data_backup)
     keys = list(after["batteries"]["spec"].keys())
@@ -71,7 +71,7 @@ def test_scaffold_overwrite_resets_values(power_data_backup):
     data["batteries"]["spec"]["capacity_wh"] = 999.0
     write_toml_atomic(power_data_backup, data)
 
-    result, _ = scaffold_subsystem("power", overwrite=True)
+    result, _ = scaffold_system("power", overwrite=True)
 
     after = read_toml(power_data_backup)
     # capacity_wh は default 無し → placeholder 0.0
@@ -81,18 +81,18 @@ def test_scaffold_overwrite_resets_values(power_data_backup):
 
 
 def test_scaffold_overwrite_does_not_affect_unrelated_subsystem(power_data_backup):
-    """overwrite: power のスキャフォールド呼び出しは他 subsystem の data.toml を書き換えない。"""
+    """overwrite: power のスキャフォールド呼び出しは他 system の data.toml を書き換えない。"""
     other_subsystems = ["thermal", "cdh", "mission", "orbital"]
     snapshots: dict[str, bytes] = {}
     for sub in other_subsystems:
-        path = subsystem_data_path(sub)
+        path = system_data_path(sub)
         if path.exists():
             snapshots[sub] = path.read_bytes()
 
-    scaffold_subsystem("power", overwrite=True)
+    scaffold_system("power", overwrite=True)
 
     for sub, original in snapshots.items():
-        path = subsystem_data_path(sub)
+        path = system_data_path(sub)
         assert path.read_bytes() == original, f"{sub}/data.toml が変更された"
 
 
@@ -107,7 +107,7 @@ def test_scaffold_format_only_normalizes_float(power_data_backup):
     pre = read_toml(power_data_backup)
     assert isinstance(pre["batteries"]["spec"]["capacity_wh"], int)
 
-    scaffold_subsystem("power", format_only=True)
+    scaffold_system("power", format_only=True)
 
     after = read_toml(power_data_backup)
     val = after["batteries"]["spec"]["capacity_wh"]
@@ -117,9 +117,9 @@ def test_scaffold_format_only_normalizes_float(power_data_backup):
 
 def test_scaffold_mode_field_in_result(power_data_backup):
     """ScaffoldResult.mode が 3 つのモードを区別する。"""
-    res_default, _ = scaffold_subsystem("power", dry_run=True)
-    res_format, _ = scaffold_subsystem("power", dry_run=True, format_only=True)
-    res_overwrite, _ = scaffold_subsystem("power", dry_run=True, overwrite=True)
+    res_default, _ = scaffold_system("power", dry_run=True)
+    res_format, _ = scaffold_system("power", dry_run=True, format_only=True)
+    res_overwrite, _ = scaffold_system("power", dry_run=True, overwrite=True)
 
     assert res_default.mode == "add-missing"
     assert res_format.mode == "format-only"

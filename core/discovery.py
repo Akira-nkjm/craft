@@ -1,6 +1,6 @@
 """Subsystem 自動 discovery。
 
-`subsystems/<name>/` 配下の Python ファイルを import 順に走らせて、
+`systems/<name>/` 配下の Python ファイルを import 順に走らせて、
 `Component.__init_subclass__` / `Config.__init_subclass__` / `@analysis` を発火させる。
 """
 
@@ -10,19 +10,19 @@ from pathlib import Path
 
 from core.paths import subsystems_root
 
-# import 順は固定（subsystem 跨ぎ参照の安全のため）
+# import 順は固定（system 跨ぎ参照の安全のため）
 _FILE_ORDER = ("components", "configs", "analyses", "scope")
 
 
-def discover_subsystems(root: Path | None = None) -> list[str]:
-    """`subsystems/<name>/` を走査して全 Python ファイルを import。
+def discover_systems(root: Path | None = None) -> list[str]:
+    """`systems/<name>/` を走査して全 Python ファイルを import。
 
-    既に installed package として `subsystems.<name>.<file>` で import 可能であれば
+    既に installed package として `systems.<name>.<file>` で import 可能であれば
     通常の `importlib.import_module` を使う。そうでなければ `spec_from_file_location`
     でファイル直接 import。
 
     Returns:
-        発見・import された subsystem 名のリスト。
+        発見・import された system 名のリスト。
     """
     if root is None:
         root = subsystems_root()
@@ -41,10 +41,10 @@ def discover_subsystems(root: Path | None = None) -> list[str]:
 
 
 def _import_subsystem(sub_dir: Path) -> None:
-    """1 subsystem 分の Python ファイルを順に import。"""
+    """1 system 分の Python ファイルを順に import。"""
     sub_name = sub_dir.name
     # __init__.py 経由で package として import を試みる
-    pkg_name = f"subsystems.{sub_name}"
+    pkg_name = f"systems.{sub_name}"
     try:
         importlib.import_module(pkg_name)
         for file_stem in _FILE_ORDER:
@@ -62,7 +62,7 @@ def _import_subsystem(sub_dir: Path) -> None:
         py_path = sub_dir / f"{file_stem}.py"
         if not py_path.exists():
             continue
-        mod_name = f"subsystems.{sub_name}.{file_stem}"
+        mod_name = f"systems.{sub_name}.{file_stem}"
         spec = importlib.util.spec_from_file_location(mod_name, py_path)
         if spec is None or spec.loader is None:
             continue

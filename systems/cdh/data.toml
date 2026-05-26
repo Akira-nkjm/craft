@@ -1,0 +1,34 @@
+# C&DH system (Singleton: OBC)
+# 簡略形式: `<sub>.model.` プレフィックス省略
+
+[obc.spec]
+clock_mhz = 100
+ram_mb = 512
+storage_gb = 32.0
+architecture = "ARM Cortex-R5"
+default_power_consumption_per_unit_w = 3.5
+operating_temperature_min_c = -40.0
+operating_temperature_max_c = 85.0
+
+[obc.spec.bus_interface]                        # A2: ネスト Pydantic model
+voltage_v = 28.0
+rated_current_a = 2.5
+protocol = "CAN"
+
+[obc.design]
+firmware_version = "v1.2.0"
+boot_partition_count = 2
+
+[obc.design.power_modes]
+safe = true
+nominal = true
+science = true
+safe_hold = true
+
+[obc.requirements]
+mtbf_hours = 50000.0
+radiation_tolerance_krad = 30.0
+
+[obc.meta]
+vendor = "Aitech"
+heritage = "S950-XR"

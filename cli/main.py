@@ -18,7 +18,7 @@
     craft history [PATH] [--limit N]    git log
     craft diff <FROM> <TO> [PATH]       git diff
     craft gen-stubs [--check]           Component/Config の .pyi stub 生成
-    craft init subsystem <name>         subsystem 雛形生成
+    craft init system <name>         system 雛形生成
 """
 
 import importlib
@@ -30,7 +30,7 @@ from typing import Any
 import typer
 from pydantic import ValidationError
 
-from core.discovery import discover_subsystems
+from core.discovery import discover_systems
 
 # Typer サブアプリ
 app = typer.Typer(
@@ -51,8 +51,8 @@ app.add_typer(runs_app, name="runs")
 
 
 def _bootstrap() -> None:
-    """全 subsystem を import → registry 確定。"""
-    discover_subsystems()
+    """全 system を import → registry 確定。"""
+    discover_systems()
 
 
 def _print_json(obj: Any) -> None:
@@ -133,13 +133,13 @@ def diff_cmd(
 
 @schema_app.command("list")
 def schema_list() -> None:
-    """登録済み subsystem / component を一覧表示。"""
+    """登録済み system / component を一覧表示。"""
     _bootstrap()
     from schema import default_registry
 
     out: dict[str, list[dict[str, Any]]] = {}
     for c in default_registry.components():
-        out.setdefault(c.subsystem, []).append(
+        out.setdefault(c.system, []).append(
             {
                 "name": c.name,
                 "plural": c.plural,
@@ -151,14 +151,14 @@ def schema_list() -> None:
 
 
 @schema_app.command("show")
-def schema_show(subsystem: str, component: str) -> None:
+def schema_show(system: str, component: str) -> None:
     """単一 component の JSON Schema (Entry model) を表示。"""
     _bootstrap()
     from schema import default_registry
 
-    defn = default_registry.component_or_none(subsystem, component)
+    defn = default_registry.component_or_none(system, component)
     if defn is None:
-        typer.echo(f"Error: component '{subsystem}.{component}' not found", err=True)
+        typer.echo(f"Error: component '{system}.{component}' not found", err=True)
         raise typer.Exit(code=1)
     _print_json(defn.entry.model_json_schema())
 
@@ -168,7 +168,7 @@ def schema_show(subsystem: str, component: str) -> None:
 
 @app.command("get")
 def get(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str | None = typer.Argument(None),
 ) -> None:
@@ -181,10 +181,10 @@ def get(
     )
 
     if instance is None:
-        _print_json(list_instances(subsystem, component))
+        _print_json(list_instances(system, component))
         return
     try:
-        payload, etag = get_instance(subsystem, component, instance)
+        payload, etag = get_instance(system, component, instance)
     except InstanceNotFound as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1) from e
@@ -237,19 +237,19 @@ def _format_validation_error(err: ValidationError) -> str:
     return "\n".join(lines)
 
 
-def _resolve_instance_etag(subsystem: str, component: str, instance: str) -> str:
+def _resolve_instance_etag(system: str, component: str, instance: str) -> str:
     """`--etag` 省略時に現在の instance ETag を取得する。"""
     from core.instances import InstanceNotFound, get_instance
 
     try:
-        _, etag = get_instance(subsystem, component, instance)
+        _, etag = get_instance(system, component, instance)
     except InstanceNotFound as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1) from e
     return etag
 
 
-def _resolve_shared_spec_etag(subsystem: str, component: str) -> str:
+def _resolve_shared_spec_etag(system: str, component: str) -> str:
     from core.instances import (
         InstanceNotFound,
         SingletonNotInstanceable,
@@ -257,7 +257,7 @@ def _resolve_shared_spec_etag(subsystem: str, component: str) -> str:
     )
 
     try:
-        _, etag = get_shared_spec(subsystem, component)
+        _, etag = get_shared_spec(system, component)
     except (InstanceNotFound, SingletonNotInstanceable) as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1) from e
@@ -266,7 +266,7 @@ def _resolve_shared_spec_etag(subsystem: str, component: str) -> str:
 
 @app.command("create")
 def create_cmd(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     data: Path | None = typer.Option(None, "--data", help="TOML or JSON payload file"),
@@ -284,7 +284,7 @@ def create_cmd(
 
     payload = _load_payload(data, json_str)
     try:
-        view, etag = create_instance(subsystem, component, instance, payload)
+        view, etag = create_instance(system, component, instance, payload)
     except (
         InstanceAlreadyExists,
         SingletonNotInstanceable,
@@ -303,7 +303,7 @@ def create_cmd(
 
 @app.command("put")
 def put_cmd(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     data: Path | None = typer.Option(None, "--data", help="TOML or JSON payload file"),
@@ -321,11 +321,11 @@ def put_cmd(
 
     payload = _load_payload(data, json_str)
     resolved_etag = (
-        etag if etag is not None else _resolve_instance_etag(subsystem, component, instance)
+        etag if etag is not None else _resolve_instance_etag(system, component, instance)
     )
     try:
         view, new_etag = replace_instance(
-            subsystem, component, instance, payload, expected_etag=resolved_etag
+            system, component, instance, payload, expected_etag=resolved_etag
         )
     except (InstanceNotFound, SingletonNotInstanceable, SharedSpecConflict) as e:
         typer.echo(f"Error: {e}", err=True)
@@ -340,7 +340,7 @@ def put_cmd(
 
 @app.command("patch")
 def patch_cmd(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     data: Path | None = typer.Option(None, "--data", help="TOML or JSON delta file"),
@@ -358,11 +358,11 @@ def patch_cmd(
 
     delta = _load_payload(data, json_str)
     resolved_etag = (
-        etag if etag is not None else _resolve_instance_etag(subsystem, component, instance)
+        etag if etag is not None else _resolve_instance_etag(system, component, instance)
     )
     try:
         view, new_etag = patch_instance(
-            subsystem, component, instance, delta, expected_etag=resolved_etag
+            system, component, instance, delta, expected_etag=resolved_etag
         )
     except (InstanceNotFound, SingletonNotInstanceable, SharedSpecConflict) as e:
         typer.echo(f"Error: {e}", err=True)
@@ -377,7 +377,7 @@ def patch_cmd(
 
 @app.command("delete")
 def delete_cmd(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     etag: str | None = typer.Option(None, "--etag", help="If-Match ETag (省略時は GET で取得)"),
@@ -391,22 +391,22 @@ def delete_cmd(
     )
 
     resolved_etag = (
-        etag if etag is not None else _resolve_instance_etag(subsystem, component, instance)
+        etag if etag is not None else _resolve_instance_etag(system, component, instance)
     )
     try:
-        delete_instance(subsystem, component, instance, expected_etag=resolved_etag)
+        delete_instance(system, component, instance, expected_etag=resolved_etag)
     except (InstanceNotFound, SingletonNotInstanceable) as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1) from e
 
-    typer.echo(f"Deleted {subsystem}.{component}.{instance}")
+    typer.echo(f"Deleted {system}.{component}.{instance}")
 
 
 # ─── shared spec ────────────────────────────────────────────────────
 
 
 @spec_app.command("get")
-def spec_get(subsystem: str, component: str) -> None:
+def spec_get(system: str, component: str) -> None:
     """MultiInstance の shared spec を取得。"""
     _bootstrap()
     from core.instances import (
@@ -416,7 +416,7 @@ def spec_get(subsystem: str, component: str) -> None:
     )
 
     try:
-        spec, etag = get_shared_spec(subsystem, component)
+        spec, etag = get_shared_spec(system, component)
     except (InstanceNotFound, SingletonNotInstanceable) as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1) from e
@@ -427,7 +427,7 @@ def spec_get(subsystem: str, component: str) -> None:
 
 @spec_app.command("set")
 def spec_set(
-    subsystem: str,
+    system: str,
     component: str,
     data: Path | None = typer.Option(None, "--data", help="TOML or JSON payload file"),
     json_str: str | None = typer.Option(None, "--json", help="JSON payload (inline)"),
@@ -448,7 +448,7 @@ def spec_set(
         from core.instances import get_shared_spec
 
         try:
-            _, resolved_etag = get_shared_spec(subsystem, component)
+            _, resolved_etag = get_shared_spec(system, component)
         except InstanceNotFound:
             resolved_etag = None  # まだ無いので etag 不要
         except SingletonNotInstanceable as e:
@@ -457,7 +457,7 @@ def spec_set(
 
     try:
         new_spec, new_etag = set_shared_spec(
-            subsystem, component, payload, expected_etag=resolved_etag
+            system, component, payload, expected_etag=resolved_etag
         )
     except (InstanceNotFound, SingletonNotInstanceable) as e:
         typer.echo(f"Error: {e}", err=True)
@@ -478,7 +478,7 @@ def merge_cmd(
     dry_run: bool = typer.Option(False, "--dry-run", help="書き込まず stdout に出力"),
     check: bool = typer.Option(False, "--check", help="lock が古ければ exit 1 (CI 用)"),
 ) -> None:
-    """全 subsystems/*/data.toml を generated/merged.toml に統合。"""
+    """全 systems/*/data.toml を generated/merged.toml に統合。"""
     _bootstrap()
     from core.merge import is_merge_stale, merge
 
@@ -495,7 +495,7 @@ def merge_cmd(
         _print_json(merged_dict)
     else:
         typer.echo(f"Wrote {result.output_path}")
-        typer.echo(f"Subsystems: {', '.join(result.subsystems)}")
+        typer.echo(f"Subsystems: {', '.join(result.systems)}")
 
 
 # ─── scaffold ────────────────────────────────────────────────────────
@@ -503,18 +503,18 @@ def merge_cmd(
 
 @app.command("scaffold")
 def scaffold_cmd(
-    subsystem: str | None = typer.Argument(None, help="対象 subsystem (省略時は全件)"),
+    system: str | None = typer.Argument(None, help="対象 system (省略時は全件)"),
     dry_run: bool = typer.Option(False, "--dry-run"),
 ) -> None:
     """registry → data.toml 雛形生成 (add-missing, 既存値保持)。"""
     _bootstrap()
-    from core.scaffold import scaffold_all, scaffold_subsystem
+    from core.scaffold import scaffold_all, scaffold_system
 
-    if subsystem is None:
+    if system is None:
         results = scaffold_all(dry_run=dry_run)
     else:
         try:
-            r, _ = scaffold_subsystem(subsystem, dry_run=dry_run)
+            r, _ = scaffold_system(system, dry_run=dry_run)
         except ValueError as e:
             typer.echo(f"Error: {e}", err=True)
             raise typer.Exit(code=1) from e
@@ -523,7 +523,7 @@ def scaffold_cmd(
     for r in results:
         marker = "(dry-run)" if dry_run else ""
         typer.echo(
-            f"{r.subsystem}: added={len(r.added_paths)} warnings={len(r.removed_warnings)} {marker}"
+            f"{r.system}: added={len(r.added_paths)} warnings={len(r.removed_warnings)} {marker}"
         )
         for p in r.added_paths:
             typer.echo(f"  + {p}")
@@ -635,7 +635,7 @@ def analysis_list() -> None:
     items = [
         {
             "name": a.name,
-            "subsystem": a.subsystem,
+            "system": a.system,
             "verify": a.verify,
             "desc": a.desc,
         }
@@ -646,7 +646,7 @@ def analysis_list() -> None:
 
 @analysis_app.command("run")
 def analysis_run(
-    subsystem: str = typer.Argument(..., help="ad-hoc は '_'"),
+    system: str = typer.Argument(..., help="ad-hoc は '_'"),
     name: str = typer.Argument(...),
     payload_json: str | None = typer.Option(
         None, "--payload", "-p", help="JSON payload (ad-hoc analysis のみ)"
@@ -655,17 +655,17 @@ def analysis_run(
 ) -> None:
     """analysis を実行（veriq 連携 or ad-hoc）。"""
     _bootstrap()
-    sub = None if subsystem == "_" else subsystem
+    sub = None if system == "_" else system
     from schema import default_registry
 
     adef = default_registry.analysis_or_none(sub, name)
     if adef is None:
-        typer.echo(f"Error: analysis '{subsystem}.{name}' not found", err=True)
+        typer.echo(f"Error: analysis '{system}.{name}' not found", err=True)
         raise typer.Exit(code=1)
 
     payload = json.loads(payload_json) if payload_json else {}
 
-    if adef.subsystem is None:
+    if adef.system is None:
         import inspect
 
         from core.analysis_cache import (
@@ -704,15 +704,15 @@ def analysis_run(
     from core.merge import merge as merge_func
 
     project = vq.Project("Craft")
-    for s in sorted(default_registry.subsystems()):
-        mod = importlib.import_module(f"subsystems.{s}.scope")
+    for s in sorted(default_registry.systems()):
+        mod = importlib.import_module(f"systems.{s}.scope")
         scope = getattr(mod, s, None)
         if scope is not None:
             project.add_scope(scope)
     merge_func()
     model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
-    tree = result.get_scope_tree(adef.subsystem)
+    tree = result.get_scope_tree(adef.system)
     if tree is None:
         _print_json({"value": None})
         return
@@ -736,7 +736,7 @@ def gen_stubs_cmd(
         help="既存 .pyi が古ければ exit 1 (書き込みなし、CI 用)",
     ),
 ) -> None:
-    """各 subsystem に `_stubs.pyi` を生成する。"""
+    """各 system に `_stubs.pyi` を生成する。"""
     _bootstrap()
     from schema.stubgen import check_stubs, generate_stubs
 
@@ -760,7 +760,7 @@ def gen_stubs_cmd(
 # ─── init ────────────────────────────────────────────────────────────
 
 
-@init_app.command("subsystem")
+@init_app.command("system")
 def init_subsystem(
     name: str,
     kind: str = typer.Option(
@@ -769,10 +769,10 @@ def init_subsystem(
         help="hardware | config-only | default (= 空のスケルトン)",
     ),
 ) -> None:
-    """新しい subsystem ディレクトリ雛形を生成。"""
+    """新しい system ディレクトリ雛形を生成。"""
     from cli import templates
 
-    target = Path("subsystems") / name
+    target = Path("systems") / name
     if target.exists():
         typer.echo(f"Error: {target} already exists", err=True)
         raise typer.Exit(code=1)
@@ -780,9 +780,9 @@ def init_subsystem(
     templates.create_subsystem(target, name=name, kind=kind)
     typer.echo(f"Created {target}/ ({kind})")
     typer.echo("Next steps:")
-    typer.echo(f"  1. edit subsystems/{name}/components.py (or configs.py)")
+    typer.echo(f"  1. edit systems/{name}/components.py (or configs.py)")
     typer.echo(f"  2. craft scaffold {name}")
-    typer.echo(f"  3. fill values in subsystems/{name}/data.toml")
+    typer.echo(f"  3. fill values in systems/{name}/data.toml")
     typer.echo("  4. craft verify")
 
 

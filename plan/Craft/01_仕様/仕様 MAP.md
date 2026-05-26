@@ -40,8 +40,8 @@ tags: [project, dev, satellite, spec-map]
 |---|---|
 | [[API設計]] | FastAPI ルート全体（Schema/Instances/Analyses/Verification/Runs/History/Meta） |
 | [[MCP設計]] | MCP サーバ — registry から tool を自動派生（Claude Code/Desktop 連携） |
-| [[データパイプライン]] | TOML merge（subsystems/* → generated/merged.toml）と scaffold（registry → data.toml 雛形） |
-| [[プロジェクト初期化]] | `craft init` CLI — project / subsystem / component / config / analysis の立ち上げボイラープレート自動生成 |
+| [[データパイプライン]] | TOML merge（systems/* → generated/merged.toml）と scaffold（registry → data.toml 雛形） |
+| [[プロジェクト初期化]] | `craft init` CLI — project / system / component / config / analysis の立ち上げボイラープレート自動生成 |
 | [[テスト戦略]] | テストピラミッド（Unit/Contract/Integration/Property/E2E） |
 
 ---

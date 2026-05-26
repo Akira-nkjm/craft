@@ -30,7 +30,7 @@ veriq の `@scope.calculation()` / `@scope.verification()` の **薄いラッパ
 ```python
 def analysis(
     *,
-    subsystem: str | None = None,   # None = ファイルパスから自動推論（default）
+    system: str | None = None,   # None = ファイルパスから自動推論（default）
     name: str | None = None,
     desc: str | None = None,
     tags: Iterable[str] = (),
@@ -51,12 +51,12 @@ def analysis(
 
 | 引数 | 型 | 説明 |
 |---|---|---|
-| `subsystem` | `str \| None` | 通常は **省略**（`subsystems/<name>/analyses.py` のパスから自動推論）。`str` 明示も可。`None` 明示 + `subsystems/` 外配置 = ad-hoc（veriq 非登録） |
+| `system` | `str \| None` | 通常は **省略**（`systems/<name>/analyses.py` のパスから自動推論）。`str` 明示も可。`None` 明示 + `systems/` 外配置 = ad-hoc（veriq 非登録） |
 | `name` | `str \| None` | 登録名。`None` なら `func.__name__` |
 | `desc` | `str \| None` | 短い説明。`None` なら docstring 1 行目 |
 | `tags` | `Iterable[str]` | 検索・分類用 |
-| `verify` | `bool` | True なら veriq の `@scope.verification()`、False なら `@scope.calculation()`。`subsystem=None` の時は無視 |
-| `imports` | `Iterable[str]` | veriq cross-scope imports（例: `["orbital", "thermal"]`）。`subsystem` 必須 |
+| `verify` | `bool` | True なら veriq の `@scope.verification()`、False なら `@scope.calculation()`。`system=None` の時は無視 |
+| `imports` | `Iterable[str]` | veriq cross-scope imports（例: `["orbital", "thermal"]`）。`system` 必須 |
 | `cache` | `bool` | 結果を `generated/runs/analyses/{name}/{key}.toml` にキャッシュ（[[データパイプライン]] §2） |
 | `code_version` | `str \| None` | キャッシュキー用バージョン。`None` なら関数 source の sha256 から自動算出 |
 | `async_only` | `bool` | True なら同期 API でも常に job 化して返す |
@@ -83,7 +83,7 @@ class AnalysisFunction[T, **P]:
 3 種類:
 
 ```python
-@analysis(subsystem="power")
+@analysis(system="power")
 def my_analysis(
     # (1) Ref 経由: TOML / 過去計算から値を取得
     spec: Annotated[BatterySpec, vq.Ref("$.batteries.main.spec")],
@@ -163,16 +163,16 @@ key = sha256(
 
 ## 5. veriq bridge 実装
 
-decorator は **解決された subsystem の値で 3 分岐**（`subsystem` 省略時はファイルパスから推論済み）:
+decorator は **解決された system の値で 3 分岐**（`system` 省略時はファイルパスから推論済み）:
 
-### 5.1 subsystem 解決不能（ad-hoc、`subsystems/` 外）
+### 5.1 system 解決不能（ad-hoc、`systems/` 外）
 ```python
-defn = AnalysisDefinition(name, subsystem=None, ...)
+defn = AnalysisDefinition(name, system=None, ...)
 default_registry.register_analysis(defn)
 # veriq には何もしない
 ```
 
-### 5.2 `subsystem="power", verify=False`（veriq calculation）
+### 5.2 `system="power", verify=False`（veriq calculation）
 ```python
 # 内部で
 power_scope.calculation(name=name, imports=imports)(func)
@@ -180,7 +180,7 @@ power_scope.calculation(name=name, imports=imports)(func)
 default_registry.register_analysis(defn)
 ```
 
-### 5.3 `subsystem="power", verify=True`（veriq verification）
+### 5.3 `system="power", verify=True`（veriq verification）
 ```python
 power_scope.verification(name=name, imports=imports)(func)
 default_registry.register_analysis(AnalysisDefinition(..., verify=True))
@@ -189,7 +189,7 @@ default_registry.register_analysis(AnalysisDefinition(..., verify=True))
 ### 5.4 scope オブジェクトの解決
 
 ```python
-# subsystem 名から Scope オブジェクトを取り出す
+# system 名から Scope オブジェクトを取り出す
 from craft.verification.project import get_scope
 scope = get_scope("power")   # → veriq.Scope インスタンス
 ```
@@ -254,7 +254,7 @@ class AnalysisRunner:
 | エラー | 原因 |
 |---|---|
 | `InvalidSignature` | Annotated に複数 Ref、戻り値型が無い、verify=True で戻り値が bool でない |
-| `SubsystemNotFound` | `subsystem="xxx"` だが verification/project.py に scope 無し |
+| `SubsystemNotFound` | `system="xxx"` だが verification/project.py に scope 無し |
 | `DuplicateRegistration` | 同名 analysis が既存 |
 
 → decorator 適用 = import 時に raise。起動時に発覚するので安全。
@@ -290,7 +290,7 @@ def thermal_coupling_estimate(
 ### 8.2 veriq calculation
 ```python
 @analysis(
-    subsystem="power",
+    system="power",
     desc="OperationMode 別の総消費電力",
     imports=["orbital"],
 )
@@ -311,7 +311,7 @@ def total_power_by_mode(
 ### 8.3 veriq verification
 ```python
 @analysis(
-    subsystem="power",
+    system="power",
     verify=True,
     desc="バッテリー容量が要求 DoD を満たすか",
 )
@@ -366,7 +366,7 @@ def test_total_power_by_mode():
 | 引数 3 種 | Ref / Table / 直接パラメータ |
 | 戻り値 | プリミティブ / Pydantic / vq.Table（verify は bool 限定） |
 | キャッシュキー | `name + code_version + inputs_hash + refs_hash` |
-| veriq bridge | `subsystem` の値で 3 分岐、verify=True が verification |
+| veriq bridge | `system` の値で 3 分岐、verify=True が verification |
 | 実行経路 | Python 直接 / veriq 経由 / API runner の 3 つ |
 | エラー設計 | decorator 時と実行時を区別、専用例外 |
 | テスト | 直接呼び出し可能性を維持 |
@@ -396,7 +396,7 @@ def total_power_by_mode(
     # (a) 単一インスタンスの spec を直接引く
     spec: Annotated[BatterySpec, vq.Ref("$.batteries.main.spec")],
 
-    # (b) 別 scope（subsystem）の値を引く
+    # (b) 別 scope（system）の値を引く
     altitude: Annotated[float, vq.Ref("$.orbit.altitude_km", scope="orbital")],
 
     # (c) 別 scope の計算結果を引く（@calcname 記法）
@@ -435,7 +435,7 @@ selected = {k: batteries[k] for k in ("main", "aux")}
 
 ### 13.5 アドホックモード（veriq 非起動）の Ref 解決
 
-`subsystem=None` で veriq を起動しない場合も同じ記法を維持。`core/ref_resolver.py` の薄いリゾルバが TOML / 前回計算結果から `vq.Ref` を解決:
+`system=None` で veriq を起動しない場合も同じ記法を維持。`core/ref_resolver.py` の薄いリゾルバが TOML / 前回計算結果から `vq.Ref` を解決:
 
 ```python
 def resolve_ref(ref: vq.Ref, data_root: Path) -> Any:

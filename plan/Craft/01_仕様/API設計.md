@@ -30,28 +30,28 @@ Web UI は API が安定した後（Phase 2+）に検討。Swagger UI / OpenAPI 
 
 | Method | Path | 説明 |
 |---|---|---|
-| GET | `/api/projects/{pid}/schema/subsystems` | サブシステム一覧 |
-| GET | `/api/projects/{pid}/schema/{subsystem}` | サブシステム配下の component 型一覧 |
-| GET | `/api/projects/{pid}/schema/{subsystem}/{component}` | 単一 component の JSON Schema (`<Name>Entry`) |
+| GET | `/api/projects/{pid}/schema/systems` | サブシステム一覧 |
+| GET | `/api/projects/{pid}/schema/{system}` | サブシステム配下の component 型一覧 |
+| GET | `/api/projects/{pid}/schema/{system}/{component}` | 単一 component の JSON Schema (`<Name>Entry`) |
 | GET | `/api/projects/{pid}/schema/openapi.json` | OpenAPI ドキュメント |
 
 ### Instances（CRUD）
 
 | Method | Path | 説明 |
 |---|---|---|
-| GET | `/api/projects/{pid}/components/{subsystem}` | サブシステム全インスタンス一覧（plural ごとにグルーピング） |
-| GET | `/api/projects/{pid}/components/{subsystem}/{component}` | 単一 component の全インスタンス一覧 |
-| GET | `/api/projects/{pid}/components/{subsystem}/{component}/{instance}` | 単一インスタンス取得（ETag 付き） |
-| POST | `/api/projects/{pid}/components/{subsystem}/{component}/{instance}` | 新規作成（既存なら 409） |
-| PUT | `/api/projects/{pid}/components/{subsystem}/{component}/{instance}` | 全置換（If-Match 必須） |
-| PATCH | `/api/projects/{pid}/components/{subsystem}/{component}/{instance}` | 部分更新（If-Match 必須） |
-| DELETE | `/api/projects/{pid}/components/{subsystem}/{component}/{instance}` | 削除（If-Match 必須） |
+| GET | `/api/projects/{pid}/components/{system}` | サブシステム全インスタンス一覧（plural ごとにグルーピング） |
+| GET | `/api/projects/{pid}/components/{system}/{component}` | 単一 component の全インスタンス一覧 |
+| GET | `/api/projects/{pid}/components/{system}/{component}/{instance}` | 単一インスタンス取得（ETag 付き） |
+| POST | `/api/projects/{pid}/components/{system}/{component}/{instance}` | 新規作成（既存なら 409） |
+| PUT | `/api/projects/{pid}/components/{system}/{component}/{instance}` | 全置換（If-Match 必須） |
+| PATCH | `/api/projects/{pid}/components/{system}/{component}/{instance}` | 部分更新（If-Match 必須） |
+| DELETE | `/api/projects/{pid}/components/{system}/{component}/{instance}` | 削除（If-Match 必須） |
 
 ### Verification（検証実行・結果）
 
 | Method | Path | 説明 |
 |---|---|---|
-| POST | `/api/projects/{pid}/verify/{subsystem}` | サブシステム検証を実行（非同期 job） |
+| POST | `/api/projects/{pid}/verify/{system}` | サブシステム検証を実行（非同期 job） |
 | POST | `/api/projects/{pid}/verify` | 全サブシステム検証 |
 | GET | `/api/projects/{pid}/runs` | 過去の検証 run 一覧 |
 | GET | `/api/projects/{pid}/runs/{run_id}` | 検証結果詳細 |
@@ -124,7 +124,7 @@ Content-Type: application/json
 
 ```bash
 # schema
-craft schema list                                # GET /schema/subsystems
+craft schema list                                # GET /schema/systems
 craft schema show power battery                  # GET /schema/power/battery
 
 # components
@@ -135,7 +135,7 @@ craft patch power battery main --set spec.capacity_wh=120
 craft delete power battery aux
 
 # verify
-craft verify power                               # subsystem
+craft verify power                               # system
 craft verify                                     # all
 craft runs list
 craft runs show {run_id}
@@ -169,8 +169,8 @@ craft diff <sha1>..<sha2>
 ### per-field validation
 | Method | Path | 用途 |
 |---|---|---|
-| POST | `/api/projects/{pid}/validate/{subsystem}/{component}` | 部分ペイロード受領、フィールド単位の検証結果を返す。入力中のリアルタイムフィードバック用 |
-| POST | `/api/projects/{pid}/validate/{subsystem}/{component}/field` | 単一フィールドのみ検証（軽量） |
+| POST | `/api/projects/{pid}/validate/{system}/{component}` | 部分ペイロード受領、フィールド単位の検証結果を返す。入力中のリアルタイムフィードバック用 |
+| POST | `/api/projects/{pid}/validate/{system}/{component}/field` | 単一フィールドのみ検証（軽量） |
 
 ### drafts / staging
 | Method | Path | 用途 |
@@ -184,7 +184,7 @@ craft diff <sha1>..<sha2>
 | Method | Path | 用途 |
 |---|---|---|
 | GET | `/api/projects/{pid}/summary` | 衛星全体のサマリ（mass / power / thermal の総計） |
-| GET | `/api/projects/{pid}/summary/{subsystem}` | サブシステムサマリ |
+| GET | `/api/projects/{pid}/summary/{system}` | サブシステムサマリ |
 | GET | `/api/projects/{pid}/dependencies` | サブシステム間依存グラフ |
 
 ### Push 通信
@@ -200,7 +200,7 @@ craft diff <sha1>..<sha2>
 - → JSON Schema は不変、追加情報のみ。後方互換性あり
 
 ### Search / Pagination
-- `GET /api/projects/{pid}/components/{subsystem}?q=...&page=...&limit=...`
+- `GET /api/projects/{pid}/components/{system}?q=...&page=...&limit=...`
 - スキーマ既存 endpoint の **クエリパラメータ追加** で済む（破壊なし）
 
 ---
@@ -229,7 +229,7 @@ from craft.schema import analysis, fld
 import veriq as vq
 
 @analysis(
-    name="battery_eol_capacity",                     # subsystem はファイルパスから推論
+    name="battery_eol_capacity",                     # system はファイルパスから推論
     desc="バッテリーの End-of-Life 容量を寿命と充放電サイクルから算出",
     tags=["power", "lifetime"],
 )
@@ -250,11 +250,11 @@ def battery_eol_capacity(
 
 | Method | Path | 用途 |
 |---|---|---|
-| GET | `/api/analyses` | 登録済み解析一覧（subsystem / name / desc / tags） |
-| GET | `/api/analyses/{subsystem}` | サブシステム単位の解析一覧 |
-| GET | `/api/analyses/{subsystem}/{name}/schema` | 入力 / 出力 JSON Schema |
-| POST | `/api/analyses/{subsystem}/{name}` | 解析実行（同期） |
-| POST | `/api/analyses/{subsystem}/{name}/async` | 非同期実行（job ID 返却、`/runs/{id}` でポーリング） |
+| GET | `/api/analyses` | 登録済み解析一覧（system / name / desc / tags） |
+| GET | `/api/analyses/{system}` | サブシステム単位の解析一覧 |
+| GET | `/api/analyses/{system}/{name}/schema` | 入力 / 出力 JSON Schema |
+| POST | `/api/analyses/{system}/{name}` | 解析実行（同期） |
+| POST | `/api/analyses/{system}/{name}/async` | 非同期実行（job ID 返却、`/runs/{id}` でポーリング） |
 
 ### 自動生成される CLI
 
@@ -262,7 +262,7 @@ def battery_eol_capacity(
 craft analysis list                              # GET /api/analyses
 craft analysis show power battery_eol_capacity   # schema 表示
 craft analysis run power battery_eol_capacity \
-  --spec data/subsystem/power.toml#batteries.main \
+  --spec data/system/power.toml#batteries.main \
   --years 5 --cycles-per-day 2
 ```
 
@@ -305,11 +305,11 @@ def thermal_coupling(a: PanelSurface, b: PanelSurface) -> float:
 ```
 schema/_registry.py        ← UnifiedRegistry (components / configs / analyses を束ねる)
 schema/_analysis.py        ← @analysis decorator 実装
-schema/auto_discover.py    ← subsystems/<name>/analyses.py を pkgutil 走査
+schema/auto_discover.py    ← systems/<name>/analyses.py を pkgutil 走査
 api/routers/analyses.py    ← /api/analyses/* を動的に生やす
 ```
 
-`subsystems/power/components.py` と同じディレクトリの `subsystems/power/analyses.py` に `@analysis` 関数を書く（[[最終構成]] §4）。
+`systems/power/components.py` と同じディレクトリの `systems/power/analyses.py` に `@analysis` 関数を書く（[[最終構成]] §4）。
 
 ### 入力ソースの解決
 
@@ -318,7 +318,7 @@ api/routers/analyses.py    ← /api/analyses/* を動的に生やす
 ```bash
 # CLI: TOML パスを直接指定
 craft analysis run power battery_eol_capacity \
-  --spec data/subsystem/power.toml#batteries.main \
+  --spec data/system/power.toml#batteries.main \
   --years 5
 ```
 
@@ -383,7 +383,7 @@ def enum_usage(
 
 | Method | Path | 用途 |
 |---|---|---|
-| GET | `/api/projects/{pid}/registry/components` | 全 component の (subsystem, name, plural, fields) |
+| GET | `/api/projects/{pid}/registry/components` | 全 component の (system, name, plural, fields) |
 | GET | `/api/projects/{pid}/registry/analyses` | 全 @analysis の (name, signature, tags) |
 | GET | `/api/projects/{pid}/registry/search?field=...` | フィールド名・型で横断検索 |
 

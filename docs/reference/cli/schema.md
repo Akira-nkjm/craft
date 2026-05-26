@@ -1,12 +1,12 @@
 # craft schema
 
-Registry に登録された subsystem・component のメタ情報を確認するコマンド群。
+Registry に登録された system・component のメタ情報を確認するコマンド群。
 
 ---
 
 ## `craft schema list`
 
-登録済みのすべての subsystem とそれに属する component を JSON 形式で出力する。
+登録済みのすべての system とそれに属する component を JSON 形式で出力する。
 
 ```bash
 uv run craft schema list
@@ -32,7 +32,7 @@ uv run craft schema list
 
 ---
 
-## `craft schema show <subsystem> <component>`
+## `craft schema show <system> <component>`
 
 指定した component の Entry モデルに対応する JSON Schema を出力する。
 Swagger UI での表示内容と同一で、フィールド型・バリデーション・`unit` 等のメタ情報が確認できる。
@@ -45,7 +45,7 @@ uv run craft schema show power battery
 
 | 引数 | 必須 | 説明 |
 |---|---|---|
-| `subsystem` | はい | 対象の subsystem 名 |
+| `system` | はい | 対象の system 名 |
 | `component` | はい | 対象の component 名（小文字） |
 
 **出力例**

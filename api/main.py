@@ -1,6 +1,6 @@
 """Craft FastAPI entry point。
 
-起動時に `discover_subsystems()` で全 subsystem を import し、
+起動時に `discover_systems()` で全 system を import し、
 registry を確定させてから router を組み立てる。
 """
 
@@ -20,7 +20,7 @@ from api.routers import (
     verify,
     veriq_passthrough,
 )
-from core.discovery import discover_subsystems
+from core.discovery import discover_systems
 
 TAGS_METADATA = [
     {"name": "schema", "description": "Pydantic JSON Schema 配信"},
@@ -28,7 +28,7 @@ TAGS_METADATA = [
     {"name": "analyses", "description": "@analysis 関数の自動 API（一覧 / 実行）"},
     {"name": "verify", "description": "veriq 検証実行"},
     {"name": "runs", "description": "verification run history"},
-    {"name": "merge", "description": "subsystems/*/data.toml → generated/merged.toml"},
+    {"name": "merge", "description": "systems/*/data.toml → generated/merged.toml"},
     {"name": "scaffold", "description": "registry → data.toml 雛形生成"},
     {"name": "veriq", "description": "veriq pass-through (graph / trace / schema)"},
     {"name": "history", "description": "git log / diff"},
@@ -38,7 +38,7 @@ TAGS_METADATA = [
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    discover_subsystems()
+    discover_systems()
     yield
 
 

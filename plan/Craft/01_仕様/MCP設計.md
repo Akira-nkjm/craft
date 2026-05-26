@@ -69,9 +69,9 @@ Config は常に Singleton なので list / add / delete なし（[[Config設計
 
 | tool | 役割 |
 |---|---|
-| `list_subsystems` | 登録済み subsystem 一覧 |
-| `list_components` | 全 component の (subsystem, name, plural, fields) |
-| `list_configs` | 全 config の (subsystem, name, fields) |
+| `list_systems` | 登録済み system 一覧 |
+| `list_components` | 全 component の (system, name, plural, fields) |
+| `list_configs` | 全 config の (system, name, fields) |
 | `list_analyses` | 全 analysis の (name, signature, tags) |
 | `search_field` | フィールド名・型で横断検索 |
 | `get_schema` | 指定 component / config の JSON Schema |
@@ -92,7 +92,7 @@ Config は常に Singleton なので list / add / delete なし（[[Config設計
 - **動詞 + 名詞**: `add_battery` (✅) / `battery_add` (❌)
 - **snake_case**: `add_solar_panel` (✅) / `addSolarPanel` (❌)
 - **plural は registry の `plural` 属性を尊重**: `add_battery` で TOML は `[batteries.<name>]` に書かれる
-- **subsystem は引数に含めない**: `add_battery` だけで OK（component 名が一意なので subsystem 不要）
+- **system は引数に含めない**: `add_battery` だけで OK（component 名が一意なので system 不要）
 
 ---
 
@@ -265,7 +265,7 @@ LLM に結果をフィードバック → LLM が修正案を出す
 | 接続 | stdio（ローカル専用） |
 | 認証 | Phase 1 では無し |
 | tool 派生 | registry から自動、手書きの tool は禁止 |
-| 命名規約 | `動詞_名詞` (snake_case)、subsystem は引数に含めない |
+| 命名規約 | `動詞_名詞` (snake_case)、system は引数に含めない |
 | 入力 schema | Pydantic JSON Schema をそのまま MCP `inputSchema` に流用 |
 | エラー形式 | API と同じ RFC 7807 互換 envelope |
 | 実装 | API client の薄ラッパ、ロジック重複なし |
@@ -279,6 +279,6 @@ LLM に結果をフィードバック → LLM が修正案を出す
   - 暫定方針: tool schema は固定、enum 値の妥当性は実行時 422 で弾く（API と同じ）
 - **長時間解析の進捗報告**: `analyze_*` tool が job 化された時、MCP の `progress` notification をどう使うか
 - **複数プロジェクト対応**: Phase 2 で `/api/projects/{pid}/...` に切る場合、MCP tool に project_id 引数を足すか、サーバ起動時に固定するか
-- **tool 数の爆発**: subsystem が増えると tool 数が `O(component × CRUD)` で増える。Claude 側の表示で困らないか実測が必要
+- **tool 数の爆発**: system が増えると tool 数が `O(component × CRUD)` で増える。Claude 側の表示で困らないか実測が必要
 
 → 実装着手時に確認、本ノートに追記。

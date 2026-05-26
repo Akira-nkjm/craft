@@ -16,11 +16,11 @@ veriq の Scope と Project への登録。
 
 ```python
 # 重要: from __future__ import annotations は絶対に書かない
-"""Power subsystem veriq scope."""
+"""Power system veriq scope."""
 
 import veriq as vq
 
-from craft.schema._root_model_builder import build_subsystem_root_model
+from craft.schema._root_model_builder import build_system_root_model
 from craft.paths import DATA_ROOT
 
 
@@ -32,7 +32,7 @@ power = vq.Scope("power")
 # - registry に登録された全 component を Table として持つ root
 # - TOML の現在キーから StrEnum を動的生成
 @power.root_model()
-class PowerRootModel(build_subsystem_root_model("power", DATA_ROOT / "power.toml")):
+class PowerRootModel(build_system_root_model("power", DATA_ROOT / "power.toml")):
     pass
 ```
 
@@ -47,16 +47,16 @@ power = vq.Scope("power")
 ```
 
 これだけで veriq の Scope オブジェクトが用意される。
-このオブジェクトを `@analysis(subsystem="power", ...)` が **暗黙的に参照** する。
+このオブジェクトを `@analysis(system="power", ...)` が **暗黙的に参照** する。
 
 ### root model の構築
 
 ```python
-build_subsystem_root_model("power", DATA_ROOT / "power.toml")
+build_system_root_model("power", DATA_ROOT / "power.toml")
 ```
 
 内部処理:
-1. `default_registry.components(subsystem="power")` で全 component 定義を取得
+1. `default_registry.components(system="power")` で全 component 定義を取得
 2. 各 component の `plural` をキーに、 `vq.Table[DynamicEnum, Entry]` フィールドを生やす
 3. `DynamicEnum` は `load_instance_enum(toml, plural)` で現在の TOML キーから動的生成
 4. `extra="forbid"` を一律適用
@@ -80,7 +80,7 @@ project.add_scope(thermal)
 
 ## 新サブシステム追加時の手順
 
-1. `schema/subsystems/<new>.py` を作って `@component` を書く
+1. `schema/systems/<new>.py` を作って `@component` を書く
 2. `verification/scopes/<new>.py` を作って scope + root model を登録（本ファイルをコピペ）
 3. `verification/project.py` の `project.add_scope(<new>)` を追加
 

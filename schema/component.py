@@ -24,7 +24,7 @@ _RESERVED = {
     "__shared_spec_default__",
     "__trait_no_design__",
     "__trait_design_extra__",
-    "__subsystem__",
+    "__system__",
     "__plural__",
 }
 
@@ -41,23 +41,23 @@ def _is_internal(cls: type) -> bool:
     return cls.__name__ == "Component" or cls.__name__.startswith("_")
 
 
-def _infer_subsystem_from_caller() -> str:
-    """呼び出し元ファイルパスから subsystem を推論。
+def _infer_system_from_caller() -> str:
+    """呼び出し元ファイルパスから system を推論。
 
-    `.../subsystems/<name>/...` から `<name>` を取得。
+    `.../systems/<name>/...` から `<name>` を取得。
     """
     frame = inspect.currentframe()
     while frame is not None:
         path = Path(frame.f_code.co_filename)
         parts = path.parts
-        if "subsystems" in parts:
-            idx = parts.index("subsystems")
+        if "systems" in parts:
+            idx = parts.index("systems")
             if idx + 1 < len(parts):
                 return parts[idx + 1]
         frame = frame.f_back
     raise RuntimeError(
-        "Cannot infer subsystem from caller stack. "
-        "Pass `subsystem='...'` as a class keyword argument."
+        "Cannot infer system from caller stack. "
+        "Pass `system='...'` as a class keyword argument."
     )
 
 
@@ -114,14 +114,14 @@ class Component:
     Design: ClassVar[Any]
     Requirements: ClassVar[Any]
     Entry: ClassVar[Any]
-    __subsystem__: ClassVar[str]
+    __system__: ClassVar[str]
     __plural__: ClassVar[str]
     __cardinality__: ClassVar[str] = "single"
 
     def __init_subclass__(
         cls,
         *,
-        subsystem: str | None = None,
+        system: str | None = None,
         plural: str | None = None,
         **kwargs: Any,
     ) -> None:
@@ -129,8 +129,8 @@ class Component:
         if _is_internal(cls):
             return
 
-        if subsystem is None:
-            subsystem = _infer_subsystem_from_caller()
+        if system is None:
+            system = _infer_system_from_caller()
         if plural is None:
             plural = _auto_pluralize(cls.__name__)
 
@@ -218,13 +218,13 @@ class Component:
         cls.Design = design_model
         cls.Requirements = req_model
         cls.Entry = entry_model
-        cls.__subsystem__ = subsystem
+        cls.__system__ = system
         cls.__plural__ = plural
         cls.__cardinality__ = cardinality
 
         default_registry.register_component(
             ComponentDefinition(
-                subsystem=subsystem,
+                system=system,
                 name=cls.__name__.lower(),
                 plural=plural,
                 cardinality=cardinality,

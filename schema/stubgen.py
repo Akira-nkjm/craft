@@ -1,14 +1,14 @@
 """Component / Config の `.pyi` stub 生成。
 
 `UnifiedRegistry` に登録済みの Pydantic モデル (Spec / Design / Requirements / Entry,
-および Config の Model) を、subsystem ごとに 1 ファイルの `.pyi` 形式で書き出す。
+および Config の Model) を、system ごとに 1 ファイルの `.pyi` 形式で書き出す。
 
 Output:
-    `subsystems/<sub>/_stubs.pyi` （`_stubs` 接頭辞で通常 import 経路と衝突しない）
+    `systems/<sub>/_stubs.pyi` （`_stubs` 接頭辞で通常 import 経路と衝突しない）
 
 主な API:
-    `render_subsystem_stub(subsystem) -> str` — 1 subsystem 分の文字列を生成
-    `generate_stubs(output_root=None) -> list[Path]` — 全 subsystem を書き出す
+    `render_subsystem_stub(system) -> str` — 1 system 分の文字列を生成
+    `generate_stubs(output_root=None) -> list[Path]` — 全 system を書き出す
     `check_stubs() -> list[tuple[Path, str]]` — 既存ファイルとの diff を返す
 """
 
@@ -20,7 +20,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from core.discovery import discover_subsystems
+from core.discovery import discover_systems
 from core.paths import subsystem_dir
 from schema.registry import (
     ComponentDefinition,
@@ -138,15 +138,15 @@ def _collect_models_for_config(defn: ConfigDefinition) -> list[type[BaseModel]]:
 
 
 def render_subsystem_stub(
-    subsystem: str,
+    system: str,
     *,
     registry: UnifiedRegistry | None = None,
 ) -> str:
-    """1 subsystem 分の `.pyi` 文字列を生成する（書き込みなし）。"""
+    """1 system 分の `.pyi` 文字列を生成する（書き込みなし）。"""
     reg = registry if registry is not None else default_registry
 
-    components = sorted(reg.components(subsystem=subsystem), key=lambda d: d.name)
-    configs = sorted(reg.configs(subsystem=subsystem), key=lambda d: d.name)
+    components = sorted(reg.components(system=system), key=lambda d: d.name)
+    configs = sorted(reg.configs(system=system), key=lambda d: d.name)
 
     # ファイル内で定義する model 名を先に集める（外部参照と区別するため）
     local_models: set[str] = set()
@@ -186,18 +186,18 @@ def render_subsystem_stub(
     return "".join(header_parts) + body
 
 
-def _stub_path_for(subsystem: str, *, output_root: Path | None = None) -> Path:
+def _stub_path_for(system: str, *, output_root: Path | None = None) -> Path:
     if output_root is None:
-        return subsystem_dir(subsystem) / STUB_FILENAME
-    return output_root / subsystem / STUB_FILENAME
+        return subsystem_dir(system) / STUB_FILENAME
+    return output_root / system / STUB_FILENAME
 
 
 def _ensure_bootstrap(registry: UnifiedRegistry | None) -> UnifiedRegistry:
-    """default_registry を使う場合は subsystem discovery を発火させる。"""
+    """default_registry を使う場合は system discovery を発火させる。"""
     if registry is not None:
         return registry
-    # subsystems を import して registry を埋める
-    discover_subsystems()
+    # systems を import して registry を埋める
+    discover_systems()
     return default_registry
 
 
@@ -206,14 +206,14 @@ def generate_stubs(
     output_root: Path | None = None,
     registry: UnifiedRegistry | None = None,
 ) -> list[Path]:
-    """全 subsystem の stub を生成し、書き込んだファイルパスのリストを返す。
+    """全 system の stub を生成し、書き込んだファイルパスのリストを返す。
 
     `output_root` を指定すると `<output_root>/<sub>/_stubs.pyi` に書き出す。
-    省略時は `subsystems/<sub>/_stubs.pyi`。
+    省略時は `systems/<sub>/_stubs.pyi`。
     """
     reg = _ensure_bootstrap(registry)
     written: list[Path] = []
-    for sub in sorted(reg.subsystems()):
+    for sub in sorted(reg.systems()):
         content = render_subsystem_stub(sub, registry=reg)
         path = _stub_path_for(sub, output_root=output_root)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -233,7 +233,7 @@ def check_stubs(
     """
     reg = _ensure_bootstrap(registry)
     mismatches: list[tuple[Path, str]] = []
-    for sub in sorted(reg.subsystems()):
+    for sub in sorted(reg.systems()):
         expected = render_subsystem_stub(sub, registry=reg)
         path = _stub_path_for(sub, output_root=output_root)
         actual = path.read_text(encoding="utf-8") if path.exists() else ""

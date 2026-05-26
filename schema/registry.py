@@ -31,7 +31,7 @@ class SourceLocation:
 
 @dataclass(frozen=True, slots=True)
 class ComponentDefinition:
-    subsystem: str
+    system: str
     name: str
     plural: str
     cardinality: str
@@ -47,7 +47,7 @@ class ComponentDefinition:
 
 @dataclass(frozen=True, slots=True)
 class ConfigDefinition:
-    subsystem: str
+    system: str
     name: str
     model: type[BaseModel]
     cls: type
@@ -58,7 +58,7 @@ class ConfigDefinition:
 @dataclass(frozen=True, slots=True)
 class AnalysisDefinition:
     name: str
-    subsystem: str | None
+    system: str | None
     func: Callable[..., Any]
     verify: bool
     imports: tuple[str, ...]
@@ -88,85 +88,85 @@ class UnifiedRegistry:
     _analyses: dict[tuple[str | None, str], AnalysisDefinition] = field(default_factory=dict)
 
     def register_component(self, defn: ComponentDefinition) -> None:
-        key = (defn.subsystem, defn.name)
+        key = (defn.system, defn.name)
         if key in self._components:
             raise DuplicateRegistration(
-                f"Component {defn.subsystem}.{defn.name} already registered"
+                f"Component {defn.system}.{defn.name} already registered"
             )
         # plural 衝突検出
         for existing in self._components.values():
-            if existing.subsystem == defn.subsystem and existing.plural == defn.plural:
+            if existing.system == defn.system and existing.plural == defn.plural:
                 raise DuplicateRegistration(
-                    f"Plural '{defn.plural}' already used by {existing.subsystem}.{existing.name}"
+                    f"Plural '{defn.plural}' already used by {existing.system}.{existing.name}"
                 )
         self._components[key] = defn
 
     def register_config(self, defn: ConfigDefinition) -> None:
-        key = (defn.subsystem, defn.name)
+        key = (defn.system, defn.name)
         if key in self._configs:
-            raise DuplicateRegistration(f"Config {defn.subsystem}.{defn.name} already registered")
+            raise DuplicateRegistration(f"Config {defn.system}.{defn.name} already registered")
         self._configs[key] = defn
 
     def register_analysis(self, defn: AnalysisDefinition) -> None:
-        key = (defn.subsystem, defn.name)
+        key = (defn.system, defn.name)
         if key in self._analyses:
-            raise DuplicateRegistration(f"Analysis {defn.subsystem}.{defn.name} already registered")
+            raise DuplicateRegistration(f"Analysis {defn.system}.{defn.name} already registered")
         self._analyses[key] = defn
 
-    def component(self, subsystem: str, name: str) -> ComponentDefinition:
+    def component(self, system: str, name: str) -> ComponentDefinition:
         try:
-            return self._components[(subsystem, name)]
+            return self._components[(system, name)]
         except KeyError as err:
-            raise NotRegistered(f"Component {subsystem}.{name}") from err
+            raise NotRegistered(f"Component {system}.{name}") from err
 
-    def component_or_none(self, subsystem: str, name: str) -> ComponentDefinition | None:
-        return self._components.get((subsystem, name))
+    def component_or_none(self, system: str, name: str) -> ComponentDefinition | None:
+        return self._components.get((system, name))
 
-    def components(self, *, subsystem: str | None = None) -> list[ComponentDefinition]:
+    def components(self, *, system: str | None = None) -> list[ComponentDefinition]:
         defs = list(self._components.values())
-        if subsystem is not None:
-            defs = [d for d in defs if d.subsystem == subsystem]
+        if system is not None:
+            defs = [d for d in defs if d.system == system]
         return defs
 
-    def config(self, subsystem: str, name: str) -> ConfigDefinition:
+    def config(self, system: str, name: str) -> ConfigDefinition:
         try:
-            return self._configs[(subsystem, name)]
+            return self._configs[(system, name)]
         except KeyError as err:
-            raise NotRegistered(f"Config {subsystem}.{name}") from err
+            raise NotRegistered(f"Config {system}.{name}") from err
 
-    def configs(self, *, subsystem: str | None = None) -> list[ConfigDefinition]:
+    def configs(self, *, system: str | None = None) -> list[ConfigDefinition]:
         defs = list(self._configs.values())
-        if subsystem is not None:
-            defs = [d for d in defs if d.subsystem == subsystem]
+        if system is not None:
+            defs = [d for d in defs if d.system == system]
         return defs
 
-    def analysis(self, subsystem: str | None, name: str) -> AnalysisDefinition:
+    def analysis(self, system: str | None, name: str) -> AnalysisDefinition:
         try:
-            return self._analyses[(subsystem, name)]
+            return self._analyses[(system, name)]
         except KeyError as err:
-            raise NotRegistered(f"Analysis {subsystem}.{name}") from err
+            raise NotRegistered(f"Analysis {system}.{name}") from err
 
-    def analysis_or_none(self, subsystem: str | None, name: str) -> AnalysisDefinition | None:
-        return self._analyses.get((subsystem, name))
+    def analysis_or_none(self, system: str | None, name: str) -> AnalysisDefinition | None:
+        return self._analyses.get((system, name))
 
     def analyses(
         self,
         *,
-        subsystem: str | None = None,
+        system: str | None = None,
         verify: bool | None = None,
     ) -> list[AnalysisDefinition]:
         defs = list(self._analyses.values())
-        if subsystem is not None:
-            defs = [d for d in defs if d.subsystem == subsystem]
+        if system is not None:
+            defs = [d for d in defs if d.system == system]
         if verify is not None:
             defs = [d for d in defs if d.verify == verify]
         return defs
 
-    def subsystems(self) -> set[str]:
+    def systems(self) -> set[str]:
         out: set[str] = set()
-        out.update(d.subsystem for d in self._components.values())
-        out.update(d.subsystem for d in self._configs.values())
-        out.update(d.subsystem for d in self._analyses.values() if d.subsystem is not None)
+        out.update(d.system for d in self._components.values())
+        out.update(d.system for d in self._configs.values())
+        out.update(d.system for d in self._analyses.values() if d.system is not None)
         return out
 
     def clear(self) -> None:

@@ -21,25 +21,25 @@ from core.instances import (
     patch_instance,
     replace_instance,
 )
-from core.paths import subsystem_data_path
+from core.paths import system_data_path
 from core.toml_io import read_toml
 from schema import default_registry
 
 router = APIRouter(prefix="/components", tags=["components"])
 
 
-@router.get("/{subsystem}/{component}")
-def list_component_instances(subsystem: str, component: str) -> dict[str, Any]:
-    defn = default_registry.component_or_none(subsystem, component)
+@router.get("/{system}/{component}")
+def list_component_instances(system: str, component: str) -> dict[str, Any]:
+    defn = default_registry.component_or_none(system, component)
     if defn is None:
-        raise NotFoundError(f"Component '{subsystem}.{component}' is not registered")
-    data = read_toml(subsystem_data_path(subsystem))
+        raise NotFoundError(f"Component '{system}.{component}' is not registered")
+    data = read_toml(system_data_path(system))
     if defn.cardinality == "multi":
-        instances = list_instances(subsystem, component)
+        instances = list_instances(system, component)
     else:
         instances = data.get(defn.name, {})
     return {
-        "subsystem": subsystem,
+        "system": system,
         "component": component,
         "plural": defn.plural,
         "cardinality": defn.cardinality,
@@ -47,31 +47,31 @@ def list_component_instances(subsystem: str, component: str) -> dict[str, Any]:
     }
 
 
-@router.get("/{subsystem}/{component}/{instance}")
+@router.get("/{system}/{component}/{instance}")
 def get_component_instance(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     response: Response,
 ) -> dict[str, Any]:
     try:
-        payload, etag = get_instance(subsystem, component, instance)
+        payload, etag = get_instance(system, component, instance)
     except InstanceNotFound as e:
         raise NotFoundError(str(e)) from e
     response.headers["ETag"] = etag
     return payload
 
 
-@router.post("/{subsystem}/{component}/{instance}", status_code=201)
+@router.post("/{system}/{component}/{instance}", status_code=201)
 def create_component_instance(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     response: Response,
     payload: dict[str, Any] = Body(...),
 ) -> dict[str, Any]:
     try:
-        created, etag = create_instance(subsystem, component, instance, payload)
+        created, etag = create_instance(system, component, instance, payload)
     except InstanceAlreadyExists as e:
         raise ConflictError(str(e)) from e
     except SingletonNotInstanceable as e:
@@ -84,9 +84,9 @@ def create_component_instance(
     return created
 
 
-@router.put("/{subsystem}/{component}/{instance}")
+@router.put("/{system}/{component}/{instance}")
 def replace_component_instance(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     response: Response,
@@ -95,7 +95,7 @@ def replace_component_instance(
 ) -> dict[str, Any]:
     try:
         updated, etag = replace_instance(
-            subsystem, component, instance, payload, expected_etag=if_match
+            system, component, instance, payload, expected_etag=if_match
         )
     except InstanceNotFound as e:
         raise NotFoundError(str(e)) from e
@@ -105,9 +105,9 @@ def replace_component_instance(
     return updated
 
 
-@router.patch("/{subsystem}/{component}/{instance}")
+@router.patch("/{system}/{component}/{instance}")
 def patch_component_instance(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     response: Response,
@@ -116,7 +116,7 @@ def patch_component_instance(
 ) -> dict[str, Any]:
     try:
         updated, etag = patch_instance(
-            subsystem, component, instance, delta, expected_etag=if_match
+            system, component, instance, delta, expected_etag=if_match
         )
     except InstanceNotFound as e:
         raise NotFoundError(str(e)) from e
@@ -126,15 +126,15 @@ def patch_component_instance(
     return updated
 
 
-@router.delete("/{subsystem}/{component}/{instance}", status_code=204)
+@router.delete("/{system}/{component}/{instance}", status_code=204)
 def delete_component_instance(
-    subsystem: str,
+    system: str,
     component: str,
     instance: str,
     if_match: str | None = Header(default=None, alias="If-Match"),
 ) -> Response:
     try:
-        delete_instance(subsystem, component, instance, expected_etag=if_match)
+        delete_instance(system, component, instance, expected_etag=if_match)
     except InstanceNotFound as e:
         raise NotFoundError(str(e)) from e
     except SingletonNotInstanceable as e:

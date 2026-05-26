@@ -19,7 +19,7 @@ def run_merge(dry_run: bool = False) -> dict[str, Any]:
         raise ConflictError(str(e)) from e
     return {
         "output_path": str(result.output_path),
-        "subsystems": list(result.subsystems),
+        "systems": list(result.systems),
         "source_files": result.source_files,
         "written": result.written,
         "stale": is_merge_stale(),

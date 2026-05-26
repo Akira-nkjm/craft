@@ -28,12 +28,12 @@
 └──────────────────────────────────────────────────────────────┘
                           │  (registered by)
 ┌──────────────────────────────────────────────────────────────┐
-│  Declarations  (subsystems/<name>/)                          │
+│  Declarations  (systems/<name>/)                          │
 │  components.py / configs.py / analyses.py / scope.py         │
 └──────────────────────────────────────────────────────────────┘
                           │  (validated against)
 ┌──────────────────────────────────────────────────────────────┐
-│  Data layer  (subsystems/<name>/data.toml)                   │
+│  Data layer  (systems/<name>/data.toml)                   │
 │   → core.merge → generated/merged.toml  (veriq 入力)         │
 └──────────────────────────────────────────────────────────────┘
                           │  (computed by)
@@ -46,7 +46,7 @@
 
 ## ディレクトリ構成
 
-フラット構成。ユーザが直接触るのは `subsystems/` のみで、`schema/` は基盤として固定する。
+フラット構成。ユーザが直接触るのは `systems/` のみで、`schema/` は基盤として固定する。
 
 ```
 craft/
@@ -55,7 +55,7 @@ craft/
 ├── api/                    # FastAPI 本体 (routers/, errors.py, main.py)
 ├── cli/                    # Typer CLI エントリ (craft コマンド)
 ├── mcp_server/             # MCP サーバ (craft-mcp、stdio)
-├── subsystems/             # ユーザ領域 (power / cdh / thermal / mission)
+├── systems/             # ユーザ領域 (power / cdh / thermal / mission)
 │   └── <name>/
 │       ├── components.py   # Component 派生クラス
 │       ├── configs.py      # Config 派生クラス
@@ -87,7 +87,7 @@ uv sync
 # CLI ヘルプ
 uv run craft --help
 
-# 登録済み subsystem / component の一覧
+# 登録済み system / component の一覧
 uv run craft schema list
 
 # merge + veriq による検証実行
@@ -109,7 +109,7 @@ uv run craft merge [--check] [--dry-run]    # data.toml → merged.toml
 uv run craft scaffold [<sub>] [--dry-run]   # data.toml 雛形生成
 uv run craft analysis list                  # @analysis 一覧
 uv run craft analysis run <sub> <name>      # @analysis 実行
-uv run craft init subsystem <name>          # subsystem 雛形生成
+uv run craft init system <name>          # system 雛形生成
 ```
 
 ---
@@ -126,9 +126,9 @@ uv run pyrefly check         # 型チェック
 
 ## `data.toml` の簡略形式
 
-`subsystems/<name>/data.toml` では `<sub>.model.` プレフィックスを省略して記述する（`core.merge` が `generated/merged.toml` 生成時に自動付与）。`shared_spec=True` の MultiInstance Component は、共通の `spec` と instance ごとの `design` / `requirements` / `meta` を分離する。
+`systems/<name>/data.toml` では `<sub>.model.` プレフィックスを省略して記述する（`core.merge` が `generated/merged.toml` 生成時に自動付与）。`shared_spec=True` の MultiInstance Component は、共通の `spec` と instance ごとの `design` / `requirements` / `meta` を分離する。
 
-例: `subsystems/power/data.toml`
+例: `systems/power/data.toml`
 
 ```toml
 # 全インスタンス共通の spec
@@ -157,7 +157,7 @@ depth_of_discharge = 0.6
 ### 開発者向け
 - [Web ドキュメント](https://Akira-nkjm.github.io/craft/) — Zensical でホストされた全ドキュメント
 - [`docs/concepts.md`](docs/concepts.md) — Component / Config / Analysis / Traits / data.toml の概念説明
-- [`docs/tutorial.md`](docs/tutorial.md) — 新しい subsystem をゼロから追加するチュートリアル
+- [`docs/tutorial.md`](docs/tutorial.md) — 新しい system をゼロから追加するチュートリアル
 
 ### 設計資料
 - [`plan/Craft/Craft.md`](plan/Craft/Craft.md) — プロジェクト全体の入口

@@ -2,7 +2,7 @@
 
 import sys
 
-import subsystems.power.scope  # noqa: F401
+import systems.power.scope  # noqa: F401
 from core.merge import is_merge_stale, merge
 from core.toml_io import read_toml
 
@@ -28,12 +28,12 @@ def test_merge_writes_file_and_lock(clean_generated_dir):
     assert mod.MERGED_LOCK.exists()
 
     lock = read_toml(mod.MERGED_LOCK)
-    assert "subsystems/power/data.toml" in lock["sources"]
+    assert "systems/power/data.toml" in lock["sources"]
 
 
 def test_merge_subsystems_filter(clean_generated_dir):
-    result, merged = merge(subsystems=["power"])
-    assert result.subsystems == ("power",)
+    result, merged = merge(systems=["power"])
+    assert result.systems == ("power",)
     assert set(merged.keys()) == {"power"}
 
 

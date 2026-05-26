@@ -4,7 +4,7 @@ import pytest
 from typer.testing import CliRunner
 
 from cli.main import app
-from core.discovery import discover_subsystems
+from core.discovery import discover_systems
 from schema import default_registry
 from schema.stubgen import (
     STUB_FILENAME,
@@ -16,8 +16,8 @@ from schema.stubgen import (
 
 @pytest.fixture(autouse=True)
 def _bootstrap_registry() -> None:
-    """subsystem discovery を発火して registry を埋める。"""
-    discover_subsystems()
+    """system discovery を発火して registry を埋める。"""
+    discover_systems()
 
 
 @pytest.fixture
@@ -46,10 +46,10 @@ def test_render_subsystem_stub_mission_config() -> None:
 
 
 def test_generate_stubs_writes_files(tmp_path) -> None:
-    """全 subsystem 分のファイルが書き出される。"""
+    """全 system 分のファイルが書き出される。"""
     written = generate_stubs(output_root=tmp_path)
     assert written, "expected at least one stub to be written"
-    subs = default_registry.subsystems()
+    subs = default_registry.systems()
     for sub in subs:
         expected = tmp_path / sub / STUB_FILENAME
         assert expected in written

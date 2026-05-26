@@ -3,8 +3,8 @@
 import veriq as vq
 
 from core.merge import MERGED_TOML, merge
-from subsystems.orbital.scope import orbital
-from subsystems.power.scope import power
+from systems.orbital.scope import orbital
+from systems.power.scope import power
 
 
 def test_evaluate_project_runs_and_reports_verifications(clean_generated_dir):
