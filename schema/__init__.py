@@ -18,6 +18,7 @@ from schema.registry import (
 from schema.root_model_builder import build_system_root_model
 from schema.traits import (
     MultiInstance,
+    Placeable,
     PowerConsuming,
     SpecOnly,
     TemperatureSensitive,
@@ -30,6 +31,7 @@ __all__ = [
     "Config",
     "ConfigDefinition",
     "MultiInstance",
+    "Placeable",
     "Placement",
     "PowerConsuming",
     "SpecOnly",

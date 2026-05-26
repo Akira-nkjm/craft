@@ -7,13 +7,12 @@ Spec / Design / Requirements / Entry モデルを動的構築 + UnifiedRegistry 
 import inspect
 import re
 from pathlib import Path
-from typing import Any, ClassVar, dataclass_transform
+from typing import Any, ClassVar, dataclass_transform, get_origin
 
 from pydantic import BaseModel, ConfigDict, create_model
 from pydantic.fields import FieldInfo
 
 from schema.fields import fld
-from schema.placement import Placement
 from schema.registry import ComponentDefinition, SourceLocation, default_registry
 
 _RESERVED = {
@@ -27,6 +26,10 @@ _RESERVED = {
     "__trait_design_extra__",
     "__system__",
     "__plural__",
+    # _Trait protocol ClassVars — excluded from spec field collection
+    "cardinality",
+    "design_extra",
+    "spec_only",
 }
 
 
@@ -86,6 +89,8 @@ def _collect_fields_from(source: Any) -> dict[str, tuple[type, Any]]:
     for fname, ftype in anns.items():
         if fname in _RESERVED or fname.startswith("_"):
             continue
+        if get_origin(ftype) is ClassVar:
+            continue
         default = source.__dict__.get(fname, ...)
         if isinstance(default, FieldInfo):
             fields[fname] = (ftype, default)
@@ -143,9 +148,9 @@ class Component:
                 continue
             if _is_trait(base):
                 traits.append(base.__name__)
-                if getattr(base, "__cardinality__", None) == "multi":
+                if getattr(base, "cardinality", "single") == "multi":
                     cardinality = "multi"
-                if getattr(base, "__trait_no_design__", False):
+                if getattr(base, "spec_only", False):
                     spec_only = True
 
         # Spec fields: walk MRO from base→derived so derived overrides
@@ -158,7 +163,7 @@ class Component:
             if base is object or base is Component:
                 continue
             spec_fields.update(_collect_fields_from(base))
-            extra = base.__dict__.get("__trait_design_extra__")
+            extra = base.__dict__.get("design_extra")
             if extra:
                 design_extra.update(extra)
 
@@ -166,10 +171,10 @@ class Component:
         inner_design = cls.__dict__.get("Design")
         inner_req = cls.__dict__.get("Requirements")
 
-        # quantity / placement は全 component 共通の基底 design フィールド（user が上書き可能）
+        # quantity は全 component 共通の基底 design フィールド（user が上書き可能）
+        # placement は Placeable trait で opt-in する
         design_fields: dict[str, tuple[type, Any]] = {
             "quantity": (int, fld(ge=1, default=1, desc="搭載個数")),
-            "placement": (Placement | None, fld(default=None, desc="搭載位置・CAD パラメータ")),
         }
         design_fields.update(design_extra)
         if inner_design is not None:
