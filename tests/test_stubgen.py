@@ -5,13 +5,9 @@ from typer.testing import CliRunner
 
 from cli.main import app
 from core.discovery import discover_systems
+from core.stubgen import check_stubs, generate_stubs
 from schema import default_registry
-from schema.stubgen import (
-    STUB_FILENAME,
-    check_stubs,
-    generate_stubs,
-    render_subsystem_stub,
-)
+from schema.stubgen import STUB_FILENAME, render_subsystem_stub
 
 
 @pytest.fixture(autouse=True)
@@ -73,7 +69,7 @@ def test_check_stubs_detects_missing(tmp_path) -> None:
 
 def test_cli_gen_stubs_check_exit_0_when_synced(runner, tmp_path, monkeypatch) -> None:
     """CLI: generate 直後の --check は exit 0。"""
-    import schema.stubgen as stubgen
+    import core.stubgen as stubgen
 
     monkeypatch.setattr(stubgen, "subsystem_dir", lambda name: tmp_path / name)
 
@@ -87,7 +83,7 @@ def test_cli_gen_stubs_check_exit_0_when_synced(runner, tmp_path, monkeypatch) -
 
 def test_cli_gen_stubs_check_exit_1_when_outdated(runner, tmp_path, monkeypatch) -> None:
     """CLI: stub が無い状態で --check は exit 1。"""
-    import schema.stubgen as stubgen
+    import core.stubgen as stubgen
 
     monkeypatch.setattr(stubgen, "subsystem_dir", lambda name: tmp_path / name)
 
