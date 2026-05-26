@@ -84,7 +84,7 @@ def _jsonable(value: Any) -> Any:
 
         json.dumps(value)
         return value
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return str(value)
 
 

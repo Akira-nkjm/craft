@@ -134,7 +134,7 @@ def normalize_float_values(table: Table, model: type[BaseModel]) -> None:
         val = table[fname]
         try:
             current = val.value if hasattr(val, "value") else val
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             current = val
         if isinstance(current, int) and not isinstance(current, bool):
             with _suppress_errors():

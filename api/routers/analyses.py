@@ -90,7 +90,7 @@ def _safe_default(default: Any) -> Any:
 
         json.dumps(default)
         return default
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return str(default)
 
 
