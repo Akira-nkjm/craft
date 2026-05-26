@@ -4,101 +4,19 @@
 Spec / Design / Requirements / Entry モデルを動的構築 + UnifiedRegistry へ登録する。
 """
 
-import inspect
-import re
-from pathlib import Path
-from typing import Any, ClassVar, dataclass_transform, get_origin
+from typing import Any, ClassVar, dataclass_transform
 
 from pydantic import BaseModel, ConfigDict, create_model
-from pydantic.fields import FieldInfo
 
+from schema._subclass_helpers import (
+    auto_pluralize,
+    collect_fields_from,
+    infer_system_from_caller,
+    is_internal,
+    is_trait,
+)
 from schema.fields import fld
 from schema.registry import ComponentDefinition, SourceLocation, default_registry
-
-_RESERVED = {
-    "Spec",
-    "Design",
-    "Requirements",
-    "Entry",
-    "__cardinality__",
-    "__shared_spec_default__",
-    "__trait_no_design__",
-    "__trait_design_extra__",
-    "__system__",
-    "__plural__",
-    # _Trait protocol ClassVars — excluded from spec field collection
-    "cardinality",
-    "design_extra",
-    "spec_only",
-}
-
-
-def _is_trait(base: type) -> bool:
-    """Component 派生ではない trait class か判定。"""
-    from schema.traits import _Trait
-
-    return base is not _Trait and isinstance(base, type) and issubclass(base, _Trait)
-
-
-def _is_internal(cls: type) -> bool:
-    """internal/base class はスキップ。"""
-    return cls.__name__ == "Component" or cls.__name__.startswith("_")
-
-
-def _infer_system_from_caller() -> str:
-    """呼び出し元ファイルパスから system を推論。
-
-    `.../systems/<name>/...` から `<name>` を取得。
-    """
-    frame = inspect.currentframe()
-    while frame is not None:
-        path = Path(frame.f_code.co_filename)
-        parts = path.parts
-        if "systems" in parts:
-            idx = parts.index("systems")
-            if idx + 1 < len(parts):
-                return parts[idx + 1]
-        frame = frame.f_back
-    raise RuntimeError(
-        "Cannot infer system from caller stack. Pass `system='...'` as a class keyword argument."
-    )
-
-
-def _auto_pluralize(name: str) -> str:
-    """単純な英語複数化。`Battery` → `batteries`、`OBC` → `obc`。"""
-    base = _camel_to_snake(name)
-    if base.endswith("y") and not base.endswith(("ay", "ey", "iy", "oy", "uy")):
-        return base[:-1] + "ies"
-    if base.endswith(("s", "x", "z", "ch", "sh")):
-        return base + "es"
-    return base + "s"
-
-
-def _camel_to_snake(name: str) -> str:
-    s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
-    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
-
-
-def _collect_fields_from(source: Any) -> dict[str, tuple[type, Any]]:
-    """`source` (class) の annotations と class-level defaults から field 辞書を作る。
-
-    戻り値は `create_model` 用の `{name: (type, default_or_FieldInfo)}` 形式。
-    """
-    anns = getattr(source, "__annotations__", {}) or {}
-    fields: dict[str, tuple[type, Any]] = {}
-    for fname, ftype in anns.items():
-        if fname in _RESERVED or fname.startswith("_"):
-            continue
-        if get_origin(ftype) is ClassVar:
-            continue
-        default = source.__dict__.get(fname, ...)
-        if isinstance(default, FieldInfo):
-            fields[fname] = (ftype, default)
-        elif default is ...:
-            fields[fname] = (ftype, fld())
-        else:
-            fields[fname] = (ftype, fld(default=default))
-    return fields
 
 
 @dataclass_transform(field_specifiers=(fld,))
@@ -132,13 +50,13 @@ class Component:
         **kwargs: Any,
     ) -> None:
         super().__init_subclass__(**kwargs)
-        if _is_internal(cls):
+        if is_internal(cls):
             return
 
         if system is None:
-            system = _infer_system_from_caller()
+            system = infer_system_from_caller()
         if plural is None:
-            plural = _auto_pluralize(cls.__name__)
+            plural = auto_pluralize(cls.__name__)
 
         cardinality = "single"
         spec_only = False
@@ -146,7 +64,7 @@ class Component:
         for base in cls.__mro__:
             if base is cls:
                 continue
-            if _is_trait(base):
+            if is_trait(base):
                 traits.append(base.__name__)
                 if getattr(base, "cardinality", "single") == "multi":
                     cardinality = "multi"
@@ -162,7 +80,7 @@ class Component:
         for base in reversed(cls.__mro__):
             if base is object or base is Component:
                 continue
-            spec_fields.update(_collect_fields_from(base))
+            spec_fields.update(collect_fields_from(base))
             extra = base.__dict__.get("design_extra")
             if extra:
                 design_extra.update(extra)
@@ -178,11 +96,11 @@ class Component:
         }
         design_fields.update(design_extra)
         if inner_design is not None:
-            design_fields.update(_collect_fields_from(inner_design))
+            design_fields.update(collect_fields_from(inner_design))
 
         req_fields: dict[str, tuple[type, Any]] = {}
         if inner_req is not None:
-            req_fields.update(_collect_fields_from(inner_req))
+            req_fields.update(collect_fields_from(inner_req))
 
         model_config = ConfigDict(extra="forbid")
         # pyrefly: pydantic.create_model の overload は **dict 展開と相性が悪い

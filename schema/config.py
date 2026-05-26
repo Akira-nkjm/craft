@@ -4,12 +4,12 @@ from typing import Any, ClassVar, dataclass_transform
 
 from pydantic import BaseModel, ConfigDict, create_model
 
-from schema.component import (
-    _auto_pluralize,
-    _collect_fields_from,
-    _infer_system_from_caller,
-    _is_internal,
-    _is_trait,
+from schema._subclass_helpers import (
+    auto_pluralize,
+    collect_fields_from,
+    infer_system_from_caller,
+    is_internal,
+    is_trait,
 )
 from schema.fields import fld
 from schema.registry import ConfigDefinition, SourceLocation, default_registry
@@ -32,23 +32,23 @@ class Config:
         **kwargs: Any,
     ) -> None:
         super().__init_subclass__(**kwargs)
-        if _is_internal(cls) or cls.__name__ == "Config":
+        if is_internal(cls) or cls.__name__ == "Config":
             return
 
         if system is None:
-            system = _infer_system_from_caller()
+            system = infer_system_from_caller()
 
         cardinality = "single"
         for base in cls.__mro__:
             if base is cls:
                 continue
-            if _is_trait(base) and getattr(base, "cardinality", "single") == "multi":
+            if is_trait(base) and getattr(base, "cardinality", "single") == "multi":
                 cardinality = "multi"
 
         if plural is None:
-            plural = _auto_pluralize(cls.__name__)
+            plural = auto_pluralize(cls.__name__)
 
-        fields = _collect_fields_from(cls)
+        fields = collect_fields_from(cls)
         model_config = ConfigDict(extra="forbid")
         model = create_model(  # pyrefly: ignore[no-matching-overload]
             f"{cls.__name__}Model",
