@@ -65,9 +65,11 @@ jobs:
           fi
           ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --json title --jq .title)
           BODY=$(printf 'Closes #%s\n\nAuto-created by Claude Code GitHub Action from `@claude` mention on #%s.\n\nSee the issue for full context and the discussion thread for implementation details.\n\n🤖 Generated with Claude Code' "$ISSUE_NUMBER" "$ISSUE_NUMBER")
-          gh pr create \
+          PR_URL=$(gh pr create \
             --base main \
             --head "$BRANCH" \
             --title "$ISSUE_TITLE" \
-            --body "$BODY" \
-            --label "claude-review"
+            --body "$BODY")
+          PR_NUM=$(basename "$PR_URL")
+          # Chain a review by mentioning @claude on the new PR
+          gh pr comment "$PR_NUM" --body "@claude review この PR を簡潔にレビューしてください。差分を読んで、🔴 critical / 🟡 suggestions / 🟢 良い点 / 承認判断 を 1 コメントにまとめてください。"
