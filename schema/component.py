@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, create_model
 from pydantic.fields import FieldInfo
 
 from schema.fields import fld
+from schema.placement import Placement
 from schema.registry import ComponentDefinition, SourceLocation, default_registry
 
 _RESERVED = {
@@ -173,9 +174,10 @@ class Component:
         inner_design = cls.__dict__.get("Design")
         inner_req = cls.__dict__.get("Requirements")
 
-        # quantity は全 component 共通の基底 design フィールド（user が上書き可能）
+        # quantity / placement は全 component 共通の基底 design フィールド（user が上書き可能）
         design_fields: dict[str, tuple[type, Any]] = {
             "quantity": (int, fld(ge=1, default=1, desc="搭載個数")),
+            "placement": (Placement | None, fld(default=None, desc="搭載位置・CAD パラメータ")),
         }
         design_fields.update(design_extra)
         if inner_design is not None:

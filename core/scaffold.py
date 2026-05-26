@@ -252,6 +252,18 @@ def _scaffold_config(
         )
 
 
+def _extract_nested_model(annotation: Any) -> type[BaseModel] | None:
+    """annotation が BaseModel サブクラス（または X | None）ならそのクラスを返す。"""
+    if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+        return annotation
+    args = getattr(annotation, "__args__", None)
+    if args:
+        for arg in args:
+            if isinstance(arg, type) and issubclass(arg, BaseModel):
+                return arg
+    return None
+
+
 def _fill_model_section(
     section: Table,
     model: type[BaseModel],
@@ -274,6 +286,23 @@ def _fill_model_section(
         key_source = _ks if isinstance(_ks, str) else None
         if key_source is not None:
             _fill_keyed_dict(section, fname, key_source, base_path, added, format_only=format_only)
+            continue
+
+        # Nested BaseModel field → recursive subsection
+        nested = _extract_nested_model(finfo.annotation)
+        if nested is not None:
+            if fname not in section and format_only:
+                continue
+            subsection = _ensure_table(section, fname)
+            _fill_model_section(
+                subsection,
+                nested,
+                f"{base_path}.{fname}",
+                added,
+                removed,
+                format_only=format_only,
+                overwrite=overwrite,
+            )
             continue
 
         if fname in section:

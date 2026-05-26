@@ -7,6 +7,7 @@ from schema.analysis import analysis
 from schema.component import Component
 from schema.config import Config
 from schema.fields import fld
+from schema.placement import Placement
 from schema.registry import (
     AnalysisDefinition,
     ComponentDefinition,
@@ -29,6 +30,7 @@ __all__ = [
     "Config",
     "ConfigDefinition",
     "MultiInstance",
+    "Placement",
     "PowerConsuming",
     "SpecOnly",
     "TemperatureSensitive",

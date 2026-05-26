@@ -14,6 +14,22 @@ power_per_unit_w = 5.0
 quantity = 1 # 搭載個数
 hysteresis_c = 2.0 # ヒステリシス幅 [degC]
 
+[heaters.battery_pack.design.placement] # 搭載位置・CAD パラメータ
+face = "PX" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 1.0 # Bounding box x dimension [mm]
+dy = 1.0 # Bounding box y dimension [mm]
+dz = 1.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
 [heaters.battery_pack.design.power_modes] # OperationMode 別の on/off
 safe = true
 nominal = true
@@ -29,6 +45,22 @@ power_per_unit_w = 3.0
 [heaters.obc_radiator.design]
 quantity = 1 # 搭載個数
 hysteresis_c = 1.5 # ヒステリシス幅 [degC]
+
+[heaters.obc_radiator.design.placement] # 搭載位置・CAD パラメータ
+face = "PX" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 1.0 # Bounding box x dimension [mm]
+dy = 1.0 # Bounding box y dimension [mm]
+dz = 1.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
 [heaters.obc_radiator.design.power_modes] # OperationMode 別の on/off
 safe = true

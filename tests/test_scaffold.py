@@ -6,7 +6,8 @@ from core.toml_io import read_toml, write_toml_atomic
 
 
 def test_scaffold_existing_data_is_noop(power_data_backup):
-    """既存 data.toml が完全なら added は空。"""
+    """scaffold は冪等：2回目の実行では added は空。"""
+    scaffold_system("power")
     result, _ = scaffold_system("power", dry_run=True)
     assert result.added_paths == ()
     assert result.removed_warnings == ()

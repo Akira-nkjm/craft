@@ -161,17 +161,27 @@ def default_value(finfo: FieldInfo) -> Any:
 
 
 def _placeholder_for_type(annotation: Any) -> Any:
-    origin = getattr(annotation, "__origin__", None) or annotation
-    if annotation is float or origin is float:
+    from typing import Literal
+
+    origin = getattr(annotation, "__origin__", None)
+
+    # Literal → 最初の値をそのまま返す
+    if origin is Literal:
+        args = getattr(annotation, "__args__", None)
+        if args:
+            return args[0]
+
+    bare = origin or annotation
+    if bare is float:
         return 0.0
-    if annotation is int or origin is int:
+    if bare is int:
         return 0
-    if annotation is bool or origin is bool:
+    if bare is bool:
         return False
-    if annotation is str or origin is str:
+    if bare is str:
         return ""
-    if origin in (list, tuple, set):
+    if bare in (list, tuple, set):
         return []
-    if origin is dict:
+    if bare is dict:
         return {}
     return ""
