@@ -12,6 +12,7 @@ from api.errors import register_exception_handlers
 from api.routers import (
     analyses,
     components,
+    configs,
     history,
     merge,
     runs,
@@ -25,6 +26,7 @@ from core.discovery import discover_systems
 TAGS_METADATA = [
     {"name": "schema", "description": "Pydantic JSON Schema 配信"},
     {"name": "components", "description": "TOML 上のインスタンス CRUD（ETag / If-Match）"},
+    {"name": "configs", "description": "Config CRUD（Singleton / MultiInstance）"},
     {"name": "analyses", "description": "@analysis 関数の自動 API（一覧 / 実行）"},
     {"name": "verify", "description": "veriq 検証実行"},
     {"name": "runs", "description": "verification run history"},
@@ -54,6 +56,7 @@ register_exception_handlers(app)
 
 app.include_router(schema.router)
 app.include_router(components.router)
+app.include_router(configs.router)
 app.include_router(analyses.router)
 app.include_router(verify.router)
 app.include_router(runs.router)

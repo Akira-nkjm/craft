@@ -17,16 +17,23 @@ from core.instances import (
     SharedSpecConflict,
     SingletonNotInstanceable,
     create_instance,
+    delete_config_instance,
     delete_instance,
+    get_config_instance,
     get_instance,
     get_shared_spec,
+    get_singleton_config,
+    list_config_instances,
     list_instances,
+    patch_config_instance,
     patch_instance,
+    set_config_instance,
     set_shared_spec,
+    set_singleton_config,
 )
 from core.merge import MERGED_TOML, merge
 from core.paths import system_data_path
-from core.toml_io import read_toml, write_toml_atomic
+from core.toml_io import read_toml
 from schema import default_registry
 
 
@@ -46,7 +53,10 @@ def handle_list_introspection(kind: str) -> Any:
             for c in default_registry.components()
         ]
     if kind == "configs":
-        return [{"system": c.system, "name": c.name} for c in default_registry.configs()]
+        return [
+            {"system": c.system, "name": c.name, "plural": c.plural, "cardinality": c.cardinality}
+            for c in default_registry.configs()
+        ]
     if kind == "analyses":
         return [
             {
@@ -90,8 +100,76 @@ def handle_get_component(system: str, component: str, instance: str | None) -> A
 
 
 def handle_get_config(system: str, name: str) -> Any:
-    data = read_toml(system_data_path(system))
-    return data.get(name, {"error": f"config '{system}.{name}' not present in data.toml"})
+    cfg = default_registry._configs.get((system, name))
+    if cfg is None:
+        return {"error": f"config '{system}.{name}' not found"}
+    if cfg.cardinality == "multi":
+        return list_config_instances(system, name)
+    data, _ = get_singleton_config(system, name)
+    return data
+
+
+def handle_get_config_instance(system: str, name: str, key: str) -> Any:
+    try:
+        data, etag = get_config_instance(system, name, key)
+    except InstanceNotFound as e:
+        return {"error": str(e)}
+    return {"etag": etag, **data}
+
+
+def handle_set_config_instance(system: str, name: str, payload: dict[str, Any]) -> Any:
+    key = payload.get("key", "")
+    if not key:
+        return {"error": "key required"}
+    body = {k: v for k, v in payload.items() if k != "key"}
+    try:
+        data, etag = set_config_instance(system, name, key, body)
+    except SingletonNotInstanceable as e:
+        return {"error": str(e)}
+    except ValidationError as e:
+        return {"error": f"validation_error: {e}"}
+    return {"etag": etag, **data}
+
+
+def handle_patch_config_instance(system: str, name: str, payload: dict[str, Any]) -> Any:
+    key = payload.get("key", "")
+    if not key:
+        return {"error": "key required"}
+    delta = payload.get("delta") or {}
+    if not isinstance(delta, dict):
+        return {"error": "delta must be an object"}
+    etag = payload.get("etag")
+    if etag is None:
+        try:
+            _, etag = get_config_instance(system, name, key)
+        except InstanceNotFound as e:
+            return {"error": str(e)}
+    try:
+        data, new_etag = patch_config_instance(system, name, key, delta, expected_etag=etag)
+    except InstanceNotFound as e:
+        return {"error": str(e)}
+    except ValidationError as e:
+        return {"error": f"validation_error: {e}"}
+    return {"etag": new_etag, **data}
+
+
+def handle_delete_config_instance(system: str, name: str, payload: dict[str, Any]) -> Any:
+    key = payload.get("key", "")
+    if not key:
+        return {"error": "key required"}
+    etag = payload.get("etag")
+    if etag is None:
+        try:
+            _, etag = get_config_instance(system, name, key)
+        except InstanceNotFound as e:
+            return {"error": str(e)}
+    try:
+        delete_config_instance(system, name, key, expected_etag=etag)
+    except InstanceNotFound as e:
+        return {"error": str(e)}
+    except SingletonNotInstanceable as e:
+        return {"error": str(e)}
+    return {"deleted": True, "key": key}
 
 
 # ─── write: instance CRUD ──────────────────────────────────────────
@@ -172,23 +250,19 @@ def handle_delete_instance(system: str, component: str, payload: dict[str, Any])
 
 
 def handle_set_config(system: str, name: str, payload: dict[str, Any]) -> Any:
-    """Config 全置換。data.toml の top-level [name] を payload['data'] に差し替える。"""
-    cfg = default_registry._configs.get((system, name))
-    if cfg is None:
-        return {"error": f"config '{system}.{name}' not found"}
+    """Singleton config 全置換。"""
     data_payload = payload.get("data")
     if not isinstance(data_payload, dict):
         return {"error": "data (object) required"}
     try:
-        validated = cfg.model.model_validate(data_payload)
+        new_value, etag = set_singleton_config(system, name, data_payload)
+    except InstanceNotFound as e:
+        return {"error": str(e)}
+    except SingletonNotInstanceable as e:
+        return {"error": str(e)}
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
-    new_value = validated.model_dump(exclude_none=True)
-    path = system_data_path(system)
-    data = read_toml(path)
-    data[name] = new_value
-    write_toml_atomic(path, data)
-    return {"name": name, **new_value}
+    return {"etag": etag, **new_value}
 
 
 def handle_set_shared_spec(system: str, component: str, payload: dict[str, Any]) -> Any:

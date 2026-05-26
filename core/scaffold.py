@@ -217,16 +217,33 @@ def _scaffold_config(
     format_only: bool,
     overwrite: bool,
 ) -> None:
-    section = _ensure_table(target, cfg.name)
-    _fill_model_section(
-        section,
-        cfg.model,
-        cfg.name,
-        added,
-        removed,
-        format_only=format_only,
-        overwrite=overwrite,
-    )
+    if cfg.cardinality == "multi":
+        section = _ensure_table(target, cfg.plural)
+        instance_keys = [k for k in section if isinstance(section[k], (dict, Table))]
+        if not instance_keys:
+            instance_keys = ["main"]
+        for inst in instance_keys:
+            inst_section = _ensure_table(section, inst)
+            _fill_model_section(
+                inst_section,
+                cfg.model,
+                f"{cfg.plural}.{inst}",
+                added,
+                removed,
+                format_only=format_only,
+                overwrite=overwrite,
+            )
+    else:
+        section = _ensure_table(target, cfg.name)
+        _fill_model_section(
+            section,
+            cfg.model,
+            cfg.name,
+            added,
+            removed,
+            format_only=format_only,
+            overwrite=overwrite,
+        )
 
 
 def _fill_model_section(

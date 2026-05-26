@@ -49,6 +49,8 @@ class ComponentDefinition:
 class ConfigDefinition:
     system: str
     name: str
+    plural: str
+    cardinality: str  # "single" | "multi"
     model: type[BaseModel]
     cls: type
     source: SourceLocation
@@ -90,9 +92,7 @@ class UnifiedRegistry:
     def register_component(self, defn: ComponentDefinition) -> None:
         key = (defn.system, defn.name)
         if key in self._components:
-            raise DuplicateRegistration(
-                f"Component {defn.system}.{defn.name} already registered"
-            )
+            raise DuplicateRegistration(f"Component {defn.system}.{defn.name} already registered")
         # plural 衝突検出
         for existing in self._components.values():
             if existing.system == defn.system and existing.plural == defn.plural:

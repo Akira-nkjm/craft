@@ -107,14 +107,36 @@ def _component_read_tools() -> list[mcp_types.Tool]:
 
 
 def _config_read_tools() -> list[mcp_types.Tool]:
-    return [
-        mcp_types.Tool(
-            name=f"get_{cfg.name}",
-            description=f"{cfg.system}.{cfg.name} (Config) を取得。",
-            inputSchema={"type": "object", "properties": {}},
-        )
-        for cfg in default_registry.configs()
-    ]
+    out: list[mcp_types.Tool] = []
+    for cfg in default_registry.configs():
+        if cfg.cardinality == "multi":
+            out.append(
+                mcp_types.Tool(
+                    name=f"list_{cfg.plural}",
+                    description=f"{cfg.system}.{cfg.name} の全エントリ一覧。",
+                    inputSchema={"type": "object", "properties": {}},
+                )
+            )
+            out.append(
+                mcp_types.Tool(
+                    name=f"get_{cfg.name}",
+                    description=f"{cfg.system}.{cfg.name} の1エントリを key で取得。",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {"key": {"type": "string"}},
+                        "required": ["key"],
+                    },
+                )
+            )
+        else:
+            out.append(
+                mcp_types.Tool(
+                    name=f"get_{cfg.name}",
+                    description=f"{cfg.system}.{cfg.name} (Config) を取得。",
+                    inputSchema={"type": "object", "properties": {}},
+                )
+            )
+    return out
 
 
 # ─── analysis ──────────────────────────────────────────────────────
@@ -287,21 +309,69 @@ def _component_write_tools() -> list[mcp_types.Tool]:
 
 
 def _config_write_tools() -> list[mcp_types.Tool]:
-    return [
-        mcp_types.Tool(
-            name=f"set_{cfg.name}",
-            description=f"Replace {cfg.system}.{cfg.name} (Config) contents.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "data": {"type": "object"},
-                    "etag": {"type": "string"},
-                },
-                "required": ["data"],
-            },
-        )
-        for cfg in default_registry.configs()
-    ]
+    out: list[mcp_types.Tool] = []
+    for cfg in default_registry.configs():
+        if cfg.cardinality == "multi":
+            out.append(
+                mcp_types.Tool(
+                    name=f"set_{cfg.name}",
+                    description=f"{cfg.system}.{cfg.name} エントリを作成または全置換。",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "key": {"type": "string"},
+                            "data": {"type": "object"},
+                            "etag": {"type": "string"},
+                        },
+                        "required": ["key", "data"],
+                    },
+                )
+            )
+            out.append(
+                mcp_types.Tool(
+                    name=f"patch_{cfg.name}",
+                    description=f"{cfg.system}.{cfg.name} エントリを部分更新。",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "key": {"type": "string"},
+                            "delta": {"type": "object"},
+                            "etag": {"type": "string"},
+                        },
+                        "required": ["key", "delta"],
+                    },
+                )
+            )
+            out.append(
+                mcp_types.Tool(
+                    name=f"delete_{cfg.name}",
+                    description=f"{cfg.system}.{cfg.name} エントリを削除。",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "key": {"type": "string"},
+                            "etag": {"type": "string"},
+                        },
+                        "required": ["key"],
+                    },
+                )
+            )
+        else:
+            out.append(
+                mcp_types.Tool(
+                    name=f"set_{cfg.name}",
+                    description=f"Replace {cfg.system}.{cfg.name} (Config) contents.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "data": {"type": "object"},
+                            "etag": {"type": "string"},
+                        },
+                        "required": ["data"],
+                    },
+                )
+            )
+    return out
 
 
 # ─── history / diff ────────────────────────────────────────────────
@@ -375,8 +445,19 @@ def build_handler_map() -> dict[str, Callable[[dict[str, Any]], Any]]:
             handlers[f"get_{cdef.name}"] = _make_get_singleton_handler(cdef.system, cdef.name)
             handlers[f"patch_{cdef.name}"] = _make_patch_handler(cdef.system, cdef.name)
     for cfg in default_registry.configs():
-        handlers[f"get_{cfg.name}"] = _make_get_config_handler(cfg.system, cfg.name)
-        handlers[f"set_{cfg.name}"] = _make_set_config_handler(cfg.system, cfg.name)
+        if cfg.cardinality == "multi":
+            handlers[f"list_{cfg.plural}"] = _make_list_config_handler(cfg.system, cfg.name)
+            handlers[f"get_{cfg.name}"] = _make_get_config_instance_handler(cfg.system, cfg.name)
+            handlers[f"set_{cfg.name}"] = _make_set_config_instance_handler(cfg.system, cfg.name)
+            handlers[f"patch_{cfg.name}"] = _make_patch_config_instance_handler(
+                cfg.system, cfg.name
+            )
+            handlers[f"delete_{cfg.name}"] = _make_delete_config_instance_handler(
+                cfg.system, cfg.name
+            )
+        else:
+            handlers[f"get_{cfg.name}"] = _make_get_config_handler(cfg.system, cfg.name)
+            handlers[f"set_{cfg.name}"] = _make_set_config_handler(cfg.system, cfg.name)
     for adef in default_registry.analyses():
         if adef.verify:
             handlers[f"verify_{adef.name}"] = lambda _payload, name=adef.name, sub=adef.system: (
@@ -466,5 +547,51 @@ def _make_set_config_handler(system: str, config_name: str):
 
     def h(payload: dict[str, Any]) -> Any:
         return handle_set_config(system, config_name, payload)
+
+    return h
+
+
+def _make_list_config_handler(system: str, config_name: str):
+    from mcp_server.handlers import handle_get_config
+
+    def h(_payload: dict[str, Any]) -> Any:
+        return handle_get_config(system, config_name)
+
+    return h
+
+
+def _make_get_config_instance_handler(system: str, config_name: str):
+    from mcp_server.handlers import handle_get_config_instance
+
+    def h(payload: dict[str, Any]) -> Any:
+        key = payload.get("key", "")
+        return handle_get_config_instance(system, config_name, key)
+
+    return h
+
+
+def _make_set_config_instance_handler(system: str, config_name: str):
+    from mcp_server.handlers import handle_set_config_instance
+
+    def h(payload: dict[str, Any]) -> Any:
+        return handle_set_config_instance(system, config_name, payload)
+
+    return h
+
+
+def _make_patch_config_instance_handler(system: str, config_name: str):
+    from mcp_server.handlers import handle_patch_config_instance
+
+    def h(payload: dict[str, Any]) -> Any:
+        return handle_patch_config_instance(system, config_name, payload)
+
+    return h
+
+
+def _make_delete_config_instance_handler(system: str, config_name: str):
+    from mcp_server.handlers import handle_delete_config_instance
+
+    def h(payload: dict[str, Any]) -> Any:
+        return handle_delete_config_instance(system, config_name, payload)
 
     return h
