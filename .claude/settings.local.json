@@ -20,9 +20,12 @@
       "mcp__codegraph__codegraph_node",
       "mcp__codegraph__codegraph_explore",
       "mcp__codegraph__codegraph_files",
-      "mcp__codegraph__codegraph_status"
+      "mcp__codegraph__codegraph_status",
+      "Bash(gh label *)",
+      "Bash(gh issue create *)"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "codegraph"
   ],
@@ -88,6 +91,5 @@
         ]
       }
     ]
-  },
-  "enableAllProjectMcpServers": true
+  }
 }

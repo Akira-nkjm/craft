@@ -16,21 +16,10 @@ from core.runs import (
     update_latest,
     write_run_artifacts,
 )
-from schema import default_registry
+from core.serialization import to_jsonable
+from core.veriq_project import build_project
 
 merge_mod = importlib.import_module("core.merge")
-
-
-def build_project() -> vq.Project:
-    """登録済み system の scope を集めて Project を組み立てる。"""
-    project = vq.Project("Craft")
-    for sub in sorted(default_registry.systems()):
-        mod = importlib.import_module(f"systems.{sub}.scope")
-        scope = getattr(mod, sub, None)
-        if scope is None:
-            continue
-        project.add_scope(scope)
-    return project
 
 
 def run_verify_core() -> dict[str, Any]:
@@ -96,11 +85,11 @@ def _result_payload(result: Any) -> dict[str, Any]:
             continue
         scopes_payload[scope_name] = {
             "calculations": [
-                {"path": str(node.path), "value": _jsonable(node.value)}
+                {"path": str(node.path), "value": to_jsonable(node.value)}
                 for node in tree.calculations
             ],
             "verifications": [
-                {"path": str(node.path), "value": _jsonable(node.value)}
+                {"path": str(node.path), "value": to_jsonable(node.value)}
                 for node in tree.verifications
             ],
         }
@@ -109,13 +98,3 @@ def _result_payload(result: Any) -> dict[str, Any]:
         "errors": [str(e) for e in result.errors],
         "scopes": scopes_payload,
     }
-
-
-def _jsonable(value: Any) -> Any:
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if isinstance(value, dict):
-        return {str(k): _jsonable(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_jsonable(v) for v in value]
-    return value

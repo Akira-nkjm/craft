@@ -21,7 +21,6 @@
     craft init system <name>         system 雛形生成
 """
 
-import importlib
 import json
 import sys
 from pathlib import Path
@@ -32,6 +31,7 @@ from pydantic import ValidationError
 
 from core.discovery import discover_systems
 from core.errors import ETagMismatch, PreconditionRequired
+from core.serialization import to_jsonable
 
 # Typer サブアプリ
 app = typer.Typer(
@@ -57,21 +57,7 @@ def _bootstrap() -> None:
 
 
 def _print_json(obj: Any) -> None:
-    typer.echo(json.dumps(obj, indent=2, ensure_ascii=False, default=_jsonable))
-
-
-def _jsonable(value: Any) -> Any:
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if isinstance(value, Path):
-        return str(value)
-    if isinstance(value, (str, int, float, bool, type(None))):
-        return value
-    if isinstance(value, dict):
-        return {str(k): _jsonable(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_jsonable(v) for v in value]
-    return str(value)
+    typer.echo(json.dumps(obj, indent=2, ensure_ascii=False, default=to_jsonable))
 
 
 # ─── history / diff ─────────────────────────────────────────────────
@@ -681,73 +667,24 @@ def analysis_run(
     """analysis を実行（veriq 連携 or ad-hoc）。"""
     _bootstrap()
     sub = None if system == "_" else system
-    from schema import default_registry
-
-    adef = default_registry.analysis_or_none(sub, name)
-    if adef is None:
-        typer.echo(f"Error: analysis '{system}.{name}' not found", err=True)
-        raise typer.Exit(code=1)
-
     payload = json.loads(payload_json) if payload_json else {}
 
-    if adef.system is None:
-        import inspect
+    from core.analysis_runner import AnalysisArgumentError, AnalysisNotFound
+    from core.analysis_runner import run_analysis as _run_analysis
 
-        from core.analysis_cache import (
-            code_version_for_func,
-            compute_cache_key,
-            get_cached,
-            put_cached,
-        )
+    try:
+        result = _run_analysis(sub, name, payload, use_cache=not no_cache)
+    except AnalysisNotFound:
+        typer.echo(f"Error: analysis '{system}.{name}' not found", err=True)
+        raise typer.Exit(code=1) from None
+    except AnalysisArgumentError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from None
 
-        sig = inspect.signature(adef.func)
-        bound = sig.bind_partial(**payload)
-        bound.apply_defaults()
-        inputs = dict(bound.arguments)
-        cache_key: str | None = None
-        if adef.cache and not no_cache:
-            code_version = code_version_for_func(adef.func)
-            cache_key = compute_cache_key(adef.name, code_version, inputs)
-            cached = get_cached(adef.name, cache_key)
-            if cached is not None:
-                _print_json({"value": cached.get("value"), "cache_hit": True})
-                return
-        value = adef.func(*bound.args, **bound.kwargs)
-        json_value = _jsonable(value)
-        if cache_key is not None:
-            put_cached(adef.name, cache_key, {"value": json_value})
-        output = {"value": json_value}
-        if adef.cache:
-            output["cache_hit"] = False
-        _print_json(output)
-        return
-
-    # veriq 経由
-    import veriq as vq
-
-    from core.merge import MERGED_TOML
-    from core.merge import merge as merge_func
-
-    project = vq.Project("Craft")
-    for s in sorted(default_registry.systems()):
-        mod = importlib.import_module(f"systems.{s}.scope")
-        scope = getattr(mod, s, None)
-        if scope is not None:
-            project.add_scope(scope)
-    merge_func()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
-    result = vq.evaluate_project(project, model_data)
-    tree = result.get_scope_tree(adef.system)
-    if tree is None:
-        _print_json({"value": None})
-        return
-    nodes = tree.verifications if adef.verify else tree.calculations
-    prefix = "?" if adef.verify else "@"
-    for node in nodes:
-        if str(node.path).endswith(f"{prefix}{adef.name}"):
-            _print_json({"value": _jsonable(node.value)})
-            return
-    _print_json({"value": None})
+    output: dict[str, Any] = {"value": result.value}
+    if result.cache_hit is not None:
+        output["cache_hit"] = result.cache_hit
+    _print_json(output)
 
 
 # ─── gen-stubs ───────────────────────────────────────────────────────
