@@ -11,6 +11,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
 
+import core.errors as _core_errors
+
 
 class ProblemDetails(BaseModel):
     """RFC 7807 problem-details payload。"""
@@ -137,6 +139,40 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
         return JSONResponse(
             status_code=422,
+            content=jsonable_encoder(problem.model_dump(exclude_none=True)),
+            media_type="application/problem+json",
+        )
+
+    @app.exception_handler(_core_errors.ETagMismatch)
+    async def core_etag_mismatch_handler(
+        request: Request, exc: _core_errors.ETagMismatch
+    ) -> JSONResponse:
+        problem = ProblemDetails(
+            type="etag_mismatch",
+            status=412,
+            title="ETag precondition failed",
+            detail=str(exc),
+            instance=str(request.url.path),
+        )
+        return JSONResponse(
+            status_code=412,
+            content=jsonable_encoder(problem.model_dump(exclude_none=True)),
+            media_type="application/problem+json",
+        )
+
+    @app.exception_handler(_core_errors.PreconditionRequired)
+    async def core_precondition_required_handler(
+        request: Request, exc: _core_errors.PreconditionRequired
+    ) -> JSONResponse:
+        problem = ProblemDetails(
+            type="if_match_required",
+            status=428,
+            title="If-Match header required",
+            detail=str(exc),
+            instance=str(request.url.path),
+        )
+        return JSONResponse(
+            status_code=428,
             content=jsonable_encoder(problem.model_dump(exclude_none=True)),
             media_type="application/problem+json",
         )

@@ -5,6 +5,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from core.errors import ETagMismatch, PreconditionRequired
 from core.history import (
     GitError,
     GitRefNotFound,
@@ -146,6 +147,8 @@ def handle_patch_config_instance(system: str, name: str, payload: dict[str, Any]
             return {"error": str(e)}
     try:
         data, new_etag = patch_config_instance(system, name, key, delta, expected_etag=etag)
+    except (ETagMismatch, PreconditionRequired) as e:
+        return {"error": str(e)}
     except InstanceNotFound as e:
         return {"error": str(e)}
     except ValidationError as e:
@@ -165,6 +168,8 @@ def handle_delete_config_instance(system: str, name: str, payload: dict[str, Any
             return {"error": str(e)}
     try:
         delete_config_instance(system, name, key, expected_etag=etag)
+    except (ETagMismatch, PreconditionRequired) as e:
+        return {"error": str(e)}
     except InstanceNotFound as e:
         return {"error": str(e)}
     except SingletonNotInstanceable as e:
@@ -221,6 +226,8 @@ def handle_patch_instance(system: str, component: str, payload: dict[str, Any]) 
 
     try:
         view, new_etag = patch_instance(system, component, name, delta, expected_etag=etag)
+    except (ETagMismatch, PreconditionRequired) as e:
+        return {"error": str(e)}
     except InstanceNotFound as e:
         return {"error": str(e)}
     except SharedSpecConflict as e:
@@ -242,6 +249,8 @@ def handle_delete_instance(system: str, component: str, payload: dict[str, Any])
             return {"error": str(e)}
     try:
         delete_instance(system, component, name, expected_etag=etag)
+    except (ETagMismatch, PreconditionRequired) as e:
+        return {"error": str(e)}
     except InstanceNotFound as e:
         return {"error": str(e)}
     except SingletonNotInstanceable as e:
@@ -280,6 +289,8 @@ def handle_set_shared_spec(system: str, component: str, payload: dict[str, Any])
             return {"error": str(e)}
     try:
         new_spec, new_etag = set_shared_spec(system, component, spec, expected_etag=etag)
+    except (ETagMismatch, PreconditionRequired) as e:
+        return {"error": str(e)}
     except SingletonNotInstanceable as e:
         return {"error": str(e)}
     except ValidationError as e:
@@ -295,7 +306,7 @@ def handle_history(payload: dict[str, Any]) -> Any:
     limit_raw = payload.get("limit", 20)
     try:
         limit = int(limit_raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return {"error": "limit must be an integer"}
     try:
         entries = git_log(path, limit=limit)
