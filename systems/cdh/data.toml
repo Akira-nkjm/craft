@@ -1,33 +1,39 @@
 # C&DH system (Singleton: OBC)
 # 簡略形式: `<sub>.model.` プレフィックス省略
 
-[obc.spec]
-clock_mhz = 100
-ram_mb = 512
-storage_gb = 32.0
-architecture = "ARM Cortex-R5"
-power_per_unit_w = 3.5
-temp_min_c = -40.0
-temp_max_c = 85.0
 
-[obc.spec.bus_interface]                        # A2: ネスト Pydantic model
+
+# === OBC ===
+
+[obc.spec]
+mass_kg = 0.0 # 質量 [kg]
+temp_min_c = -40.0 # 動作温度下限 [degC]
+temp_max_c = 85.0 # 動作温度上限 [degC]
+power_per_unit_w = 3.5 # 単位あたりの想定消費電力 [W]
+clock_mhz = 100 # [MHz]
+ram_mb = 512 # [MB]
+storage_gb = 32.0 # [GB]
+architecture = "ARM Cortex-R5" # CPU アーキ (ARM/RISC-V 等)
+
+[obc.spec.bus_interface] # バス I/F (ネスト model)
 voltage_v = 28.0
 rated_current_a = 2.5
 protocol = "CAN"
 
 [obc.design]
+quantity = 1 # 搭載個数
 firmware_version = "v1.2.0"
 boot_partition_count = 2
 
-[obc.design.power_modes]
+[obc.design.power_modes] # OperationMode 別の on/off
 safe = true
 nominal = true
 science = true
 safe_hold = true
 
 [obc.requirements]
-mtbf_hours = 50000.0
-radiation_tolerance_krad = 30.0
+mtbf_hours = 50000.0 # [h]
+radiation_tolerance_krad = 30.0 # [krad]
 
 [obc.meta]
 vendor = "Aitech"

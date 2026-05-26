@@ -1,0 +1,8 @@
+# === Sun Senser ===
+
+[sunsenser.spec]
+mass_kg = 0.0 # 質量 [kg]
+fov_deg = 0.0 # 視野角
+
+[sunsenser.design]
+quantity = 1 # 搭載個数
