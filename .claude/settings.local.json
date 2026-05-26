@@ -23,6 +23,9 @@
       "mcp__codegraph__codegraph_status"
     ]
   },
+  "enabledMcpjsonServers": [
+    "codegraph"
+  ],
   "hooks": {
     "PreToolUse": [
       {
@@ -85,5 +88,6 @@
         ]
       }
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true
 }
