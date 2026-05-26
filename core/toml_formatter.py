@@ -90,7 +90,11 @@ class _suppress_errors:  # noqa: N801 — context manager 用、private util
 
 
 def order_fields_by_registry(table: Table, model: type[BaseModel]) -> None:
-    """既存 Table の field 順序を model.model_fields の順に並び替え。"""
+    """既存 Table の field 順序を model.model_fields の順に並び替え。
+
+    キーを削除後に残る non-keyed body アイテム（セクション区切りコメント・
+    空白行）も除去する。放置すると再追加したフィールドが末尾に押し出される。
+    """
     desired = list(model.model_fields.keys())
     items_in_order: list[tuple[str, Any]] = []
     extras: list[tuple[str, Any]] = []
@@ -100,9 +104,11 @@ def order_fields_by_registry(table: Table, model: type[BaseModel]) -> None:
     for fname in list(table.keys()):
         if fname not in desired:
             extras.append((fname, table[fname]))
-    # 全 key を一旦削除して順序再構築
+    # 全 key を削除
     for fname in list(table.keys()):
         del table[fname]
+    # 削除後に残る non-keyed アイテム（コメント・空白）も除去して順序を確定させる
+    table.value._body[:] = [(k, v) for k, v in table.value._body if k is not None]
     for fname, val in items_in_order:
         table[fname] = val
     for fname, val in extras:

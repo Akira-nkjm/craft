@@ -56,6 +56,7 @@ def test_scaffold_format_only_reorders_fields(power_data_backup):
     after = read_toml(power_data_backup)
     keys = list(after["batteries"]["spec"].keys())
     expected = [
+        "mass_kg",
         "temp_min_c",
         "temp_max_c",
         "capacity_wh",

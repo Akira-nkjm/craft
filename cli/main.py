@@ -505,16 +505,22 @@ def merge_cmd(
 def scaffold_cmd(
     system: str | None = typer.Argument(None, help="対象 system (省略時は全件)"),
     dry_run: bool = typer.Option(False, "--dry-run"),
+    format_only: bool = typer.Option(
+        False, "--format-only", help="既存値を変えず順序・コメントのみ整形"
+    ),
+    overwrite: bool = typer.Option(False, "--overwrite", help="既存値を default に戻す（破壊的）"),
 ) -> None:
     """registry → data.toml 雛形生成 (add-missing, 既存値保持)。"""
     _bootstrap()
     from core.scaffold import scaffold_all, scaffold_system
 
     if system is None:
-        results = scaffold_all(dry_run=dry_run)
+        results = scaffold_all(dry_run=dry_run, format_only=format_only, overwrite=overwrite)
     else:
         try:
-            r, _ = scaffold_system(system, dry_run=dry_run)
+            r, _ = scaffold_system(
+                system, dry_run=dry_run, format_only=format_only, overwrite=overwrite
+            )
         except ValueError as e:
             typer.echo(f"Error: {e}", err=True)
             raise typer.Exit(code=1) from e

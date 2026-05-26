@@ -10,6 +10,7 @@
 - shared_spec=True (MultiInstance) → `<plural>.spec` 直下に spec を置く
 """
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -84,7 +85,8 @@ def scaffold_system(
     )
 
     if not dry_run:
-        write_toml_atomic(data_path, doc)
+        content = _normalize_scaffold_spacing(tomlkit.dumps(doc))
+        write_toml_atomic(data_path, content)
 
     return result, doc
 
@@ -117,6 +119,7 @@ def _scaffold_component(
     overwrite: bool,
 ) -> None:
     if cdef.cardinality == "multi":
+        _ensure_section_comment(target, cdef.plural, _class_name_to_title(cdef.cls))
         section = _ensure_table(target, cdef.plural)
         # MultiInstance の shared spec を `<plural>.spec` 直下に置く
         shared_spec_section = _ensure_table(section, "spec")
@@ -148,6 +151,7 @@ def _scaffold_component(
                 include_spec=False,  # shared_spec のため per-instance spec は出さない
             )
     else:
+        _ensure_section_comment(target, cdef.name, _class_name_to_title(cdef.cls))
         section = _ensure_table(target, cdef.name)
         _fill_instance_subsections(
             section,
@@ -218,6 +222,7 @@ def _scaffold_config(
     overwrite: bool,
 ) -> None:
     if cfg.cardinality == "multi":
+        _ensure_section_comment(target, cfg.plural, _class_name_to_title(cfg.cls))
         section = _ensure_table(target, cfg.plural)
         instance_keys = [k for k in section if isinstance(section[k], (dict, Table))]
         if not instance_keys:
@@ -234,6 +239,7 @@ def _scaffold_config(
                 overwrite=overwrite,
             )
     else:
+        _ensure_section_comment(target, cfg.name, _class_name_to_title(cfg.cls))
         section = _ensure_table(target, cfg.name)
         _fill_model_section(
             section,
@@ -295,6 +301,117 @@ def _fill_model_section(
     normalize_float_values(section, model)
 
 
+def _normalize_scaffold_spacing(content: str) -> str:
+    """scaffold 後の TOML テキストの空行を正規化する（冪等）。
+
+    - `[...]` ヘッダ直前: 1 空行
+    - MultiInstance のインスタンス切り替わり直前: 2 空行
+    - `# === ... ===` 直前: 3 空行
+    """
+    # [section] ヘッダ直前を 1 空行に統一
+    content = re.sub(r"\n+(\[[^\]\n]+\])", lambda m: "\n\n" + m.group(1), content)
+    # MultiInstance のインスタンス切り替わりを 2 空行に昇格
+    content = _promote_instance_transitions(content)
+    # # === ... === 直前を 3 空行に統一
+    content = re.sub(r"\n+(# ===)", lambda m: "\n\n\n\n" + m.group(1), content)
+    # ファイル先頭の余分な空行を除去
+    content = content.lstrip("\n")
+    return content
+
+
+def _promote_instance_transitions(content: str) -> str:
+    """[root.A.x] → [root.B.y] の境界（インスタンス切り替わり）を 2 空行に昇格する。"""
+    lines = content.split("\n")
+    result: list[str] = []
+    prev_instance: tuple[str, str] | None = None  # (root, instance)
+
+    for line in lines:
+        m = re.match(r"^\[([^\]]+)\]", line)
+        if m:
+            parts = m.group(1).split(".")
+            if len(parts) >= 3:
+                root, inst = parts[0], parts[1]
+                if (
+                    prev_instance is not None
+                    and prev_instance[0] == root
+                    and prev_instance[1] != inst
+                ):
+                    # インスタンス切り替わり: 末尾の空行を 2 行に揃える
+                    while result and result[-1] == "":
+                        result.pop()
+                    result.append("")
+                    result.append("")
+                prev_instance = (root, inst)
+            else:
+                prev_instance = None
+        result.append(line)
+
+    return "\n".join(result)
+
+
+def _class_name_to_title(cls: type) -> str:
+    """CamelCase クラス名を単語スペース区切りに変換する。
+
+    SunSenser → Sun Senser, OBC → OBC, MissionProfile → Mission Profile
+    """
+    name = cls.__name__
+    # lowercase/digit の直後に uppercase が来たら空白を挿入
+    name = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", name)
+    # 連続 uppercase の直後に uppercase+lowercase が来たら空白を挿入（例: OBCFoo → OBC Foo）
+    name = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", name)
+    return name
+
+
+def _ensure_section_comment(parent: TOMLDocument, key: str, title: str | None = None) -> None:
+    """parent 内の key 直前に '# === Title ===' コメントが無ければ挿入する。
+
+    既にコメントがある場合（=== を含む）はスキップ。
+    """
+    if title is None:
+        title = key.replace("_", " ").title()
+    body = parent._body  # TOMLDocument は Container を直接継承するため _body を直接持つ
+    # key のインデックスを探す
+    key_idx = next(
+        (i for i, (k, _) in enumerate(body) if k is not None and str(k) == key),
+        None,
+    )
+    if key_idx is None:
+        # 未登録セクション: 後で _ensure_table が追加するので、今は先行コメントだけ挿入
+        # 空行数は _normalize_scaffold_spacing が統一するので nl は 1 つだけ追加
+        parent.add(tomlkit.nl())
+        parent.add(tomlkit.comment(f"=== {title} ==="))
+        parent.add(tomlkit.nl())
+        return
+
+    # 直前に === コメントが既にあるか確認（空行数は text 正規化に任せる）
+    from tomlkit.items import Comment as _Comment
+
+    for i in range(key_idx - 1, -1, -1):
+        k, v = body[i]
+        if k is not None:
+            break
+        if isinstance(v, _Comment) and "===" in str(v):
+            return  # 既にある
+
+    # === コメント無し → 新規挿入: key_idx の直前に nl + comment + nl
+    new_items = [
+        (None, tomlkit.nl()),
+        (None, tomlkit.comment(f"=== {title} ===")),
+        (None, tomlkit.nl()),
+    ]
+    for i, item in enumerate(new_items):
+        body.insert(key_idx + i, item)
+    # _map のインデックスを挿入分だけシフト
+    n = len(new_items)
+    map_ = parent._map
+    for mk in list(map_.keys()):
+        idx = map_[mk]
+        if isinstance(idx, tuple):
+            map_[mk] = tuple(i + n if i >= key_idx else i for i in idx)
+        elif isinstance(idx, int) and idx >= key_idx:
+            map_[mk] = idx + n
+
+
 def _fill_keyed_dict(
     section: Table,
     fname: str,
@@ -340,6 +457,34 @@ def _load_config_instance_keys(system: str, config_plural: str) -> list[str]:
 
 def _is_nested_table(value: Any) -> bool:
     return isinstance(value, (dict, Table)) and bool(value)
+
+
+def _ensure_nl_before_key(section: Table, key: str) -> None:
+    """section 内の key 直前に空行（改行）が無ければ挿入する。key が未登録なら末尾に nl を追加。"""
+    from tomlkit.items import Whitespace
+
+    body = section.value._body
+    key_idx = next(
+        (i for i, (k, _) in enumerate(body) if k is not None and str(k) == key),
+        None,
+    )
+    if key_idx is None:
+        section.add(tomlkit.nl())
+        return
+    for i in range(key_idx - 1, -1, -1):
+        k, v = body[i]
+        if k is not None:
+            break
+        if isinstance(v, Whitespace) and "\n" in str(v):
+            return
+    body.insert(key_idx, (None, tomlkit.nl()))
+    map_ = section.value._map
+    for mk in list(map_.keys()):
+        idx = map_[mk]
+        if isinstance(idx, tuple):
+            map_[mk] = tuple(i + 1 if i >= key_idx else i for i in idx)
+        elif isinstance(idx, int) and idx >= key_idx:
+            map_[mk] = idx + 1
 
 
 def _ensure_table(parent: TOMLDocument | Table, key: str) -> Table:

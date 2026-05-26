@@ -56,8 +56,7 @@ def _infer_system_from_caller() -> str:
                 return parts[idx + 1]
         frame = frame.f_back
     raise RuntimeError(
-        "Cannot infer system from caller stack. "
-        "Pass `system='...'` as a class keyword argument."
+        "Cannot infer system from caller stack. Pass `system='...'` as a class keyword argument."
     )
 
 
@@ -106,7 +105,16 @@ def _resolve_annotations(cls: type) -> dict[str, Any]:
 
 @dataclass_transform(field_specifiers=(fld,))
 class Component:
-    """全 component の基底クラス。decorator なしで使う。"""
+    """全 component の基底クラス。decorator なしで使う。
+
+    すべての Component に自動追加されるフィールド:
+        Spec:   mass_kg   (float, kg)  — 質量
+        Design: quantity  (int, ≥1)    — 搭載個数
+
+    trait を追加すると以下のフィールドも自動追加される:
+        PowerConsuming    → Spec: power_per_unit_w  / Design: power_modes
+        TemperatureSensitive → Spec: temp_min_c, temp_max_c
+    """
 
     # `__init_subclass__` が動的に Pydantic モデルを構築して書き換えるため、
     # 型ヒント上は Any にしておく（user 派生で `class Design: ...` 等を書ける）。
@@ -148,7 +156,10 @@ class Component:
                     spec_only = True
 
         # Spec fields: walk MRO from base→derived so derived overrides
-        spec_fields: dict[str, tuple[type, Any]] = {}
+        # mass_kg は全 component 共通の基底 spec フィールド（user が上書き可能）
+        spec_fields: dict[str, tuple[type, Any]] = {
+            "mass_kg": (float, fld(ge=0, default=0.0, unit="kg", desc="質量")),
+        }
         design_extra: dict[str, tuple[type, Any]] = {}
         for base in reversed(cls.__mro__):
             if base is object or base is Component:
@@ -162,7 +173,11 @@ class Component:
         inner_design = cls.__dict__.get("Design")
         inner_req = cls.__dict__.get("Requirements")
 
-        design_fields: dict[str, tuple[type, Any]] = dict(design_extra)
+        # quantity は全 component 共通の基底 design フィールド（user が上書き可能）
+        design_fields: dict[str, tuple[type, Any]] = {
+            "quantity": (int, fld(ge=1, default=1, desc="搭載個数")),
+        }
+        design_fields.update(design_extra)
         if inner_design is not None:
             design_fields.update(_collect_fields_from(inner_design))
 

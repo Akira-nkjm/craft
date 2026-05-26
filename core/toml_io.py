@@ -35,11 +35,11 @@ def read_toml_doc(path: Path) -> TOMLDocument:
     return tomlkit.parse(path.read_text(encoding="utf-8"))
 
 
-def write_toml_atomic(path: Path, data: dict[str, Any] | TOMLDocument) -> None:
+def write_toml_atomic(path: Path, data: dict[str, Any] | TOMLDocument | str) -> None:
     """同一ファイルシステム上で temp に書いてから rename。
 
-    `data` が dict なら tomli_w 相当の最小整形で書く。TOMLDocument なら
-    tomlkit のフォーマットをそのまま温存。
+    `data` が str ならそのまま書く。dict なら tomli_w 相当の最小整形。
+    TOMLDocument なら tomlkit のフォーマットをそのまま温存。
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_path = tempfile.mkstemp(
@@ -48,7 +48,9 @@ def write_toml_atomic(path: Path, data: dict[str, Any] | TOMLDocument) -> None:
         dir=str(path.parent),
     )
     try:
-        if isinstance(data, TOMLDocument):
+        if isinstance(data, str):
+            content = data
+        elif isinstance(data, TOMLDocument):
             content = tomlkit.dumps(data)
         else:
             content = tomlkit.dumps(_dict_to_doc(data))
