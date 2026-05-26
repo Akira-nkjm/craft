@@ -295,7 +295,7 @@ def handle_history(payload: dict[str, Any]) -> Any:
     limit_raw = payload.get("limit", 20)
     try:
         limit = int(limit_raw)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return {"error": "limit must be an integer"}
     try:
         entries = git_log(path, limit=limit)
