@@ -20,6 +20,7 @@ from core.instances import (
     create_instance,
     delete_config_instance,
     delete_instance,
+    get_component_view,
     get_config_instance,
     get_instance,
     get_shared_spec,
@@ -33,8 +34,6 @@ from core.instances import (
     set_singleton_config,
 )
 from core.merge import MERGED_TOML, merge
-from core.paths import system_data_path
-from core.toml_io import read_toml
 from schema import default_registry
 
 
@@ -89,8 +88,11 @@ def handle_get_component(system: str, component: str, instance: str | None) -> A
     if defn is None:
         return {"error": f"component '{system}.{component}' not found"}
     if defn.cardinality == "single":
-        data = read_toml(system_data_path(system))
-        return data.get(defn.name, {"error": "no data"})
+        try:
+            view, _ = get_component_view(system, component, None)
+        except InstanceNotFound:
+            return {"error": "no data"}
+        return view
     if instance is None or not instance:
         return {"error": "name required for MultiInstance component"}
     try:

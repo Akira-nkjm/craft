@@ -17,12 +17,10 @@ from core.instances import (
     create_instance,
     delete_instance,
     get_instance,
-    list_instances,
+    list_component_view,
     patch_instance,
     replace_instance,
 )
-from core.paths import system_data_path
-from core.toml_io import read_toml
 from schema import default_registry
 
 router = APIRouter(prefix="/components", tags=["components"])
@@ -33,11 +31,7 @@ def list_component_instances(system: str, component: str) -> dict[str, Any]:
     defn = default_registry.component_or_none(system, component)
     if defn is None:
         raise NotFoundError(f"Component '{system}.{component}' is not registered")
-    data = read_toml(system_data_path(system))
-    if defn.cardinality == "multi":
-        instances = list_instances(system, component)
-    else:
-        instances = data.get(defn.name, {})
+    instances = list_component_view(system, component)
     return {
         "system": system,
         "component": component,
