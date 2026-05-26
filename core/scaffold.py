@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import tomlkit
-from pydantic import BaseModel, FieldInfo
+from pydantic import BaseModel
 from tomlkit import TOMLDocument
 from tomlkit.items import Table
 
@@ -254,7 +254,7 @@ def _extract_nested_model(annotation: Any) -> type[BaseModel] | None:
 
 
 def _apply_field_add_missing(
-    section: Table, fname: str, finfo: FieldInfo, base_path: str, added: list[str]
+    section: Table, fname: str, finfo: Any, base_path: str, added: list[str]
 ) -> None:
     if fname in section:
         return
@@ -266,7 +266,7 @@ def _apply_field_add_missing(
 
 
 def _apply_field_overwrite(
-    section: Table, fname: str, finfo: FieldInfo, base_path: str, added: list[str]
+    section: Table, fname: str, finfo: Any, base_path: str, added: list[str]
 ) -> None:
     default = default_value(finfo)
     if default is None:
@@ -280,14 +280,14 @@ def _apply_field_overwrite(
 
 
 def _apply_field_format_only(
-    section: Table, fname: str, finfo: FieldInfo, base_path: str, added: list[str]
+    section: Table, fname: str, finfo: Any, base_path: str, added: list[str]
 ) -> None:
     pass  # format-only never adds or modifies fields
 
 
 _FIELD_APPLIERS: dict[
     ScaffoldMode,
-    Callable[[Table, str, FieldInfo, str, list[str]], None],
+    Callable[[Table, str, Any, str, list[str]], None],
 ] = {
     "add-missing": _apply_field_add_missing,
     "overwrite": _apply_field_overwrite,
