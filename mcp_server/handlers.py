@@ -32,6 +32,7 @@ from core.instances import (
     set_shared_spec,
     set_singleton_config,
 )
+from core.introspection import list_analyses_summary, list_components_summary, list_configs_summary
 from core.merge import MERGED_TOML, merge
 from core.paths import system_data_path
 from core.serialization import to_jsonable
@@ -46,28 +47,28 @@ def handle_list_introspection(kind: str) -> Any:
     if kind == "components":
         return [
             {
-                "system": c.system,
-                "name": c.name,
-                "plural": c.plural,
-                "cardinality": c.cardinality,
-                "traits": list(c.traits),
+                "system": s.system,
+                "name": s.name,
+                "plural": s.plural,
+                "cardinality": s.cardinality,
+                "traits": list(s.traits),
             }
-            for c in default_registry.components()
+            for s in list_components_summary()
         ]
     if kind == "configs":
         return [
-            {"system": c.system, "name": c.name, "plural": c.plural, "cardinality": c.cardinality}
-            for c in default_registry.configs()
+            {"system": s.system, "name": s.name, "plural": s.plural, "cardinality": s.cardinality}
+            for s in list_configs_summary()
         ]
     if kind == "analyses":
         return [
             {
-                "system": a.system,
-                "name": a.name,
-                "verify": a.verify,
-                "desc": a.desc,
+                "system": s.system,
+                "name": s.name,
+                "verify": s.verify,
+                "desc": s.desc,
             }
-            for a in default_registry.analyses()
+            for s in list_analyses_summary()
         ]
     raise ValueError(f"Unknown introspection kind: {kind}")
 
