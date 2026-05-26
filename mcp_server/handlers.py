@@ -14,29 +14,30 @@ from core.history import (
     git_log,
 )
 from core.instances import (
-    InstanceAlreadyExists,
     InstanceNotFound,
-    SharedSpecConflict,
     SingletonNotInstanceable,
-    create_instance,
-    delete_config_instance,
-    delete_instance,
     get_config_instance,
     get_instance,
     get_shared_spec,
     get_singleton_config,
     list_config_instances,
     list_instances,
-    patch_config_instance,
-    patch_instance,
-    set_config_instance,
     set_shared_spec,
-    set_singleton_config,
 )
 from core.merge import merge
+from core.operations import (
+    create_component_op,
+    delete_component_op,
+    delete_config_entry_op,
+    patch_component_op,
+    patch_config_entry_op,
+    set_config_entry_op,
+    set_singleton_config_op,
+)
 from core.paths import system_data_path
 from core.serialization import to_jsonable
 from core.toml_io import read_toml
+from mcp_server.error_mapping import error_or_none
 from schema import default_registry
 
 
@@ -126,12 +127,12 @@ def handle_set_config_instance(system: str, name: str, payload: dict[str, Any]) 
         return {"error": "key required"}
     body = {k: v for k, v in payload.items() if k != "key"}
     try:
-        data, etag = set_config_instance(system, name, key, body)
-    except SingletonNotInstanceable as e:
-        return {"error": str(e)}
+        result = set_config_entry_op(system, name, key, body, if_match=payload.get("etag"))
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
-    return {"etag": etag, **data}
+    if err := error_or_none(result):
+        return err
+    return {"etag": result.etag, **result.payload}
 
 
 def handle_patch_config_instance(system: str, name: str, payload: dict[str, Any]) -> Any:
@@ -148,14 +149,12 @@ def handle_patch_config_instance(system: str, name: str, payload: dict[str, Any]
         except InstanceNotFound as e:
             return {"error": str(e)}
     try:
-        data, new_etag = patch_config_instance(system, name, key, delta, expected_etag=etag)
-    except (ETagMismatch, PreconditionRequired) as e:
-        return {"error": str(e)}
-    except InstanceNotFound as e:
-        return {"error": str(e)}
+        result = patch_config_entry_op(system, name, key, delta, if_match=etag)
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
-    return {"etag": new_etag, **data}
+    if err := error_or_none(result):
+        return err
+    return {"etag": result.etag, **result.payload}
 
 
 def handle_delete_config_instance(system: str, name: str, payload: dict[str, Any]) -> Any:
@@ -168,14 +167,9 @@ def handle_delete_config_instance(system: str, name: str, payload: dict[str, Any
             _, etag = get_config_instance(system, name, key)
         except InstanceNotFound as e:
             return {"error": str(e)}
-    try:
-        delete_config_instance(system, name, key, expected_etag=etag)
-    except (ETagMismatch, PreconditionRequired) as e:
-        return {"error": str(e)}
-    except InstanceNotFound as e:
-        return {"error": str(e)}
-    except SingletonNotInstanceable as e:
-        return {"error": str(e)}
+    result = delete_config_entry_op(system, name, key, if_match=etag)
+    if err := error_or_none(result):
+        return err
     return {"deleted": True, "key": key}
 
 
@@ -189,18 +183,12 @@ def handle_add_instance(system: str, component: str, payload: dict[str, Any]) ->
         return {"error": "name required"}
     body = {k: v for k, v in payload.items() if k != "name"}
     try:
-        view, etag = create_instance(system, component, name, body)
-    except InstanceAlreadyExists as e:
-        return {"error": str(e)}
-    except InstanceNotFound as e:
-        return {"error": str(e)}
-    except SingletonNotInstanceable as e:
-        return {"error": str(e)}
-    except SharedSpecConflict as e:
-        return {"error": str(e)}
+        result = create_component_op(system, component, name, body)
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
-    return {"etag": etag, **view}
+    if err := error_or_none(result):
+        return err
+    return {"etag": result.etag, **result.payload}
 
 
 def handle_patch_instance(system: str, component: str, payload: dict[str, Any]) -> Any:
@@ -227,16 +215,12 @@ def handle_patch_instance(system: str, component: str, payload: dict[str, Any]) 
             return {"error": str(e)}
 
     try:
-        view, new_etag = patch_instance(system, component, name, delta, expected_etag=etag)
-    except (ETagMismatch, PreconditionRequired) as e:
-        return {"error": str(e)}
-    except InstanceNotFound as e:
-        return {"error": str(e)}
-    except SharedSpecConflict as e:
-        return {"error": str(e)}
+        result = patch_component_op(system, component, name, delta, if_match=etag)
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
-    return {"etag": new_etag, **view}
+    if err := error_or_none(result):
+        return err
+    return {"etag": result.etag, **result.payload}
 
 
 def handle_delete_instance(system: str, component: str, payload: dict[str, Any]) -> Any:
@@ -249,14 +233,9 @@ def handle_delete_instance(system: str, component: str, payload: dict[str, Any])
             _, etag = get_instance(system, component, name)
         except InstanceNotFound as e:
             return {"error": str(e)}
-    try:
-        delete_instance(system, component, name, expected_etag=etag)
-    except (ETagMismatch, PreconditionRequired) as e:
-        return {"error": str(e)}
-    except InstanceNotFound as e:
-        return {"error": str(e)}
-    except SingletonNotInstanceable as e:
-        return {"error": str(e)}
+    result = delete_component_op(system, component, name, if_match=etag)
+    if err := error_or_none(result):
+        return err
     return {"deleted": True, "name": name}
 
 
@@ -266,14 +245,12 @@ def handle_set_config(system: str, name: str, payload: dict[str, Any]) -> Any:
     if not isinstance(data_payload, dict):
         return {"error": "data (object) required"}
     try:
-        new_value, etag = set_singleton_config(system, name, data_payload)
-    except InstanceNotFound as e:
-        return {"error": str(e)}
-    except SingletonNotInstanceable as e:
-        return {"error": str(e)}
+        result = set_singleton_config_op(system, name, data_payload, if_match=payload.get("etag"))
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
-    return {"etag": etag, **new_value}
+    if err := error_or_none(result):
+        return err
+    return {"etag": result.etag, **result.payload}
 
 
 def handle_set_shared_spec(system: str, component: str, payload: dict[str, Any]) -> Any:
