@@ -22,3 +22,11 @@ class ResourceNotFound(CraftError):  # noqa: N818
 
 class ResourceConflict(CraftError):  # noqa: N818
     """Resource already exists or conflicts with existing state."""
+
+
+class AnalysisNotFound(CraftError):  # noqa: N818
+    """Requested analysis is not registered."""
+
+
+class AnalysisArgumentError(CraftError):
+    """Payload does not match the analysis function signature."""

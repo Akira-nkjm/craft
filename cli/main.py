@@ -667,62 +667,24 @@ def analysis_run(
     """analysis を実行（veriq 連携 or ad-hoc）。"""
     _bootstrap()
     sub = None if system == "_" else system
-    from schema import default_registry
-
-    adef = default_registry.analysis_or_none(sub, name)
-    if adef is None:
-        typer.echo(f"Error: analysis '{system}.{name}' not found", err=True)
-        raise typer.Exit(code=1)
-
     payload = json.loads(payload_json) if payload_json else {}
 
-    if adef.system is None:
-        import inspect
+    from core.analysis_runner import AnalysisArgumentError, AnalysisNotFound
+    from core.analysis_runner import run_analysis as _run_analysis
 
-        from core.analysis_cache import (
-            code_version_for_func,
-            compute_cache_key,
-            get_cached,
-            put_cached,
-        )
+    try:
+        result = _run_analysis(sub, name, payload, use_cache=not no_cache)
+    except AnalysisNotFound:
+        typer.echo(f"Error: analysis '{system}.{name}' not found", err=True)
+        raise typer.Exit(code=1) from None
+    except AnalysisArgumentError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from None
 
-        sig = inspect.signature(adef.func)
-        bound = sig.bind_partial(**payload)
-        bound.apply_defaults()
-        inputs = dict(bound.arguments)
-        cache_key: str | None = None
-        if adef.cache and not no_cache:
-            code_version = code_version_for_func(adef.func)
-            cache_key = compute_cache_key(adef.name, code_version, inputs)
-            cached = get_cached(adef.name, cache_key)
-            if cached is not None:
-                _print_json({"value": cached.get("value"), "cache_hit": True})
-                return
-        value = adef.func(*bound.args, **bound.kwargs)
-        json_value = to_jsonable(value)
-        if cache_key is not None:
-            put_cached(adef.name, cache_key, {"value": json_value})
-        output = {"value": json_value}
-        if adef.cache:
-            output["cache_hit"] = False
-        _print_json(output)
-        return
-
-    # veriq 経由
-    from core.veriq_project import evaluate_project_from_merged
-
-    _, result = evaluate_project_from_merged()
-    tree = result.get_scope_tree(adef.system)
-    if tree is None:
-        _print_json({"value": None})
-        return
-    nodes = tree.verifications if adef.verify else tree.calculations
-    prefix = "?" if adef.verify else "@"
-    for node in nodes:
-        if str(node.path).endswith(f"{prefix}{adef.name}"):
-            _print_json({"value": to_jsonable(node.value)})
-            return
-    _print_json({"value": None})
+    output: dict[str, Any] = {"value": result.value}
+    if result.cache_hit is not None:
+        output["cache_hit"] = result.cache_hit
+    _print_json(output)
 
 
 # ─── gen-stubs ───────────────────────────────────────────────────────

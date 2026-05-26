@@ -4,6 +4,8 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from core.analysis_runner import AnalysisArgumentError, AnalysisNotFound
+from core.analysis_runner import run_analysis as _run_analysis
 from core.errors import ETagMismatch, PreconditionRequired
 from core.history import (
     GitError,
@@ -340,29 +342,27 @@ def handle_diff(payload: dict[str, Any]) -> Any:
 
 def handle_analysis(system: str | None, name: str, payload: dict[str, Any]) -> Any:
     """ad-hoc 関数を直接呼ぶ / veriq 経由なら evaluate して値を取り出す。"""
-    adef = default_registry.analysis_or_none(system, name)
-    if adef is None:
-        return {"error": f"analysis '{system}.{name}' not found"}
+    try:
+        result = _run_analysis(system, name, payload)
+    except AnalysisNotFound as e:
+        return {"error": str(e)}
+    except AnalysisArgumentError as e:
+        return {"error": f"argument error: {e}"}
 
-    if adef.system is None:
-        import inspect
-
-        sig = inspect.signature(adef.func)
-        try:
-            bound = sig.bind_partial(**payload)
-            bound.apply_defaults()
-        except TypeError as e:
-            return {"error": f"argument error: {e}"}
-        value = adef.func(*bound.args, **bound.kwargs)
-        return {"value": to_jsonable(value)}
-
-    return _run_veriq_node(adef.system, adef.name, verify=False)
+    output: dict[str, Any] = {"value": result.value}
+    if result.cache_hit is not None:
+        output["cache_hit"] = result.cache_hit
+    return output
 
 
 def handle_verify_single(system: str | None, name: str) -> Any:
     if system is None:
         return {"error": "verify_* tools require veriq-attached analysis"}
-    return _run_veriq_node(system, name, verify=True)
+    try:
+        result = _run_analysis(system, name, {})
+    except AnalysisNotFound as e:
+        return {"error": str(e)}
+    return {"value": result.value}
 
 
 def handle_verify_all() -> Any:
@@ -387,16 +387,3 @@ def handle_verify_all() -> Any:
         }
     out["scopes"] = scopes
     return out
-
-
-def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
-    _, result = evaluate_project_from_merged()
-    tree = result.get_scope_tree(system)
-    if tree is None:
-        return {"value": None}
-    nodes = tree.verifications if verify else tree.calculations
-    prefix = "?" if verify else "@"
-    for node in nodes:
-        if str(node.path).endswith(f"{prefix}{name}"):
-            return {"value": to_jsonable(node.value)}
-    return {"value": None, "note": "node not found in evaluation result"}
