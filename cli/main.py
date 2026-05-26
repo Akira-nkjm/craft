@@ -31,6 +31,7 @@ import typer
 from pydantic import ValidationError
 
 from core.discovery import discover_systems
+from core.errors import ETagMismatch, PreconditionRequired
 
 # Typer サブアプリ
 app = typer.Typer(
@@ -327,6 +328,9 @@ def put_cmd(
         view, new_etag = replace_instance(
             system, component, instance, payload, expected_etag=resolved_etag
         )
+    except (ETagMismatch, PreconditionRequired) as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from e
     except (InstanceNotFound, SingletonNotInstanceable, SharedSpecConflict) as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1) from e
@@ -364,6 +368,9 @@ def patch_cmd(
         view, new_etag = patch_instance(
             system, component, instance, delta, expected_etag=resolved_etag
         )
+    except (ETagMismatch, PreconditionRequired) as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from e
     except (InstanceNotFound, SingletonNotInstanceable, SharedSpecConflict) as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1) from e
@@ -395,6 +402,9 @@ def delete_cmd(
     )
     try:
         delete_instance(system, component, instance, expected_etag=resolved_etag)
+    except (ETagMismatch, PreconditionRequired) as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from e
     except (InstanceNotFound, SingletonNotInstanceable) as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1) from e
@@ -459,6 +469,9 @@ def spec_set(
         new_spec, new_etag = set_shared_spec(
             system, component, payload, expected_etag=resolved_etag
         )
+    except (ETagMismatch, PreconditionRequired) as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from e
     except (InstanceNotFound, SingletonNotInstanceable) as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1) from e

@@ -17,6 +17,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from core.errors import ETagMismatch, PreconditionRequired
 from core.paths import system_data_path
 from core.toml_io import read_toml, write_toml_atomic
 from schema import default_registry
@@ -370,14 +371,10 @@ def set_shared_spec(
 
 def _check_etag(current: dict[str, Any], expected_etag: str | None) -> None:
     if expected_etag is None:
-        from api.errors import IfMatchRequiredError
-
-        raise IfMatchRequiredError("If-Match header is required for this operation")
+        raise PreconditionRequired("If-Match header is required for this operation")
     actual = compute_etag(current)
     if expected_etag.strip() != actual:
-        from api.errors import ETagMismatchError
-
-        raise ETagMismatchError(f"If-Match did not match current ETag ({actual})")
+        raise ETagMismatch(f"If-Match did not match current ETag ({actual})")
 
 
 def _deep_merge(base: dict[str, Any], delta: dict[str, Any]) -> dict[str, Any]:
