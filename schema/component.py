@@ -96,14 +96,6 @@ def _collect_fields_from(source: Any) -> dict[str, tuple[type, Any]]:
     return fields
 
 
-def _resolve_annotations(cls: type) -> dict[str, Any]:
-    """Python 3.14 の lazy annotations を解決。"""
-    try:
-        return inspect.get_annotations(cls, eval_str=True)
-    except Exception:
-        return getattr(cls, "__annotations__", {}) or {}
-
-
 @dataclass_transform(field_specifiers=(fld,))
 class Component:
     """全 component の基底クラス。decorator なしで使う。
