@@ -298,3 +298,24 @@ def set_shared_spec(
     parent[keys[-1]] = new_spec
     write_toml_atomic(system_data_path(system), data)
     return new_spec, compute_etag(new_spec)
+
+
+def list_component_view(system: str, component: str) -> dict[str, Any]:
+    """API / MCP 向け一覧 view。cardinality を問わず list_instances に委譲。"""
+    return list_instances(system, component)
+
+
+def get_component_view(
+    system: str, component: str, instance: str | None
+) -> tuple[dict[str, Any], str]:
+    """API / MCP 向け単体 view。singleton は instance=None で呼ぶ。
+
+    Raises InstanceNotFound if not found.
+    """
+    defn = _component_defn(system, component)
+    resolved = instance if defn.cardinality == "multi" and instance is not None else ""
+    data = read_toml(system_data_path(system))
+    view = _instance_view(defn, data, resolved)
+    if view is None:
+        raise InstanceNotFound(f"Component '{system}.{component}' not found")
+    return view, compute_etag(view)

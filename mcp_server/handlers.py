@@ -1,11 +1,10 @@
 """MCP tool handlers — registry / TOML / veriq の薄いラッパ。"""
 
+import importlib
 from typing import Any
 
 from pydantic import ValidationError
 
-from core.analysis_runner import AnalysisArgumentError, AnalysisNotFound
-from core.analysis_runner import run_analysis as _run_analysis
 from core.errors import ETagMismatch, PreconditionRequired
 from core.history import (
     GitError,
@@ -21,6 +20,7 @@ from core.instances import (
     create_instance,
     delete_config_instance,
     delete_instance,
+    get_component_view,
     get_config_instance,
     get_instance,
     get_shared_spec,
@@ -33,10 +33,7 @@ from core.instances import (
     set_shared_spec,
     set_singleton_config,
 )
-from core.paths import system_data_path
-from core.serialization import to_jsonable
-from core.toml_io import read_toml
-from core.veriq_project import evaluate_project_from_merged
+from core.merge import MERGED_TOML, merge
 from schema import default_registry
 
 
@@ -91,8 +88,11 @@ def handle_get_component(system: str, component: str, instance: str | None) -> A
     if defn is None:
         return {"error": f"component '{system}.{component}' not found"}
     if defn.cardinality == "single":
-        data = read_toml(system_data_path(system))
-        return data.get(defn.name, {"error": "no data"})
+        try:
+            view, _ = get_component_view(system, component, None)
+        except InstanceNotFound:
+            return {"error": "no data"}
+        return view
     if instance is None or not instance:
         return {"error": "name required for MultiInstance component"}
     try:
@@ -342,32 +342,39 @@ def handle_diff(payload: dict[str, Any]) -> Any:
 
 def handle_analysis(system: str | None, name: str, payload: dict[str, Any]) -> Any:
     """ad-hoc 関数を直接呼ぶ / veriq 経由なら evaluate して値を取り出す。"""
-    try:
-        result = _run_analysis(system, name, payload)
-    except AnalysisNotFound as e:
-        return {"error": str(e)}
-    except AnalysisArgumentError as e:
-        return {"error": f"argument error: {e}"}
+    adef = default_registry.analysis_or_none(system, name)
+    if adef is None:
+        return {"error": f"analysis '{system}.{name}' not found"}
 
-    output: dict[str, Any] = {"value": result.value}
-    if result.cache_hit is not None:
-        output["cache_hit"] = result.cache_hit
-    return output
+    if adef.system is None:
+        import inspect
+
+        sig = inspect.signature(adef.func)
+        try:
+            bound = sig.bind_partial(**payload)
+            bound.apply_defaults()
+        except TypeError as e:
+            return {"error": f"argument error: {e}"}
+        value = adef.func(*bound.args, **bound.kwargs)
+        return {"value": _jsonable(value)}
+
+    return _run_veriq_node(adef.system, adef.name, verify=False)
 
 
 def handle_verify_single(system: str | None, name: str) -> Any:
     if system is None:
         return {"error": "verify_* tools require veriq-attached analysis"}
-    try:
-        result = _run_analysis(system, name, {})
-    except AnalysisNotFound as e:
-        return {"error": str(e)}
-    return {"value": result.value}
+    return _run_veriq_node(system, name, verify=True)
 
 
 def handle_verify_all() -> Any:
     """全 scope を評価して calculation / verification を返す。"""
-    _, result = evaluate_project_from_merged()
+    import veriq as vq
+
+    project = _build_project()
+    merge()
+    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    result = vq.evaluate_project(project, model_data)
     out: dict[str, Any] = {"success": result.success, "errors": [str(e) for e in result.errors]}
     scopes: dict[str, Any] = {}
     for scope_name in result.scopes:
@@ -377,13 +384,55 @@ def handle_verify_all() -> Any:
             continue
         scopes[scope_name] = {
             "calculations": [
-                {"path": str(node.path), "value": to_jsonable(node.value)}
+                {"path": str(node.path), "value": _jsonable(node.value)}
                 for node in tree.calculations
             ],
             "verifications": [
-                {"path": str(node.path), "value": to_jsonable(node.value)}
+                {"path": str(node.path), "value": _jsonable(node.value)}
                 for node in tree.verifications
             ],
         }
     out["scopes"] = scopes
     return out
+
+
+def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
+    import veriq as vq
+
+    project = _build_project()
+    merge()
+    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    result = vq.evaluate_project(project, model_data)
+    tree = result.get_scope_tree(system)
+    if tree is None:
+        return {"value": None}
+    nodes = tree.verifications if verify else tree.calculations
+    prefix = "?" if verify else "@"
+    for node in nodes:
+        if str(node.path).endswith(f"{prefix}{name}"):
+            return {"value": _jsonable(node.value)}
+    return {"value": None, "note": "node not found in evaluation result"}
+
+
+def _build_project():
+    import veriq as vq
+
+    project = vq.Project("Craft")
+    for sub in sorted(default_registry.systems()):
+        mod = importlib.import_module(f"systems.{sub}.scope")
+        scope = getattr(mod, sub, None)
+        if scope is not None:
+            project.add_scope(scope)
+    return project
+
+
+def _jsonable(value: Any) -> Any:
+    if hasattr(value, "model_dump"):
+        return value.model_dump()
+    if isinstance(value, (str, int, float, bool, type(None))):
+        return value
+    if isinstance(value, dict):
+        return {str(k): _jsonable(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(v) for v in value]
+    return str(value)

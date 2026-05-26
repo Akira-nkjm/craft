@@ -14,8 +14,10 @@ from ._common import (
 from .components import (
     create_instance,
     delete_instance,
+    get_component_view,
     get_instance,
     get_shared_spec,
+    list_component_view,
     list_instances,
     patch_instance,
     replace_instance,
@@ -42,8 +44,10 @@ __all__ = [
     # component CRUD
     "create_instance",
     "delete_instance",
+    "get_component_view",
     "get_instance",
     "get_shared_spec",
+    "list_component_view",
     "list_instances",
     "patch_instance",
     "replace_instance",
