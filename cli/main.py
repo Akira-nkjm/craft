@@ -762,6 +762,14 @@ def gen_stubs_cmd(
     for path in written:
         typer.echo(f"Wrote {path}")
 
+    if written:
+        import subprocess
+
+        subprocess.run(
+            ["uv", "run", "ruff", "format", *[str(p) for p in written]],
+            check=True,
+        )
+
 
 # ─── init ────────────────────────────────────────────────────────────
 
