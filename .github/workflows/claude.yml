@@ -6,7 +6,7 @@ on:
   pull_request_review_comment:
     types: [created]
   issues:
-    types: [opened, assigned]
+    types: [opened, assigned, labeled]
   pull_request_review:
     types: [submitted]
 
@@ -16,6 +16,8 @@ jobs:
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && github.event.action == 'assigned' && github.event.assignee.login == 'Akira-nkjm') ||
+      (github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'claude-implement') ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
     permissions:
@@ -34,9 +36,16 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Implement the issue. Follow the conventions in AGENTS.md, RULES.md,
+            and .claude/rules/git-workflow.md. The issue body usually contains
+            file paths and line numbers — read those locations with the Read
+            tool before editing. Commit with Conventional Commits format.
 
       - name: Auto-create PR for new claude branch
-        if: github.event_name == 'issue_comment' && github.event.issue.pull_request == null
+        if: |
+          (github.event_name == 'issue_comment' && github.event.issue.pull_request == null) ||
+          (github.event_name == 'issues')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -61,4 +70,5 @@ jobs:
             --base main \
             --head "$BRANCH" \
             --title "$ISSUE_TITLE" \
-            --body "$BODY"
+            --body "$BODY" \
+            --label "claude-review"
