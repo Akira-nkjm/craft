@@ -9,29 +9,12 @@
 
 ## 特徴
 
-<div class="grid cards" markdown>
-
-- :satellite: **宣言的**
-
-    Component クラスを定義するだけで API・CLI・MCP tool が自動生成。
-    `api/` / `cli/` / `mcp_server/` には一切触れない。
-
-- :lock: **型安全**
-
-    Pydantic v2 による完全な型検証。`fld()` で物理単位・制約・説明を宣言。
-    JSON Schema が自動生成される。
-
-- :rocket: **veriq 統合**
-
-    `craft verify` 一発で全 subsystem の merge + 検証パイプライン実行。
-    verification 結果は runs history に永続化される。
-
-- :electric_plug: **マルチサーフェス**
-
-    同一定義から CLI / REST API / MCP server の3 surface を自動配信。
-    Swagger UI から GUI で操作できる。
-
-</div>
+| 特徴 | 説明 |
+|---|---|
+| **宣言的** | Component クラスを定義するだけで API・CLI・MCP tool が自動生成。`api/` / `cli/` / `mcp_server/` には一切触れない。 |
+| **型安全** | Pydantic v2 による完全な型検証。`fld()` で物理単位・制約・説明を宣言。JSON Schema が自動生成される。 |
+| **veriq 統合** | `craft verify` 一発で全 subsystem の merge + 検証パイプライン実行。verification 結果は runs history に永続化される。 |
+| **マルチサーフェス** | 同一定義から CLI / REST API / MCP server の 3 surface を自動配信。Swagger UI から GUI で操作できる。 |
 
 ---
 
