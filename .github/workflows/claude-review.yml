@@ -29,8 +29,9 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          track_progress: true
           claude_args: |
-            --allowed-tools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(git log:*),Bash(git diff:*)"
+            --allowed-tools "Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh issue view:*),Bash(git log:*),Bash(git diff:*)"
           prompt: |
             Review pull request #${{ github.event.pull_request.number }}.
 
@@ -40,8 +41,8 @@ jobs:
             3. PR が `Closes #N` を含むなら `gh issue view N` で要件を確認
             4. AGENTS.md と RULES.md を必要なら参照
 
-            最後に `gh pr comment ${{ github.event.pull_request.number }} --body "..."` で
-            **1 つの comment** を投稿する。フォーマット:
+            最後に `mcp__github_comment__update_claude_comment` ツールでレビュー結果を
+            tracking comment に書き込む。フォーマット:
 
             ```
             ## 🔍 Code Review
