@@ -21,7 +21,6 @@
     craft init system <name>         system 雛形生成
 """
 
-import importlib
 import json
 import sys
 from pathlib import Path
@@ -710,20 +709,9 @@ def analysis_run(
         return
 
     # veriq 経由
-    import veriq as vq
+    from core.veriq_project import evaluate_project_from_merged
 
-    from core.merge import MERGED_TOML
-    from core.merge import merge as merge_func
-
-    project = vq.Project("Craft")
-    for s in sorted(default_registry.systems()):
-        mod = importlib.import_module(f"systems.{s}.scope")
-        scope = getattr(mod, s, None)
-        if scope is not None:
-            project.add_scope(scope)
-    merge_func()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
-    result = vq.evaluate_project(project, model_data)
+    _, result = evaluate_project_from_merged()
     tree = result.get_scope_tree(adef.system)
     if tree is None:
         _print_json({"value": None})

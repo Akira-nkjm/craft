@@ -6,7 +6,6 @@ HTTP で公開する。subprocess は使わない。
 仕様: plan/Craft/01_仕様/API設計.md §veriq Pass-through API
 """
 
-import importlib
 from typing import Any
 
 import veriq as vq
@@ -15,24 +14,9 @@ from fastapi import APIRouter, Query
 from api.errors import CraftAPIError, NotFoundError, ValidationFailedError
 from core.merge import MERGED_TOML, MergeConflict, merge
 from core.serialization import to_jsonable
-from schema import default_registry
+from core.veriq_project import build_project
 
 router = APIRouter(prefix="/veriq", tags=["veriq"])
-
-
-def _build_project() -> vq.Project:
-    """登録済み system の scope を集めて Project を組み立てる。
-
-    `api.routers.verify._build_project` と同等の動的 import パターン。
-    """
-    project = vq.Project("Craft")
-    for sub in sorted(default_registry.systems()):
-        mod = importlib.import_module(f"systems.{sub}.scope")
-        scope = getattr(mod, sub, None)
-        if scope is None:
-            continue
-        project.add_scope(scope)
-    return project
 
 
 def _node_payload(node_spec: vq.NodeSpec) -> dict[str, Any]:
@@ -70,7 +54,7 @@ def _type_name(t: Any) -> str:
 @router.get("/scopes")
 def list_scopes() -> dict[str, Any]:
     """登録済み scope の一覧と各 scope の calculation / verification 数。"""
-    project = _build_project()
+    project = build_project()
     scopes: list[dict[str, Any]] = []
     for name in sorted(project.scopes):
         scope = project.scopes[name]
@@ -94,7 +78,7 @@ def list_nodes(
     scope: str | None = Query(default=None, description="scope 名でフィルタ"),
 ) -> dict[str, Any]:
     """dependency graph の全ノード一覧。"""
-    project = _build_project()
+    project = build_project()
     spec = vq.build_graph_spec(project)
 
     node_kind: vq.NodeKind | None = None
@@ -130,7 +114,7 @@ def list_nodes(
 @router.get("/nodes/{node_path:path}")
 def get_node_detail(node_path: str) -> dict[str, Any]:
     """単一ノード詳細。node_path は `scope::path` 形式 (例: `power::?verify_battery_capacity`)。"""
-    project = _build_project()
+    project = build_project()
     spec = vq.build_graph_spec(project)
 
     target_pp: Any = None
@@ -149,7 +133,7 @@ def get_node_detail(node_path: str) -> dict[str, Any]:
 @router.get("/trace")
 def get_trace() -> dict[str, Any]:
     """traceability report (要求 ↔ verification マッピング)。"""
-    project = _build_project()
+    project = build_project()
 
     try:
         merge()
@@ -199,7 +183,7 @@ def get_trace() -> dict[str, Any]:
 @router.get("/check")
 def structural_check() -> dict[str, Any]:
     """構造妥当性チェック: project.input_model() が組み立て可能か。"""
-    project = _build_project()
+    project = build_project()
     try:
         model_cls = project.input_model()
     except Exception as e:
@@ -218,7 +202,7 @@ def structural_check() -> dict[str, Any]:
 @router.get("/schema")
 def input_schema() -> dict[str, Any]:
     """project.input_model() の JSON Schema。"""
-    project = _build_project()
+    project = build_project()
     try:
         model_cls = project.input_model()
     except Exception as e:

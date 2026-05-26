@@ -9,7 +9,6 @@
 仕様: plan/Craft/01_仕様/Analysis詳細仕様.md
 """
 
-import importlib
 import inspect
 from typing import Annotated, Any, get_args, get_origin
 
@@ -24,11 +23,11 @@ from core.analysis_cache import (
     put_cached,
 )
 from core.serialization import to_jsonable
+from core.veriq_project import evaluate_project_from_merged
 from schema import default_registry
 from schema.registry import AnalysisDefinition
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
-merge_mod = importlib.import_module("core.merge")
 
 
 def _describe(adef: AnalysisDefinition) -> dict[str, Any]:
@@ -170,19 +169,8 @@ def _run_adhoc(
 
 def _run_via_veriq(adef: AnalysisDefinition) -> dict[str, Any]:
     """veriq 経由: merge → evaluate_project → 該当ノード値を返す。"""
-    import importlib
-
     assert adef.system is not None, "non-veriq analysis routed to veriq path"
-    project = vq.Project("Craft")
-    for sub in sorted(default_registry.systems()):
-        mod = importlib.import_module(f"systems.{sub}.scope")
-        scope = getattr(mod, sub, None)
-        if scope is None:
-            continue
-        project.add_scope(scope)
-    merge_mod.merge()
-    model_data = vq.load_model_data_from_toml(project, merge_mod.MERGED_TOML)
-    result = vq.evaluate_project(project, model_data)
+    _, result = evaluate_project_from_merged()
     tree = result.get_scope_tree(adef.system)
     if tree is None:
         return {"analysis": adef.name, "system": adef.system, "value": None}
