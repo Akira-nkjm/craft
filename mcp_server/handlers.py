@@ -34,6 +34,7 @@ from core.instances import (
 )
 from core.merge import MERGED_TOML, merge
 from core.paths import system_data_path
+from core.serialization import to_jsonable
 from core.toml_io import read_toml
 from schema import default_registry
 
@@ -354,7 +355,7 @@ def handle_analysis(system: str | None, name: str, payload: dict[str, Any]) -> A
         except TypeError as e:
             return {"error": f"argument error: {e}"}
         value = adef.func(*bound.args, **bound.kwargs)
-        return {"value": _jsonable(value)}
+        return {"value": to_jsonable(value)}
 
     return _run_veriq_node(adef.system, adef.name, verify=False)
 
@@ -382,11 +383,11 @@ def handle_verify_all() -> Any:
             continue
         scopes[scope_name] = {
             "calculations": [
-                {"path": str(node.path), "value": _jsonable(node.value)}
+                {"path": str(node.path), "value": to_jsonable(node.value)}
                 for node in tree.calculations
             ],
             "verifications": [
-                {"path": str(node.path), "value": _jsonable(node.value)}
+                {"path": str(node.path), "value": to_jsonable(node.value)}
                 for node in tree.verifications
             ],
         }
@@ -408,7 +409,7 @@ def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
     prefix = "?" if verify else "@"
     for node in nodes:
         if str(node.path).endswith(f"{prefix}{name}"):
-            return {"value": _jsonable(node.value)}
+            return {"value": to_jsonable(node.value)}
     return {"value": None, "note": "node not found in evaluation result"}
 
 
@@ -422,15 +423,3 @@ def _build_project():
         if scope is not None:
             project.add_scope(scope)
     return project
-
-
-def _jsonable(value: Any) -> Any:
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if isinstance(value, (str, int, float, bool, type(None))):
-        return value
-    if isinstance(value, dict):
-        return {str(k): _jsonable(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_jsonable(v) for v in value]
-    return str(value)

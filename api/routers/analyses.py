@@ -23,6 +23,7 @@ from core.analysis_cache import (
     get_cached,
     put_cached,
 )
+from core.serialization import to_jsonable
 from schema import default_registry
 from schema.registry import AnalysisDefinition
 
@@ -90,7 +91,7 @@ def _safe_default(default: Any) -> Any:
 
         json.dumps(default)
         return default
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return str(default)
 
 
@@ -154,7 +155,7 @@ def _run_adhoc(
                 "cache_hit": True,
             }
     value = adef.func(*bound.args, **bound.kwargs)
-    json_value = _jsonable(value)
+    json_value = to_jsonable(value)
     if cache_key is not None:
         put_cached(adef.name, cache_key, {"value": json_value})
     output = {
@@ -194,7 +195,7 @@ def _run_via_veriq(adef: AnalysisDefinition) -> dict[str, Any]:
                 "analysis": adef.name,
                 "system": adef.system,
                 "verify": adef.verify,
-                "value": _jsonable(node.value),
+                "value": to_jsonable(node.value),
             }
     return {
         "analysis": adef.name,
@@ -202,13 +203,3 @@ def _run_via_veriq(adef: AnalysisDefinition) -> dict[str, Any]:
         "verify": adef.verify,
         "value": None,
     }
-
-
-def _jsonable(value: Any) -> Any:
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if isinstance(value, dict):
-        return {str(k): _jsonable(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_jsonable(v) for v in value]
-    return value
