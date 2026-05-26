@@ -1,6 +1,7 @@
 """MCP tool handlers — registry / TOML / veriq の薄いラッパ。"""
 
 import importlib
+import sys as _sys
 from typing import Any
 
 from pydantic import ValidationError
@@ -13,28 +14,30 @@ from core.history import (
     git_log,
 )
 from core.instances import (
-    InstanceAlreadyExists,
     InstanceNotFound,
-    SharedSpecConflict,
     SingletonNotInstanceable,
-    create_instance,
-    delete_config_instance,
-    delete_instance,
-    get_component_view,
     get_config_instance,
     get_instance,
     get_shared_spec,
     get_singleton_config,
     list_config_instances,
     list_instances,
-    patch_config_instance,
-    patch_instance,
-    set_config_instance,
     set_shared_spec,
-    set_singleton_config,
 )
-from core.introspection import list_analyses_summary, list_components_summary, list_configs_summary
-from core.merge import MERGED_TOML, merge
+from core.merge import merge
+from core.operations import (
+    create_component_op,
+    delete_component_op,
+    delete_config_entry_op,
+    patch_component_op,
+    patch_config_entry_op,
+    set_config_entry_op,
+    set_singleton_config_op,
+)
+from core.paths import system_data_path
+from core.serialization import to_jsonable
+from core.toml_io import read_toml
+from mcp_server.error_mapping import error_or_none
 from schema import default_registry
 
 
@@ -45,28 +48,28 @@ def handle_list_introspection(kind: str) -> Any:
     if kind == "components":
         return [
             {
-                "system": s.system,
-                "name": s.name,
-                "plural": s.plural,
-                "cardinality": s.cardinality,
-                "traits": list(s.traits),
+                "system": c.system,
+                "name": c.name,
+                "plural": c.plural,
+                "cardinality": c.cardinality,
+                "traits": list(c.traits),
             }
-            for s in list_components_summary()
+            for c in default_registry.components()
         ]
     if kind == "configs":
         return [
-            {"system": s.system, "name": s.name, "plural": s.plural, "cardinality": s.cardinality}
-            for s in list_configs_summary()
+            {"system": c.system, "name": c.name, "plural": c.plural, "cardinality": c.cardinality}
+            for c in default_registry.configs()
         ]
     if kind == "analyses":
         return [
             {
-                "system": s.system,
-                "name": s.name,
-                "verify": s.verify,
-                "desc": s.desc,
+                "system": a.system,
+                "name": a.name,
+                "verify": a.verify,
+                "desc": a.desc,
             }
-            for s in list_analyses_summary()
+            for a in default_registry.analyses()
         ]
     raise ValueError(f"Unknown introspection kind: {kind}")
 
@@ -89,11 +92,8 @@ def handle_get_component(system: str, component: str, instance: str | None) -> A
     if defn is None:
         return {"error": f"component '{system}.{component}' not found"}
     if defn.cardinality == "single":
-        try:
-            view, _ = get_component_view(system, component, None)
-        except InstanceNotFound:
-            return {"error": "no data"}
-        return view
+        data = read_toml(system_data_path(system))
+        return data.get(defn.name, {"error": "no data"})
     if instance is None or not instance:
         return {"error": "name required for MultiInstance component"}
     try:
@@ -127,12 +127,12 @@ def handle_set_config_instance(system: str, name: str, payload: dict[str, Any]) 
         return {"error": "key required"}
     body = {k: v for k, v in payload.items() if k != "key"}
     try:
-        data, etag = set_config_instance(system, name, key, body)
-    except SingletonNotInstanceable as e:
-        return {"error": str(e)}
+        result = set_config_entry_op(system, name, key, body, if_match=payload.get("etag"))
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
-    return {"etag": etag, **data}
+    if err := error_or_none(result):
+        return err
+    return {"etag": result.etag, **result.payload}
 
 
 def handle_patch_config_instance(system: str, name: str, payload: dict[str, Any]) -> Any:
@@ -149,14 +149,12 @@ def handle_patch_config_instance(system: str, name: str, payload: dict[str, Any]
         except InstanceNotFound as e:
             return {"error": str(e)}
     try:
-        data, new_etag = patch_config_instance(system, name, key, delta, expected_etag=etag)
-    except (ETagMismatch, PreconditionRequired) as e:
-        return {"error": str(e)}
-    except InstanceNotFound as e:
-        return {"error": str(e)}
+        result = patch_config_entry_op(system, name, key, delta, if_match=etag)
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
-    return {"etag": new_etag, **data}
+    if err := error_or_none(result):
+        return err
+    return {"etag": result.etag, **result.payload}
 
 
 def handle_delete_config_instance(system: str, name: str, payload: dict[str, Any]) -> Any:
@@ -169,14 +167,9 @@ def handle_delete_config_instance(system: str, name: str, payload: dict[str, Any
             _, etag = get_config_instance(system, name, key)
         except InstanceNotFound as e:
             return {"error": str(e)}
-    try:
-        delete_config_instance(system, name, key, expected_etag=etag)
-    except (ETagMismatch, PreconditionRequired) as e:
-        return {"error": str(e)}
-    except InstanceNotFound as e:
-        return {"error": str(e)}
-    except SingletonNotInstanceable as e:
-        return {"error": str(e)}
+    result = delete_config_entry_op(system, name, key, if_match=etag)
+    if err := error_or_none(result):
+        return err
     return {"deleted": True, "key": key}
 
 
@@ -190,18 +183,12 @@ def handle_add_instance(system: str, component: str, payload: dict[str, Any]) ->
         return {"error": "name required"}
     body = {k: v for k, v in payload.items() if k != "name"}
     try:
-        view, etag = create_instance(system, component, name, body)
-    except InstanceAlreadyExists as e:
-        return {"error": str(e)}
-    except InstanceNotFound as e:
-        return {"error": str(e)}
-    except SingletonNotInstanceable as e:
-        return {"error": str(e)}
-    except SharedSpecConflict as e:
-        return {"error": str(e)}
+        result = create_component_op(system, component, name, body)
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
-    return {"etag": etag, **view}
+    if err := error_or_none(result):
+        return err
+    return {"etag": result.etag, **result.payload}
 
 
 def handle_patch_instance(system: str, component: str, payload: dict[str, Any]) -> Any:
@@ -228,16 +215,12 @@ def handle_patch_instance(system: str, component: str, payload: dict[str, Any]) 
             return {"error": str(e)}
 
     try:
-        view, new_etag = patch_instance(system, component, name, delta, expected_etag=etag)
-    except (ETagMismatch, PreconditionRequired) as e:
-        return {"error": str(e)}
-    except InstanceNotFound as e:
-        return {"error": str(e)}
-    except SharedSpecConflict as e:
-        return {"error": str(e)}
+        result = patch_component_op(system, component, name, delta, if_match=etag)
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
-    return {"etag": new_etag, **view}
+    if err := error_or_none(result):
+        return err
+    return {"etag": result.etag, **result.payload}
 
 
 def handle_delete_instance(system: str, component: str, payload: dict[str, Any]) -> Any:
@@ -250,14 +233,9 @@ def handle_delete_instance(system: str, component: str, payload: dict[str, Any])
             _, etag = get_instance(system, component, name)
         except InstanceNotFound as e:
             return {"error": str(e)}
-    try:
-        delete_instance(system, component, name, expected_etag=etag)
-    except (ETagMismatch, PreconditionRequired) as e:
-        return {"error": str(e)}
-    except InstanceNotFound as e:
-        return {"error": str(e)}
-    except SingletonNotInstanceable as e:
-        return {"error": str(e)}
+    result = delete_component_op(system, component, name, if_match=etag)
+    if err := error_or_none(result):
+        return err
     return {"deleted": True, "name": name}
 
 
@@ -267,14 +245,12 @@ def handle_set_config(system: str, name: str, payload: dict[str, Any]) -> Any:
     if not isinstance(data_payload, dict):
         return {"error": "data (object) required"}
     try:
-        new_value, etag = set_singleton_config(system, name, data_payload)
-    except InstanceNotFound as e:
-        return {"error": str(e)}
-    except SingletonNotInstanceable as e:
-        return {"error": str(e)}
+        result = set_singleton_config_op(system, name, data_payload, if_match=payload.get("etag"))
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
-    return {"etag": etag, **new_value}
+    if err := error_or_none(result):
+        return err
+    return {"etag": result.etag, **result.payload}
 
 
 def handle_set_shared_spec(system: str, component: str, payload: dict[str, Any]) -> Any:
@@ -357,7 +333,7 @@ def handle_analysis(system: str | None, name: str, payload: dict[str, Any]) -> A
         except TypeError as e:
             return {"error": f"argument error: {e}"}
         value = adef.func(*bound.args, **bound.kwargs)
-        return {"value": _jsonable(value)}
+        return {"value": to_jsonable(value)}
 
     return _run_veriq_node(adef.system, adef.name, verify=False)
 
@@ -374,7 +350,7 @@ def handle_verify_all() -> Any:
 
     project = _build_project()
     merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, _sys.modules["core.merge"].MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
     out: dict[str, Any] = {"success": result.success, "errors": [str(e) for e in result.errors]}
     scopes: dict[str, Any] = {}
@@ -385,11 +361,11 @@ def handle_verify_all() -> Any:
             continue
         scopes[scope_name] = {
             "calculations": [
-                {"path": str(node.path), "value": _jsonable(node.value)}
+                {"path": str(node.path), "value": to_jsonable(node.value)}
                 for node in tree.calculations
             ],
             "verifications": [
-                {"path": str(node.path), "value": _jsonable(node.value)}
+                {"path": str(node.path), "value": to_jsonable(node.value)}
                 for node in tree.verifications
             ],
         }
@@ -402,7 +378,7 @@ def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
 
     project = _build_project()
     merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, _sys.modules["core.merge"].MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
     tree = result.get_scope_tree(system)
     if tree is None:
@@ -411,7 +387,7 @@ def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
     prefix = "?" if verify else "@"
     for node in nodes:
         if str(node.path).endswith(f"{prefix}{name}"):
-            return {"value": _jsonable(node.value)}
+            return {"value": to_jsonable(node.value)}
     return {"value": None, "note": "node not found in evaluation result"}
 
 
@@ -425,15 +401,3 @@ def _build_project():
         if scope is not None:
             project.add_scope(scope)
     return project
-
-
-def _jsonable(value: Any) -> Any:
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if isinstance(value, (str, int, float, bool, type(None))):
-        return value
-    if isinstance(value, dict):
-        return {str(k): _jsonable(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_jsonable(v) for v in value]
-    return str(value)

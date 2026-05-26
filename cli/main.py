@@ -261,31 +261,18 @@ def create_cmd(
 ) -> None:
     """新規インスタンス作成（MultiInstance のみ）。"""
     _bootstrap()
-    from core.instances import (
-        InstanceAlreadyExists,
-        InstanceNotFound,
-        SharedSpecConflict,
-        SingletonNotInstanceable,
-        create_instance,
-    )
+    from cli.error_mapping import exit_if_error
+    from core.operations import create_component_op
 
     payload = _load_payload(data, json_str)
     try:
-        view, etag = create_instance(system, component, instance, payload)
-    except (
-        InstanceAlreadyExists,
-        SingletonNotInstanceable,
-        SharedSpecConflict,
-        InstanceNotFound,
-    ) as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
+        result = create_component_op(system, component, instance, payload)
     except ValidationError as e:
         typer.echo(_format_validation_error(e), err=True)
         raise typer.Exit(code=1) from e
-
-    typer.echo(f"# ETag: {etag}")
-    _print_json(view)
+    exit_if_error(result)
+    typer.echo(f"# ETag: {result.etag}")
+    _print_json(result.payload)
 
 
 @app.command("put")
@@ -299,33 +286,21 @@ def put_cmd(
 ) -> None:
     """インスタンス全置換。"""
     _bootstrap()
-    from core.instances import (
-        InstanceNotFound,
-        SharedSpecConflict,
-        SingletonNotInstanceable,
-        replace_instance,
-    )
+    from cli.error_mapping import exit_if_error
+    from core.operations import replace_component_op
 
     payload = _load_payload(data, json_str)
     resolved_etag = (
         etag if etag is not None else _resolve_instance_etag(system, component, instance)
     )
     try:
-        view, new_etag = replace_instance(
-            system, component, instance, payload, expected_etag=resolved_etag
-        )
-    except (ETagMismatch, PreconditionRequired) as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
-    except (InstanceNotFound, SingletonNotInstanceable, SharedSpecConflict) as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
+        result = replace_component_op(system, component, instance, payload, if_match=resolved_etag)
     except ValidationError as e:
         typer.echo(_format_validation_error(e), err=True)
         raise typer.Exit(code=1) from e
-
-    typer.echo(f"# ETag: {new_etag}")
-    _print_json(view)
+    exit_if_error(result)
+    typer.echo(f"# ETag: {result.etag}")
+    _print_json(result.payload)
 
 
 @app.command("patch")
@@ -339,33 +314,21 @@ def patch_cmd(
 ) -> None:
     """インスタンス部分更新（deep merge）。"""
     _bootstrap()
-    from core.instances import (
-        InstanceNotFound,
-        SharedSpecConflict,
-        SingletonNotInstanceable,
-        patch_instance,
-    )
+    from cli.error_mapping import exit_if_error
+    from core.operations import patch_component_op
 
     delta = _load_payload(data, json_str)
     resolved_etag = (
         etag if etag is not None else _resolve_instance_etag(system, component, instance)
     )
     try:
-        view, new_etag = patch_instance(
-            system, component, instance, delta, expected_etag=resolved_etag
-        )
-    except (ETagMismatch, PreconditionRequired) as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
-    except (InstanceNotFound, SingletonNotInstanceable, SharedSpecConflict) as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
+        result = patch_component_op(system, component, instance, delta, if_match=resolved_etag)
     except ValidationError as e:
         typer.echo(_format_validation_error(e), err=True)
         raise typer.Exit(code=1) from e
-
-    typer.echo(f"# ETag: {new_etag}")
-    _print_json(view)
+    exit_if_error(result)
+    typer.echo(f"# ETag: {result.etag}")
+    _print_json(result.payload)
 
 
 @app.command("delete")
@@ -377,24 +340,14 @@ def delete_cmd(
 ) -> None:
     """インスタンス削除（MultiInstance のみ）。"""
     _bootstrap()
-    from core.instances import (
-        InstanceNotFound,
-        SingletonNotInstanceable,
-        delete_instance,
-    )
+    from cli.error_mapping import exit_if_error
+    from core.operations import delete_component_op
 
     resolved_etag = (
         etag if etag is not None else _resolve_instance_etag(system, component, instance)
     )
-    try:
-        delete_instance(system, component, instance, expected_etag=resolved_etag)
-    except (ETagMismatch, PreconditionRequired) as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
-    except (InstanceNotFound, SingletonNotInstanceable) as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
-
+    result = delete_component_op(system, component, instance, if_match=resolved_etag)
+    exit_if_error(result)
     typer.echo(f"Deleted {system}.{component}.{instance}")
 
 
