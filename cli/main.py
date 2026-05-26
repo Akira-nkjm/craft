@@ -514,13 +514,13 @@ def scaffold_cmd(
     _bootstrap()
     from core.scaffold import scaffold_all, scaffold_system
 
+    mode = "format-only" if format_only else ("overwrite" if overwrite else "add-missing")
+
     if system is None:
-        results = scaffold_all(dry_run=dry_run, format_only=format_only, overwrite=overwrite)
+        results = scaffold_all(dry_run=dry_run, mode=mode)
     else:
         try:
-            r, _ = scaffold_system(
-                system, dry_run=dry_run, format_only=format_only, overwrite=overwrite
-            )
+            r, _ = scaffold_system(system, dry_run=dry_run, mode=mode)
         except ValueError as e:
             typer.echo(f"Error: {e}", err=True)
             raise typer.Exit(code=1) from e
