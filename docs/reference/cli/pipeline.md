@@ -48,9 +48,9 @@ uv run craft merge --check
 
 ## craft scaffold
 
-Registry に登録された Component の定義から `data.toml` の雛形を生成する。**既存の値は保持される**。
+Registry に登録された Component / Config の定義から `data.toml` の雛形を生成・整形する。
 
-### `craft scaffold [<system>] [--dry-run]`
+### `craft scaffold [<system>] [--dry-run] [--format-only] [--overwrite]`
 
 ```bash
 # すべての system を対象
@@ -61,6 +61,12 @@ uv run craft scaffold power
 
 # ファイルを変更せず差分を確認
 uv run craft scaffold power --dry-run
+
+# 既存値を変えずに順序・コメント・空行だけ整形
+uv run craft scaffold power --format-only
+
+# 既存値を default に戻す（破壊的）
+uv run craft scaffold power --overwrite
 ```
 
 **引数・オプション**
@@ -68,10 +74,34 @@ uv run craft scaffold power --dry-run
 | 引数 / オプション | 説明 |
 |---|---|
 | `system` | 省略時は全 system |
-| `--dry-run` | 変更内容を stdout に出力するだけ |
+| `--dry-run` | 変更内容を確認するだけ。ファイルは変更しない |
+| `--format-only` | 既存値を変えず、フィールド順序・コメント・空行だけを整形する |
+| `--overwrite` | 既存値を default に戻す（破壊的。確認してから実行） |
 
-!!! note "欠けているキーのみ追加する"
-    `craft scaffold` は既存の値を上書きしない。新しい Component を追加した後に実行するのが典型的なワークフロー。
+**3 つのモード比較**
+
+| モード | 欠落フィールドを追加 | 既存値を変更 | 順序・コメントを整形 |
+|---|---|---|---|
+| デフォルト（add-missing） | ✓ | — | ✓ |
+| `--format-only` | — | — | ✓ |
+| `--overwrite` | ✓ | ✓（default にリセット） | ✓ |
+
+**scaffold が生成・整形する内容**
+
+- 欠落フィールドに `default` 値を補完（add-missing モード）
+- フィールドの宣言順への並び替え
+- `# <desc> [unit]` コメントの付与
+- `# === ComponentName ===` セクションヘッダの挿入
+- float 値の正規化（`1` → `1.0`）
+- 空行の正規化（subsection 間 1 行 / インスタンス切り替わり 2 行 / セクションヘッダ前 3 行）
+
+!!! note "欠けているキーのみ追加する（デフォルト）"
+    デフォルトの add-missing モードでは既存の値を上書きしない。
+    新しい Component を追加した後に実行するのが典型的なワークフロー。
+
+!!! tip "`--format-only` は何度実行しても安全（冪等）"
+    `--format-only` はファイルの値を変えず整形だけを行い、かつ冪等なので、
+    `data.toml` を手で編集した後に実行してスタイルを揃えるのに適している。
 
 **典型的なワークフロー**
 
@@ -83,6 +113,9 @@ uv run craft scaffold power --dry-run
 uv run craft scaffold power
 # 4. data.toml に値を記入して検証
 uv run craft verify
+
+# 手で値を編集した後にスタイルだけ揃えたい場合
+uv run craft scaffold power --format-only
 ```
 
 ---

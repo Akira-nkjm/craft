@@ -27,6 +27,19 @@ class Battery(Component, MultiInstance, TemperatureSensitive):
 
 ---
 
+## Component 基底フィールド
+
+Trait とは別に、`Component` を継承したすべてのクラスには以下のフィールドが**常に**自動追加される。
+
+| フィールド | 追加先 | 型 | デフォルト | 説明 |
+|---|---|---|---|---|
+| `mass_kg` | **Spec** | `float` (ge=0) | `0.0` | 質量 [kg] |
+| `quantity` | **Design** | `int` (ge=1) | `1` | 搭載個数 |
+
+これらは `SpecOnly` を含むすべての Component に追加される。
+
+---
+
 ## 組み込み Trait 一覧
 
 | Trait | 追加先 | 追加フィールド |
@@ -103,14 +116,19 @@ class PowerConsuming(_Trait):
 | `power_per_unit_w` | **Spec** | `float` (ge=0) | 1 ユニットあたりの想定消費電力 (W) |
 | `power_modes` | **Design** | `dict[OperationMode, bool]` | 運用モード別の電源 on/off |
 
-`power_modes` のキーは `OperationMode` enum:
+`power_modes` のキーは `mission.operation_mode_configs` に定義されたモード名と対応する。
+`craft scaffold` を実行すると、登録済みのモード名が dict キーとして自動補完される（`key_source` 機能）。
 
-| 値 | 意味 |
+| キー例 | 意味 |
 |---|---|
 | `"safe"` | セーフモード |
 | `"nominal"` | 通常運用モード |
 | `"science"` | 観測モード |
 | `"safe_hold"` | セーフホールドモード |
+
+!!! tip "モードの追加・変更"
+    `OperationMode` の値は `systems/mission/configs.py` の `OperationModeConfig` インスタンスで管理する。
+    新しいモードを追加したら `craft scaffold` を再実行すると `power_modes` に新キーが補完される。
 
 ### 使用例
 

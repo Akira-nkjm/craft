@@ -20,6 +20,7 @@ Pydantic の `Field()` への薄いラッパで、物理単位・UI グループ
 | `desc` | `str \| None` | `None` | フィールドの説明文。JSON Schema の `description` になる |
 | `group` | `str \| None` | `None` | UI 上のグループ名。`json_schema_extra` に格納 |
 | `order` | `int \| None` | `None` | UI 上の表示順序。`json_schema_extra` に格納 |
+| `key_source` | `str \| None` | `None` | `"<system>.<config_plural>"` 形式で指定すると、scaffold 時にその Config のインスタンスキーを dict キーとして自動補完する |
 
 !!! note "戻り値の型は `Any`"
     実体は Pydantic の `FieldInfo` だが、戻り値型は `Any` と宣言されている。
@@ -118,6 +119,41 @@ Swagger UI のモデルビューや `craft schema show` の出力に現れる。
 ```python
 manufacturer: str = fld(default="", desc="Manufacturer name")
 ```
+
+### `key_source` — dict キーの自動補完
+
+`dict[str, V]` 型のフィールドで使う。`"<system>.<config_plural>"` 形式の文字列を渡すと、
+`craft scaffold` 実行時に指定した Config のインスタンス名を dict のキーとして自動補完する。
+
+```python
+from schema.common import OperationMode
+from schema.traits import _Trait
+from schema.fields import fld
+
+class PowerConsuming(_Trait):
+    __trait_design_extra__ = {
+        "power_modes": (
+            dict[OperationMode, bool],
+            fld(
+                default_factory=dict,
+                desc="OperationMode 別の on/off",
+                key_source="mission.operation_mode_configs",  # (1)
+            ),
+        ),
+    }
+```
+
+1. `mission` system の `operation_mode_configs` に定義されたインスタンスキーを補完する。
+
+`craft scaffold` 実行後の `data.toml`（`operation_mode_configs` に `nominal` / `safe` が定義されている場合）:
+
+```toml
+[pdms.main.design]
+power_modes.nominal = false  # 自動補完（未設定キーは false）
+power_modes.safe = false
+```
+
+既存のキーは変更せず、不足しているキーだけ `false` で追加する。
 
 ### `group` / `order` — UI ヒント
 

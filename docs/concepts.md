@@ -41,6 +41,33 @@ class Battery(Component):
     veriq の `inspect.signature` が実行時型を必要とするため、遅延評価になる
     `from __future__ import annotations` は **使用禁止**。型ヒントは常に実体を書く。
 
+### 自動追加される基底フィールド
+
+`Component` を継承したクラスには、宣言しなくても以下のフィールドが自動的に追加される。
+
+| フィールド | セクション | 型 | デフォルト | 説明 |
+|---|---|---|---|---|
+| `mass_kg` | **Spec** | `float` (ge=0) | `0.0` | 質量 [kg] |
+| `quantity` | **Design** | `int` (ge=1) | `1` | 搭載個数 |
+
+```python
+class SunSenser(Component):
+    """太陽センサ。自動追加: Spec.mass_kg / Design.quantity"""
+    fov_deg: float = fld(ge=0, le=180, desc="視野角")
+    # ↑ 宣言したフィールドのみ。mass_kg / quantity は自動追加される。
+```
+
+`data.toml` では：
+
+```toml
+[sunsenser.spec]
+mass_kg = 0.0  # 自動追加
+fov_deg = 0.0
+
+[sunsenser.design]
+quantity = 1   # 自動追加
+```
+
 ### Spec / Design / Requirements の使い分け
 
 | セクション | 意味 | 典型的な内容 |
@@ -116,19 +143,54 @@ class Battery(Component, MultiInstance, TemperatureSensitive):
 # systems/mission/configs.py
 from schema import Config, fld
 
-class MissionConfig(Config):
+class MissionProfile(Config):
     """ミッション基本パラメータ。"""
-    orbit_altitude_km: float = fld(ge=200, desc="軌道高度")
-    mission_lifetime_years: float = fld(ge=0)
+    duration_years: float = fld(ge=0, desc="ミッション期間")
+    target_altitude_km: float = fld(ge=200, desc="目標高度")
 ```
 
 `data.toml` での記述:
 
 ```toml
-[mission_config]
-orbit_altitude_km = 550.0
-mission_lifetime_years = 3.0
+[missionprofile]
+duration_years = 5.0
+target_altitude_km = 600.0
 ```
+
+### MultiInstance Config
+
+`MultiInstance` を付与すると Config も複数インスタンスを持てる。
+運用モード（`OperationModeConfig`）のように「名前付きパターンの集合」を表すのに使う。
+
+```python
+from schema import Config, MultiInstance, fld
+
+class OperationModeConfig(Config, MultiInstance):
+    """運用モード定義。キーがモード名になる。"""
+    description: str = fld(default="", desc="モードの説明")
+    max_duration_s: float = fld(ge=0, default=0.0, unit="s", desc="最大連続継続時間")
+    is_initial_mode: bool = fld(default=False, desc="起動直後のデフォルトモード")
+    allowed_transitions: list[str] = fld(default_factory=list, desc="遷移可能なモード名リスト")
+```
+
+`data.toml` では `[<plural>.<instance_name>]` 形式:
+
+```toml
+[operation_mode_configs.nominal]
+description = "通常運用モード"
+is_initial_mode = false
+allowed_transitions = ["safe", "science"]
+
+[operation_mode_configs.safe]
+description = "異常検知時の安全モード"
+is_initial_mode = true
+allowed_transitions = ["nominal"]
+```
+
+!!! tip "key_source による自動補完"
+    `PowerConsuming` trait の `power_modes` フィールドは `key_source="mission.operation_mode_configs"` を持つ。
+    `craft scaffold` を実行すると、`operation_mode_configs` に定義されたモード名が
+    `power_modes` の dict キーとして自動補完される。
 
 ---
 
