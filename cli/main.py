@@ -122,16 +122,16 @@ def diff_cmd(
 def schema_list() -> None:
     """登録済み system / component を一覧表示。"""
     _bootstrap()
-    from schema import default_registry
+    from core.introspection import list_components_summary
 
     out: dict[str, list[dict[str, Any]]] = {}
-    for c in default_registry.components():
-        out.setdefault(c.system, []).append(
+    for s in list_components_summary():
+        out.setdefault(s.system, []).append(
             {
-                "name": c.name,
-                "plural": c.plural,
-                "cardinality": c.cardinality,
-                "traits": list(c.traits),
+                "name": s.name,
+                "plural": s.plural,
+                "cardinality": s.cardinality,
+                "traits": list(s.traits),
             }
         )
     _print_json(out)
@@ -641,16 +641,16 @@ def runs_artifact(run_id: str, name: str) -> None:
 def analysis_list() -> None:
     """登録済み @analysis 関数を一覧。"""
     _bootstrap()
-    from schema import default_registry
+    from core.introspection import list_analyses_summary
 
     items = [
         {
-            "name": a.name,
-            "system": a.system,
-            "verify": a.verify,
-            "desc": a.desc,
+            "name": s.name,
+            "system": s.system,
+            "verify": s.verify,
+            "desc": s.desc,
         }
-        for a in default_registry.analyses()
+        for s in list_analyses_summary()
     ]
     _print_json(items)
 

@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import APIRouter
 
 from api.errors import NotFoundError
+from core.introspection import list_components_summary
 from schema import default_registry
 
 router = APIRouter(prefix="/schema", tags=["schema"])
@@ -21,13 +22,13 @@ def get_component_schema(system: str, component: str) -> dict[str, Any]:
 @router.get("")
 def list_components() -> dict[str, list[dict[str, Any]]]:
     out: dict[str, list[dict[str, Any]]] = {}
-    for c in default_registry.components():
-        out.setdefault(c.system, []).append(
+    for s in list_components_summary():
+        out.setdefault(s.system, []).append(
             {
-                "name": c.name,
-                "plural": c.plural,
-                "cardinality": c.cardinality,
-                "traits": list(c.traits),
+                "name": s.name,
+                "plural": s.plural,
+                "cardinality": s.cardinality,
+                "traits": list(s.traits),
             }
         )
     return out
