@@ -17,3 +17,31 @@ raan_deg = 45.0
 arg_periapsis_deg = 0.0
 mean_anomaly_deg = 0.0
 epoch_utc = "2027-04-01T00:00:00Z"
+
+
+# === Operation Mode Configs ===
+# key = OperationMode の値（systems/common.py の StrEnum と対応）
+
+[operation_mode_configs.safe]
+description = "異常検知時の安全モード。最低限の機能のみ動作。"
+max_duration_s = 0.0          # 制限なし（地上から回復指令まで維持）
+is_initial_mode = true
+allowed_transitions = ["nominal", "safe_hold"]
+
+[operation_mode_configs.nominal]
+description = "通常運用モード。全系統が定格動作。"
+max_duration_s = 0.0          # 制限なし
+is_initial_mode = false
+allowed_transitions = ["safe", "science", "safe_hold"]
+
+[operation_mode_configs.science]
+description = "観測・データ取得モード。ミッション機器を起動。"
+max_duration_s = 3600.0       # 最大 1 時間連続（熱・電力マージン考慮）
+is_initial_mode = false
+allowed_transitions = ["nominal", "safe"]
+
+[operation_mode_configs.safe_hold]
+description = "自律セーフホールドモード。姿勢保持のみ継続。"
+max_duration_s = 86400.0      # 最大 24 時間（バッテリー容量から設定）
+is_initial_mode = false
+allowed_transitions = ["safe"]

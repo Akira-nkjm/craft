@@ -18,10 +18,31 @@ def total_pdm_power_w(
 ) -> float:
     """nominal mode で on の PDM の消費電力合計。"""
     return sum(
-        p.spec.power_per_unit_w
-        for p in pdms.values()
-        if p.design.power_modes.get("nominal", False)
+        p.spec.power_per_unit_w for p in pdms.values() if p.design.power_modes.get("nominal", False)
     )
+
+
+@analysis(
+    desc="モード別 PDM 消費電力 [W]（全モード一覧）",
+    imports=["mission"],
+)
+def pdm_power_per_mode_w(
+    pdms: Annotated[vq.Table, vq.Ref("$.pdms")],
+    mode_configs: Annotated[vq.Table, vq.Ref("$.operation_mode_configs", scope="mission")],
+) -> dict[str, float]:
+    """各運用モードにおける PDM 消費電力合計を返す。
+
+    mode_configs に登録されたモードのみ計算し、
+    power_modes に未記載のモードはその PDM を off 扱いとする。
+    """
+    result: dict[str, float] = {}
+    for mode_name in mode_configs:
+        result[mode_name] = sum(
+            p.spec.power_per_unit_w
+            for p in pdms.values()
+            if p.design.power_modes.get(mode_name, False)
+        )
+    return result
 
 
 @analysis(verify=True, desc="全バッテリーが要求 DoD 制約を満たすか")

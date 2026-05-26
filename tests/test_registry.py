@@ -42,6 +42,7 @@ def test_analyses_registered():
     names = {a.name for a in analyses}
     assert names == {
         "total_pdm_power_w",
+        "pdm_power_per_mode_w",
         "verify_battery_capacity",
         "required_orbit_energy_wh",
     }

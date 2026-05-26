@@ -98,7 +98,13 @@ def build_system_root_model(system: str, data_path: Path) -> type[BaseModel]:
             fields[cdef.name] = (cdef.entry, ...)
 
     for cfg in configs:
-        fields[cfg.name] = (cfg.model, ...)
+        if cfg.cardinality == "multi":
+            keys = _load_instance_keys(data_path, cfg.plural)
+            name_enum = _make_name_enum(cfg.plural, keys)
+            table_type = vq.Table[name_enum, cfg.model]
+            fields[cfg.plural] = (table_type, ...)
+        else:
+            fields[cfg.name] = (cfg.model, ...)
 
     model_name = f"{system.capitalize()}RootModel"
     base_cls = _make_root_base(multi_plurals)

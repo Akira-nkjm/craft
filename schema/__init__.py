@@ -4,7 +4,6 @@
 """
 
 from schema.analysis import analysis
-from systems.common import OperationMode
 from schema.component import Component
 from schema.config import Config
 from schema.fields import fld
@@ -30,7 +29,6 @@ __all__ = [
     "Config",
     "ConfigDefinition",
     "MultiInstance",
-    "OperationMode",
     "PowerConsuming",
     "SpecOnly",
     "TemperatureSensitive",

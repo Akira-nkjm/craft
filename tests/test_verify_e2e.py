@@ -3,6 +3,7 @@
 import veriq as vq
 
 from core.merge import MERGED_TOML, merge
+from systems.mission.scope import mission
 from systems.orbital.scope import orbital
 from systems.power.scope import power
 
@@ -11,6 +12,7 @@ def test_evaluate_project_runs_and_reports_verifications(clean_generated_dir):
     project = vq.Project("Craft")
     project.add_scope(power)
     project.add_scope(orbital)
+    project.add_scope(mission)
     merge()
     model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
     result = vq.evaluate_project(project, model_data)

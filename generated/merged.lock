@@ -4,7 +4,7 @@ version = 1
 sha256 = "94744ad76efa46ae47b9b19ced9e781b2c6d0debb5355e3534ad3002927e7bc4"
 
 [sources."systems/mission/data.toml"]
-sha256 = "a67678ab25b4353fb0e81ce9bc83fb6e19c4063d1fa2028ddde3ddc5c7548157"
+sha256 = "b3c782174b5c40edfba102dbec5321678a9157c0a441f8aa36a91e4d48e544f5"
 
 [sources."systems/orbital/data.toml"]
 sha256 = "260b0e48c30d1de820b0156c509446509f48a5c653b2e3cd254c325a8ebb7388"
