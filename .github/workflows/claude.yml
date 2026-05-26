@@ -30,6 +30,36 @@ jobs:
           fetch-depth: 1
 
       - name: Run Claude Code
+        id: claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+      - name: Auto-create PR for new claude branch
+        if: github.event_name == 'issue_comment' && github.event.issue.pull_request == null
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -e
+          git fetch origin --quiet
+          BRANCH=$(git for-each-ref --sort=-committerdate --count=1 \
+            --format='%(refname:lstrip=3)' \
+            "refs/remotes/origin/claude/issue-${ISSUE_NUMBER}-*")
+          if [ -z "$BRANCH" ]; then
+            echo "::notice::No claude/issue-${ISSUE_NUMBER}-* branch found, skipping PR creation"
+            exit 0
+          fi
+          echo "Found branch: claude/$BRANCH"
+          EXISTING=$(gh pr list --head "claude/$BRANCH" --state open --json number --jq '.[0].number' || true)
+          if [ -n "$EXISTING" ]; then
+            echo "::notice::PR #$EXISTING already exists for branch claude/$BRANCH"
+            exit 0
+          fi
+          ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --json title --jq .title)
+          BODY=$(printf 'Closes #%s\n\nAuto-created by Claude Code GitHub Action from `@claude` mention on #%s.\n\nSee the issue for full context and the discussion thread for implementation details.\n\n🤖 Generated with Claude Code' "$ISSUE_NUMBER" "$ISSUE_NUMBER")
+          gh pr create \
+            --base main \
+            --head "claude/$BRANCH" \
+            --title "$ISSUE_TITLE" \
+            --body "$BODY"
