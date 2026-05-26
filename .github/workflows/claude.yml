@@ -35,6 +35,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          label_trigger: claude-implement
           # No `prompt:` — let the action auto-detect tag mode from @claude mentions /
           # claude-implement label. Tag mode creates a tracking comment and reads CLAUDE.md
           # for project conventions automatically.
