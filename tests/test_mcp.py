@@ -152,6 +152,7 @@ async def test_patch_battery(mcp_server, power_data_backup):
             {
                 "name": "main",
                 "delta": {"design": {"depth_of_discharge": 0.55}},
+                "auto_etag": True,
             },
         )
     body = _decode(result)
@@ -164,7 +165,7 @@ async def test_patch_battery(mcp_server, power_data_backup):
 @pytest.mark.asyncio
 async def test_delete_battery(mcp_server, power_data_backup):
     async with create_connected_server_and_client_session(mcp_server) as client:
-        result = await client.call_tool("delete_battery", {"name": "aux"})
+        result = await client.call_tool("delete_battery", {"name": "aux", "auto_etag": True})
         body = _decode(result)
         assert body.get("deleted") is True
 
@@ -183,7 +184,7 @@ async def test_set_batteries_spec(mcp_server, power_data_backup):
             "temp_min_c": -20.0,
             "temp_max_c": 60.0,
         }
-        result = await client.call_tool("set_batteries_spec", {"spec": new_spec})
+        result = await client.call_tool("set_batteries_spec", {"spec": new_spec, "auto_etag": True})
         body = _decode(result)
         assert "etag" in body, body
         assert body["capacity_wh"] == 150.0

@@ -236,21 +236,6 @@ def _resolve_instance_etag(system: str, component: str, instance: str) -> str:
     return etag
 
 
-def _resolve_shared_spec_etag(system: str, component: str) -> str:
-    from core.instances import (
-        InstanceNotFound,
-        SingletonNotInstanceable,
-        get_shared_spec,
-    )
-
-    try:
-        _, etag = get_shared_spec(system, component)
-    except (InstanceNotFound, SingletonNotInstanceable) as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
-    return etag
-
-
 @app.command("create")
 def create_cmd(
     system: str,
@@ -282,17 +267,26 @@ def put_cmd(
     instance: str,
     data: Path | None = typer.Option(None, "--data", help="TOML or JSON payload file"),
     json_str: str | None = typer.Option(None, "--json", help="JSON payload (inline)"),
-    etag: str | None = typer.Option(None, "--etag", help="If-Match ETag (省略時は GET で取得)"),
+    etag: str | None = typer.Option(None, "--etag", help="If-Match ETag"),
+    auto_etag: bool = typer.Option(
+        False, "--auto-etag", help="ETag 省略時に GET で自動取得（楽観ロック無効化に注意）"
+    ),
 ) -> None:
     """インスタンス全置換。"""
     _bootstrap()
     from cli.error_mapping import exit_if_error
+    from core.concurrency import ETagMode, resolve_expected_etag
     from core.operations import replace_component_op
 
     payload = _load_payload(data, json_str)
-    resolved_etag = (
-        etag if etag is not None else _resolve_instance_etag(system, component, instance)
-    )
+    mode: ETagMode = "auto" if auto_etag else "required"
+    try:
+        resolved_etag = resolve_expected_etag(
+            etag, mode, fetch=lambda: _resolve_instance_etag(system, component, instance)
+        )
+    except PreconditionRequired as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from e
     try:
         result = replace_component_op(system, component, instance, payload, if_match=resolved_etag)
     except ValidationError as e:
@@ -310,17 +304,26 @@ def patch_cmd(
     instance: str,
     data: Path | None = typer.Option(None, "--data", help="TOML or JSON delta file"),
     json_str: str | None = typer.Option(None, "--json", help="JSON delta (inline)"),
-    etag: str | None = typer.Option(None, "--etag", help="If-Match ETag (省略時は GET で取得)"),
+    etag: str | None = typer.Option(None, "--etag", help="If-Match ETag"),
+    auto_etag: bool = typer.Option(
+        False, "--auto-etag", help="ETag 省略時に GET で自動取得（楽観ロック無効化に注意）"
+    ),
 ) -> None:
     """インスタンス部分更新（deep merge）。"""
     _bootstrap()
     from cli.error_mapping import exit_if_error
+    from core.concurrency import ETagMode, resolve_expected_etag
     from core.operations import patch_component_op
 
     delta = _load_payload(data, json_str)
-    resolved_etag = (
-        etag if etag is not None else _resolve_instance_etag(system, component, instance)
-    )
+    mode: ETagMode = "auto" if auto_etag else "required"
+    try:
+        resolved_etag = resolve_expected_etag(
+            etag, mode, fetch=lambda: _resolve_instance_etag(system, component, instance)
+        )
+    except PreconditionRequired as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from e
     try:
         result = patch_component_op(system, component, instance, delta, if_match=resolved_etag)
     except ValidationError as e:
@@ -336,16 +339,25 @@ def delete_cmd(
     system: str,
     component: str,
     instance: str,
-    etag: str | None = typer.Option(None, "--etag", help="If-Match ETag (省略時は GET で取得)"),
+    etag: str | None = typer.Option(None, "--etag", help="If-Match ETag"),
+    auto_etag: bool = typer.Option(
+        False, "--auto-etag", help="ETag 省略時に GET で自動取得（楽観ロック無効化に注意）"
+    ),
 ) -> None:
     """インスタンス削除（MultiInstance のみ）。"""
     _bootstrap()
     from cli.error_mapping import exit_if_error
+    from core.concurrency import ETagMode, resolve_expected_etag
     from core.operations import delete_component_op
 
-    resolved_etag = (
-        etag if etag is not None else _resolve_instance_etag(system, component, instance)
-    )
+    mode: ETagMode = "auto" if auto_etag else "required"
+    try:
+        resolved_etag = resolve_expected_etag(
+            etag, mode, fetch=lambda: _resolve_instance_etag(system, component, instance)
+        )
+    except PreconditionRequired as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from e
     result = delete_component_op(system, component, instance, if_match=resolved_etag)
     exit_if_error(result)
     typer.echo(f"Deleted {system}.{component}.{instance}")
@@ -380,29 +392,38 @@ def spec_set(
     component: str,
     data: Path | None = typer.Option(None, "--data", help="TOML or JSON payload file"),
     json_str: str | None = typer.Option(None, "--json", help="JSON payload (inline)"),
-    etag: str | None = typer.Option(None, "--etag", help="If-Match ETag (省略時は GET で取得)"),
+    etag: str | None = typer.Option(None, "--etag", help="If-Match ETag"),
+    auto_etag: bool = typer.Option(
+        False, "--auto-etag", help="ETag 省略時に GET で自動取得（楽観ロック無効化に注意）"
+    ),
 ) -> None:
     """shared spec を更新。"""
     _bootstrap()
+    from core.concurrency import ETagMode, resolve_expected_etag
     from core.instances import (
         InstanceNotFound,
         SingletonNotInstanceable,
+        get_shared_spec,
         set_shared_spec,
     )
 
     payload = _load_payload(data, json_str)
-    # 既存 shared spec があるなら etag を要求 (set_shared_spec の挙動に合わせる)
-    resolved_etag = etag
-    if resolved_etag is None:
-        from core.instances import get_shared_spec
-
+    # spec が既に存在する場合のみ ETag policy を適用
+    # 存在しない場合は新規作成のため etag 不要
+    resolved_etag: str | None
+    try:
+        _, fetched_etag = get_shared_spec(system, component)
+        mode: ETagMode = "auto" if auto_etag else "required"
         try:
-            _, resolved_etag = get_shared_spec(system, component)
-        except InstanceNotFound:
-            resolved_etag = None  # まだ無いので etag 不要
-        except SingletonNotInstanceable as e:
+            resolved_etag = resolve_expected_etag(etag, mode, fetch=lambda: fetched_etag)
+        except PreconditionRequired as e:
             typer.echo(f"Error: {e}", err=True)
             raise typer.Exit(code=1) from e
+    except InstanceNotFound:
+        resolved_etag = etag  # 新規作成: etag 不要
+    except SingletonNotInstanceable as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from e
 
     try:
         new_spec, new_etag = set_shared_spec(
