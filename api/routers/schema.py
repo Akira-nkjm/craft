@@ -2,8 +2,9 @@
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
+from api.errors import NotFoundError
 from schema import default_registry
 
 router = APIRouter(prefix="/schema", tags=["schema"])
@@ -13,10 +14,7 @@ router = APIRouter(prefix="/schema", tags=["schema"])
 def get_component_schema(subsystem: str, component: str) -> dict[str, Any]:
     defn = default_registry.component_or_none(subsystem, component)
     if defn is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Component '{subsystem}.{component}' not found in registry",
-        )
+        raise NotFoundError(f"Component '{subsystem}.{component}' not found in registry")
     return defn.entry.model_json_schema()
 
 

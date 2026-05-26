@@ -3,9 +3,9 @@
 実行前に自動で `generated/merged.toml` を再生成し、それを veriq の入力とする。
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
-from api.errors import NotFoundError
+from api.errors import ConflictError, CraftAPIError, NotFoundError
 from core.jobs import get_job, job_to_dict, submit_verify_job
 from core.merge import MergeConflict
 from core.verify import run_verify_core
@@ -18,9 +18,9 @@ def run_verify():
     try:
         return run_verify_core()
     except MergeConflict as e:
-        raise HTTPException(status_code=409, detail=f"merge failed: {e}") from e
+        raise ConflictError(f"merge failed: {e}") from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"veriq evaluation failed: {e}") from e
+        raise CraftAPIError(f"veriq evaluation failed: {e}") from e
 
 
 @router.post("/async")
