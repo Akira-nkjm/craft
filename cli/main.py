@@ -566,9 +566,7 @@ def verify_cmd(
                 any_failed = True
 
     typer.echo(
-        f"success={result['success']}, "
-        f"errors={len(result['errors'])}, "
-        f"run_id={result['run_id']}"
+        f"success={result['success']}, errors={len(result['errors'])}, run_id={result['run_id']}"
     )
     if any_failed and fail_on_verify:
         raise typer.Exit(code=1)

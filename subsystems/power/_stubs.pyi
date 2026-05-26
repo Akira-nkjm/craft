@@ -10,14 +10,11 @@ class BatterySpec(BaseModel):
     nominal_voltage_v: float
     manufacturer: str
 
-
 class BatteryDesign(BaseModel):
     depth_of_discharge: float
 
-
 class BatteryRequirements(BaseModel):
     depth_of_discharge_max: float
-
 
 class BatteryEntry(BaseModel):
     spec: BatterySpec
@@ -25,22 +22,18 @@ class BatteryEntry(BaseModel):
     requirements: BatteryRequirements
     meta: dict[str, object] | None
 
-
 class PDMSpec(BaseModel):
     default_power_consumption_per_unit_w: float
     rated_current_a: float
-
 
 class PDMDesign(BaseModel):
     power_modes: dict[OperationMode, bool]
     efficiency: float
 
-
 class PDMEntry(BaseModel):
     spec: PDMSpec
     design: PDMDesign
     meta: dict[str, object] | None
-
 
 class SolarPanelSpec(BaseModel):
     operating_temperature_min_c: float
@@ -49,11 +42,9 @@ class SolarPanelSpec(BaseModel):
     default_power_generation_per_unit_w: float
     efficiency: float
 
-
 class SolarPanelDesign(BaseModel):
     cell_count: int
     string_count: int
-
 
 class SolarPanelEntry(BaseModel):
     spec: SolarPanelSpec

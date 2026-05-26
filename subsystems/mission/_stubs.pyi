@@ -8,7 +8,6 @@ class MissionProfileModel(BaseModel):
     contact_frequency_per_day: int
     launch_window_start: str
 
-
 class OrbitalParametersModel(BaseModel):
     semi_major_axis_km: float
     eccentricity: float
