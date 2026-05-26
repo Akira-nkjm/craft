@@ -27,7 +27,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from core.atomic_write import atomic_write_bytes, atomic_write_json, atomic_write_text
+from core.atomic_write import atomic_write_bytes_or_text, atomic_write_json
 
 merge_mod = importlib.import_module("core.merge")
 
@@ -108,15 +108,9 @@ def write_run_artifacts(
     if not d.exists():
         raise FileNotFoundError(f"Run directory not found: {d}")
     if result_toml is not None:
-        if isinstance(result_toml, bytes):
-            atomic_write_bytes(d / "result.toml", result_toml)
-        else:
-            atomic_write_text(d / "result.toml", result_toml)
+        atomic_write_bytes_or_text(d / "result.toml", result_toml)
     if input_toml is not None:
-        if isinstance(input_toml, bytes):
-            atomic_write_bytes(d / "input.toml", input_toml)
-        else:
-            atomic_write_text(d / "input.toml", input_toml)
+        atomic_write_bytes_or_text(d / "input.toml", input_toml)
     if meta is not None:
         atomic_write_json(d / "meta.json", meta)
     if trace is not None:

@@ -1,12 +1,19 @@
 """core/atomic_write のユニットテスト。interruption simulation を含む。"""
 
+import contextlib
 import json
+import os
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-from core.atomic_write import atomic_write_bytes, atomic_write_json, atomic_write_text
+from core.atomic_write import (
+    atomic_write_bytes,
+    atomic_write_bytes_or_text,
+    atomic_write_json,
+    atomic_write_text,
+)
 
 
 def test_atomic_write_bytes_creates_file(tmp_path: Path) -> None:
@@ -101,3 +108,34 @@ def test_atomic_write_json_default_serializer(tmp_path: Path) -> None:
     atomic_write_json(p, {"d": date(2026, 1, 1)})
     data = json.loads(p.read_text(encoding="utf-8"))
     assert data["d"] == "2026-01-01"
+
+
+def test_atomic_write_bytes_or_text_with_bytes(tmp_path: Path) -> None:
+    p = tmp_path / "test.bin"
+    atomic_write_bytes_or_text(p, b"\x00\x01\x02")
+    assert p.read_bytes() == b"\x00\x01\x02"
+
+
+def test_atomic_write_bytes_or_text_with_str(tmp_path: Path) -> None:
+    p = tmp_path / "test.txt"
+    atomic_write_bytes_or_text(p, "hello world")
+    assert p.read_text(encoding="utf-8") == "hello world"
+
+
+def test_atomic_write_bytes_closes_fd_on_fdopen_error(tmp_path: Path) -> None:
+    """os.fdopen が raise した場合に fd がリークしないことを確認。"""
+    p = tmp_path / "test.bin"
+    original_close = os.close
+    closed_fds: list[int] = []
+
+    def tracking_close(fd: int) -> None:
+        closed_fds.append(fd)
+        with contextlib.suppress(OSError):
+            original_close(fd)
+
+    with patch("core.atomic_write.os.fdopen", side_effect=OSError("fdopen failed")):
+        with patch("core.atomic_write.os.close", side_effect=tracking_close):
+            with pytest.raises(OSError, match="fdopen failed"):
+                atomic_write_bytes(p, b"data")
+
+    assert len(closed_fds) == 1
