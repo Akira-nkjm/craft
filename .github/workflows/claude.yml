@@ -63,12 +63,9 @@ jobs:
             exit 0
           fi
           ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --json title --jq .title)
-          BODY=$(printf 'Closes #%s\n\nAuto-created by Claude Code GitHub Action from `@claude` mention on #%s.\n\nSee the issue for full context and the discussion thread for implementation details.\n\n🤖 Generated with Claude Code' "$ISSUE_NUMBER" "$ISSUE_NUMBER")
-          PR_URL=$(gh pr create \
+          BODY=$(printf 'Closes #%s\n\nAuto-created by Claude Code GitHub Action.\n\nNOTE: This PR was created by `GITHUB_TOKEN`, so CI and `@claude review` chains do NOT auto-fire. To run CI / request review, either close+reopen this PR, push an empty commit, or comment `@claude review` manually.\n\n🤖 Generated with Claude Code' "$ISSUE_NUMBER")
+          gh pr create \
             --base main \
             --head "$BRANCH" \
             --title "$ISSUE_TITLE" \
-            --body "$BODY")
-          PR_NUM=$(basename "$PR_URL")
-          # Chain a review by mentioning @claude on the new PR
-          gh pr comment "$PR_NUM" --body "@claude review この PR を簡潔にレビューしてください。差分を読んで、🔴 critical / 🟡 suggestions / 🟢 良い点 / 承認判断 を 1 コメントにまとめてください。"
+            --body "$BODY"
