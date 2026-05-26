@@ -35,11 +35,9 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: |
-            Implement the issue. Follow the conventions in AGENTS.md, RULES.md,
-            and .claude/rules/git-workflow.md. The issue body usually contains
-            file paths and line numbers — read those locations with the Read
-            tool before editing. Commit with Conventional Commits format.
+          # No `prompt:` — let the action auto-detect tag mode from @claude mentions /
+          # claude-implement label. Tag mode creates a tracking comment and reads CLAUDE.md
+          # for project conventions automatically.
 
       - name: Auto-create PR for new claude branch
         if: |
