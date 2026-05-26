@@ -5,10 +5,8 @@ class SunSenserSpec(BaseModel):
     mass_kg: float
     fov_deg: float
 
-
 class SunSenserDesign(BaseModel):
     quantity: int
-
 
 class SunSenserEntry(BaseModel):
     spec: SunSenserSpec

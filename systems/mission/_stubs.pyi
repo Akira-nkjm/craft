@@ -8,13 +8,11 @@ class MissionProfileModel(BaseModel):
     contact_frequency_per_day: int
     launch_window_start: str
 
-
 class OperationModeConfigModel(BaseModel):
     description: str
     max_duration_s: float
     is_initial_mode: bool
     allowed_transitions: list[str]
-
 
 class OrbitalParametersModel(BaseModel):
     semi_major_axis_km: float

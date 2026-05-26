@@ -25,9 +25,7 @@ def build_project() -> vq.Project:
         mod = importlib.import_module(f"systems.{sub}.scope")
         scope = getattr(mod, sub, None)
         if scope is None:
-            raise RuntimeError(
-                f"systems/{sub}/scope.py must expose a Scope variable named '{sub}'"
-            )
+            raise RuntimeError(f"systems/{sub}/scope.py must expose a Scope variable named '{sub}'")
         proj.add_scope(scope)
     return proj
 

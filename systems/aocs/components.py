@@ -1,6 +1,6 @@
 """aocs system components."""
 
-from schema import Component, MultiInstance, fld
+from schema import Component, fld
 
 
 class SunSenser(Component):

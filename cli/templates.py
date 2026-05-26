@@ -68,9 +68,7 @@ def create_subsystem(target: Path, *, name: str, kind: str) -> None:
         import_line = f"from systems.{name} import configs as _configs  # noqa: F401"
     elif kind == "default":
         (target / "components.py").write_text(
-            f'"""{name} system components."""\n'
-            "\n"
-            "# TODO: ここに `class X(Component, ...):` を書く\n"
+            f'"""{name} system components."""\n\n# TODO: ここに `class X(Component, ...):` を書く\n'
         )
         import_line = f"from systems.{name} import components as _components  # noqa: F401"
     else:  # hardware

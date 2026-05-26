@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from core.paths import REPO_ROOT, system_data_path, subsystems_root
+from core.paths import REPO_ROOT, subsystems_root, system_data_path
 from core.toml_io import read_toml, write_toml_atomic
 
 GENERATED_DIR: Path = REPO_ROOT / "generated"

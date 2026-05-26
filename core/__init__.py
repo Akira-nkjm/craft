@@ -12,9 +12,9 @@ from core.merge import (
 )
 from core.paths import (
     REPO_ROOT,
-    system_data_path,
     subsystem_dir,
     subsystems_root,
+    system_data_path,
 )
 from core.scaffold import ScaffoldResult, scaffold_all, scaffold_system
 from core.toml_io import read_toml, write_toml_atomic

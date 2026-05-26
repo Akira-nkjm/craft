@@ -7,25 +7,21 @@ class HeaterSpec(BaseModel):
     rated_power_w: float
     target_temperature_c: float
 
-
 class HeaterDesign(BaseModel):
     quantity: int
     power_modes: dict[str, bool]
     hysteresis_c: float
-
 
 class HeaterEntry(BaseModel):
     spec: HeaterSpec
     design: HeaterDesign
     meta: dict[str, object] | None
 
-
 class PanelSurfaceSpec(BaseModel):
     mass_kg: float
     emissivity: float
     absorptivity: float
     surface_treatment: str
-
 
 class PanelSurfaceEntry(BaseModel):
     spec: PanelSurfaceSpec

@@ -115,9 +115,7 @@ def patch_component_instance(
     if_match: str | None = Header(default=None, alias="If-Match"),
 ) -> dict[str, Any]:
     try:
-        updated, etag = patch_instance(
-            system, component, instance, delta, expected_etag=if_match
-        )
+        updated, etag = patch_instance(system, component, instance, delta, expected_etag=if_match)
     except InstanceNotFound as e:
         raise NotFoundError(str(e)) from e
     except SharedSpecConflict as e:

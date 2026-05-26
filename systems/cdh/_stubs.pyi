@@ -14,18 +14,15 @@ class OBCSpec(BaseModel):
     architecture: str
     bus_interface: BusInterface
 
-
 class OBCDesign(BaseModel):
     quantity: int
     power_modes: dict[str, bool]
     firmware_version: str
     boot_partition_count: int
 
-
 class OBCRequirements(BaseModel):
     mtbf_hours: float
     radiation_tolerance_krad: float
-
 
 class OBCEntry(BaseModel):
     spec: OBCSpec

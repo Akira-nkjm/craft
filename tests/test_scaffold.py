@@ -39,9 +39,9 @@ def test_scaffold_unknown_subsystem_raises():
 
 def test_scaffold_key_source_adds_missing_mode(mission_data_backup):
     """power_modes に key_source の不足モードが自動補完される。"""
-    import systems.mission.scope  # noqa: F401
     import tomlkit
 
+    import systems.mission.scope  # noqa: F401
     from core.toml_io import write_toml_atomic
 
     # mission に新モードを追加

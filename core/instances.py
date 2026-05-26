@@ -529,4 +529,3 @@ def delete_config_instance(
     _check_etag(current, expected_etag)
     _pop_dig(data, [defn.plural, key])
     write_toml_atomic(system_data_path(system), data)
-    return out
