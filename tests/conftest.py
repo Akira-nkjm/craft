@@ -6,6 +6,15 @@ from core.paths import system_data_path
 
 
 @pytest.fixture
+def mission_data_backup():
+    """テスト中に mission/data.toml を変更する場合のバックアップ・復元 fixture。"""
+    path = system_data_path("mission")
+    backup = path.read_bytes()
+    yield path
+    path.write_bytes(backup)
+
+
+@pytest.fixture
 def power_data_backup():
     """テスト中に power/data.toml を変更する場合のバックアップ・復元 fixture。"""
     path = system_data_path("power")

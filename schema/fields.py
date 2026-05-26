@@ -27,6 +27,7 @@ def fld(
     desc: str | None = None,
     group: str | None = None,
     order: int | None = None,
+    key_source: str | None = None,
 ) -> Any:
     """Component / Config / Analysis の field 宣言ヘルパー。
 
@@ -46,6 +47,8 @@ def fld(
         extra["group"] = group
     if order is not None:
         extra["order"] = order
+    if key_source is not None:
+        extra["key_source"] = key_source
 
     kwargs: dict[str, Any] = {}
     if default_factory is not None:

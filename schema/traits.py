@@ -40,7 +40,11 @@ class PowerConsuming(_Trait):
     __trait_design_extra__: ClassVar[dict[str, Any]] = {
         "power_modes": (
             dict[OperationMode, bool],
-            fld(default_factory=dict, desc="OperationMode 別の on/off"),
+            fld(
+                default_factory=dict,
+                desc="OperationMode 別の on/off",
+                key_source="mission.operation_mode_configs",
+            ),
         ),
     }
 

@@ -260,6 +260,16 @@ def _fill_model_section(
     expected = set(model.model_fields.keys())
 
     for fname, finfo in model.model_fields.items():
+        _ks = (
+            finfo.json_schema_extra.get("key_source")
+            if isinstance(finfo.json_schema_extra, dict)
+            else None
+        )
+        key_source = _ks if isinstance(_ks, str) else None
+        if key_source is not None:
+            _fill_keyed_dict(section, fname, key_source, base_path, added, format_only=format_only)
+            continue
+
         if fname in section:
             if overwrite:
                 section[fname] = default_value(finfo)
@@ -283,6 +293,49 @@ def _fill_model_section(
     order_fields_by_registry(section, model)
     apply_field_comments(section, model)
     normalize_float_values(section, model)
+
+
+def _fill_keyed_dict(
+    section: Table,
+    fname: str,
+    key_source: str,
+    base_path: str,
+    added: list[str],
+    *,
+    format_only: bool,
+) -> None:
+    """key_source が示す config の instance キーを dict フィールドに補完する。
+
+    既存キーは触らず、不足しているキーだけ False で追加する。
+    key_source 形式: "<system>.<config_plural>" (例: "mission.operation_mode_configs")
+    """
+    if format_only:
+        return
+    parts = key_source.split(".", 1)
+    if len(parts) != 2:
+        return
+    system, config_plural = parts
+    keys = _load_config_instance_keys(system, config_plural)
+    if not keys:
+        return
+    if fname not in section:
+        section[fname] = tomlkit.table()
+    sub = section[fname]
+    if not isinstance(sub, (dict, Table)):
+        return
+    for key in keys:
+        if key not in sub:
+            sub[key] = False
+            added.append(f"{base_path}.{fname}.{key}")
+
+
+def _load_config_instance_keys(system: str, config_plural: str) -> list[str]:
+    """data.toml から config の instance キー一覧を返す。"""
+    doc = read_toml_doc(system_data_path(system))
+    section = doc.get(config_plural, {})
+    if not isinstance(section, (dict, Table)):
+        return []
+    return [k for k in section if isinstance(section[k], (dict, Table))]
 
 
 def _is_nested_table(value: Any) -> bool:
