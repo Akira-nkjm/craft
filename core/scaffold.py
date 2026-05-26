@@ -16,8 +16,7 @@ from pathlib import Path
 from typing import Any, Callable, Literal
 
 import tomlkit
-from pydantic import BaseModel
-from pydantic.fields import FieldInfo
+from pydantic import BaseModel, FieldInfo
 from tomlkit import TOMLDocument
 from tomlkit.items import Table
 
@@ -268,12 +267,12 @@ def _apply_field_add_missing(
 def _apply_field_overwrite(
     section: Table, fname: str, finfo: FieldInfo, base_path: str, added: list[str]
 ) -> None:
-    if fname in section:
-        section[fname] = default_value(finfo)
-        added.append(f"{base_path}.{fname} (overwrite)")
-        return
     default = default_value(finfo)
     if default is None:
+        return
+    if fname in section:
+        section[fname] = default
+        added.append(f"{base_path}.{fname} (overwrite)")
         return
     section[fname] = default
     added.append(f"{base_path}.{fname}")

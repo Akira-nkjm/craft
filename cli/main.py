@@ -514,6 +514,11 @@ def scaffold_cmd(
     _bootstrap()
     from core.scaffold import scaffold_all, scaffold_system
 
+    if format_only and overwrite:
+        typer.echo(
+            "Warning: --format-only and --overwrite are mutually exclusive; --format-only takes precedence.",
+            err=True,
+        )
     mode = "format-only" if format_only else ("overwrite" if overwrite else "add-missing")
 
     if system is None:
