@@ -8,10 +8,10 @@ Craft の主要な抽象を理解するためのリファレンス。
 
 ```mermaid
 graph LR
-    A["components.py<br>configs.py<br>analyses.py"] -->|"__init_subclass__<br>@analysis"| B[UnifiedRegistry]
-    C["data.toml<br>(簡略形式)"] -->|"craft merge"| D["merged.toml<br>(veriq 入力形式)"]
-    B -->|"build_subsystem_root_model"| D
-    D -->|"vq.evaluate_project"| E["検証結果 / 計算値"]
+    A["components.py / configs.py / analyses.py"] -->|"自動登録"| B[UnifiedRegistry]
+    C["data.toml"] -->|"craft merge"| D["merged.toml"]
+    B -->|"root model 生成"| D
+    D -->|"craft verify"| E["検証結果 / 計算値"]
 ```
 
 ---

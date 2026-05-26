@@ -57,7 +57,7 @@ uv run uvicorn api.main:app --reload
 
 ```mermaid
 graph TD
-    A["subsystems/&lt;sub&gt;/components.py<br>configs.py / analyses.py"] -->|__init_subclass__<br>@analysis| B[UnifiedRegistry]
+    A["subsystems/sub/components.py, configs.py, analyses.py"] -->|自動登録| B[UnifiedRegistry]
     C["subsystems/&lt;sub&gt;/data.toml"] -->|craft merge| D["generated/merged.toml"]
     B --> D
     D -->|craft verify| E["veriq 検証結果"]
