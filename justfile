@@ -67,6 +67,33 @@ codex-cleanup-isolated name:
     git branch -D "$branch" 2>/dev/null || true
     echo "削除: $wt, $branch"
 
+# 依存をインストール（dev グループ含む）
+sync:
+    uv sync
+
+# ruff で format 実行
+fmt:
+    uv run ruff format .
+
+# ruff format の差分チェックのみ（CI 用）
+fmt-check:
+    uv run ruff format --check .
+
+# ruff で lint 実行
+lint:
+    uv run ruff check .
+
+# ruff で lint 自動修正
+lint-fix:
+    uv run ruff check --fix .
+
+# pyrefly で型チェック
+typecheck:
+    uv run pyrefly check
+
+# format + lint-fix + typecheck をまとめて実行
+check: fmt lint-fix typecheck
+
 # CodeGraph index を作成・再構築する（初回または手動再構築時）
 # 通常はファイル監視で自動更新されるので不要
 codegraph-init:

@@ -4,6 +4,7 @@
 The canonical entrypoint is the Claude plugin cache script:
   ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs
 """
+
 from __future__ import annotations
 
 import glob
@@ -34,7 +35,10 @@ def version_key(path: Path) -> tuple[tuple[int, ...], str]:
 def find_companion() -> Path:
     matches = [Path(p) for p in glob.glob(os.path.expanduser(PLUGIN_GLOB))]
     if not matches:
-        print("Codex plugin がインストールされていません。`/codex:setup` を実行してください。", file=sys.stderr)
+        print(
+            "Codex plugin がインストールされていません。`/codex:setup` を実行してください。",
+            file=sys.stderr,
+        )
         raise SystemExit(1)
     selected = sorted(matches, key=version_key)[-1]
     if len(matches) > 1:
@@ -47,7 +51,10 @@ def main(argv: list[str]) -> int:
         print("usage: run.py <task-name>", file=sys.stderr)
         return 2
     if not shutil.which("node"):
-        print("node が PATH にありません。Node.js をインストールしてから再実行してください。", file=sys.stderr)
+        print(
+            "node が PATH にありません。Node.js をインストールしてから再実行してください。",
+            file=sys.stderr,
+        )
         return 1
 
     task_name = argv[1]

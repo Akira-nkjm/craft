@@ -1,4 +1,5 @@
 """Shared redaction helpers for session persistence hooks."""
+
 from __future__ import annotations
 
 import re

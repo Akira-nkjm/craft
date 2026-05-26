@@ -1,4 +1,5 @@
 """既存の justfile に新しいレシピだけをマージする。"""
+
 import re
 import sys
 

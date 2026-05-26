@@ -3,6 +3,7 @@
 
 実行: python3 .claude/tools/tests/test_dangerous_cmd.py
 """
+
 import json
 import subprocess
 import sys

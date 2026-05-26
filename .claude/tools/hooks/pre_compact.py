@@ -13,6 +13,7 @@ settings.local.json 例:
       ]
     }
 """
+
 from __future__ import annotations
 
 import json

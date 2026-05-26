@@ -4,6 +4,7 @@
 settings.local.json 例:
     {"type": "command", "command": "python3 $CLAUDE_PROJECT_DIR/.claude/tools/hooks/dangerous_cmd.py"}
 """
+
 import json
 import re
 import sys
@@ -16,15 +17,24 @@ def warn(msg: str) -> None:
 # 危険コマンドのパターン。各タプルは (正規表現, 説明)
 DANGEROUS_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bgit\s+reset\s+--hard\b"), "コミット履歴の強制リセット"),
-    (re.compile(r"\bgit\s+push\s+(?:--force\b|-f\b|--force-with-lease\b)"), "リモートへの強制プッシュ"),
+    (
+        re.compile(r"\bgit\s+push\s+(?:--force\b|-f\b|--force-with-lease\b)"),
+        "リモートへの強制プッシュ",
+    ),
     (re.compile(r"\bgit\s+clean\s+-[a-zA-Z]*f"), "未追跡ファイルの強制削除"),
     (re.compile(r"\bgit\s+checkout\s+--\s"), "ファイルの強制上書き"),
     (re.compile(r"\bgit\s+branch\s+-D\b"), "ブランチの強制削除"),
     (re.compile(r"\b(?:sudo\s+)?(?:dd|mkfs|fdisk)\b"), "ディスク操作系コマンド"),
     (re.compile(r":\(\)\s*\{.*\|.*&\s*\}"), "フォーク爆弾の疑い"),
     (re.compile(r"\bchmod\s+-R\s+777\b"), "再帰的な 777 パーミッション"),
-    (re.compile(r"\bcurl\s+[^|]*\|\s*(?:sudo\s+)?(?:bash|sh|zsh)\b"), "curl パイプ実行 (任意コード実行)"),
-    (re.compile(r"\bwget\s+[^|]*\|\s*(?:sudo\s+)?(?:bash|sh|zsh)\b"), "wget パイプ実行 (任意コード実行)"),
+    (
+        re.compile(r"\bcurl\s+[^|]*\|\s*(?:sudo\s+)?(?:bash|sh|zsh)\b"),
+        "curl パイプ実行 (任意コード実行)",
+    ),
+    (
+        re.compile(r"\bwget\s+[^|]*\|\s*(?:sudo\s+)?(?:bash|sh|zsh)\b"),
+        "wget パイプ実行 (任意コード実行)",
+    ),
 ]
 
 # rm に対する特に危険な対象（ブロック対象がパターン本体と重なる場合の追加警告）

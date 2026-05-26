@@ -9,6 +9,7 @@ Default behavior preserves existing files and copies only missing files. Directo
 targets are traversed recursively so new template files can be added without
 overwriting project-specific edits such as .claude/rules/project.md.
 """
+
 from __future__ import annotations
 
 import difflib
@@ -113,7 +114,11 @@ def copy_directory(src_dir: Path, dst_dir: Path, label: str) -> None:
             continue
         rel = src.relative_to(src_dir)
         rel_label = f"{label}/{rel.as_posix()}"
-        if any(part in EXCLUDED_PARTS for part in rel.parts) or rel_label in EXCLUDED_PATHS or rel_label.startswith(".claude/sessions/"):
+        if (
+            any(part in EXCLUDED_PARTS for part in rel.parts)
+            or rel_label in EXCLUDED_PATHS
+            or rel_label.startswith(".claude/sessions/")
+        ):
             continue
         if src.name.endswith(EXCLUDED_SUFFIXES):
             continue
@@ -202,7 +207,9 @@ def main() -> int:
     for target in TARGETS:
         install_target(src_root, dst_root, target)
 
-    log("Done. Edit .claude/rules/project.md, architecture.md, and commands.md for project-specific settings.")
+    log(
+        "Done. Edit .claude/rules/project.md, architecture.md, and commands.md for project-specific settings."
+    )
     return 0
 
 

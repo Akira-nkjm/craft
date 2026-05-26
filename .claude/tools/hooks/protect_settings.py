@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """PreToolUse hook: block agent edits to Claude settings files."""
+
 from __future__ import annotations
 
 import json

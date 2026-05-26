@@ -15,6 +15,7 @@ settings.local.json 例:
       ]
     }
 """
+
 from __future__ import annotations
 
 import json
@@ -43,7 +44,7 @@ def collect_summary(transcript_path: Path) -> tuple[str, list[str]]:
     except OSError:
         return last_assistant, touched_files
 
-    for raw in lines[-MAX_TRANSCRIPT_TAIL * 4:]:
+    for raw in lines[-MAX_TRANSCRIPT_TAIL * 4 :]:
         try:
             msg = json.loads(raw)
         except json.JSONDecodeError:

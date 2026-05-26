@@ -1,3 +1,7 @@
+# =========================
+# Craft 固有
+# =========================
+
 # 実行中のタスクファイル（ディレクトリ自体は追跡）
 .tasks/*.md
 
@@ -7,7 +11,74 @@
 # 並列 Codex 実行用の git worktree（codex-run-isolated が生成）
 .worktrees/
 
+# merge / scaffold が生成する derived artifacts
+# merged.lock は CI gate のため管理する
+generated/merged.toml
+generated/runs/
+
 # codegraph の SQLite DB は .codegraph/.gitignore で管理される（リポジトリ自体は追跡）
+
+# =========================
+# Python 標準
+# =========================
+
+# bytecode / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+wheels/
+.eggs/
+
+# virtual environments
+.venv/
+venv/
+env/
+
+# uv / pip
+.uv-cache/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.tox/
+.nox/
+
+# type checker / lint cache
+.mypy_cache/
+.pyrefly_cache/
+.ruff_cache/
+.pytype/
+.dmypy.json
+dmypy.json
+
+# jupyter
+.ipynb_checkpoints/
+
+# editor / OS
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# =========================
+# 例外（追跡したいもの）
+# =========================
 
 # グローバル gitignore の除外を上書き（設定管理リポジトリなので追跡する）
 !.claude/settings.local.json
+
+# Subagent worktrees (Claude isolation)
+.claude/worktrees/
+
