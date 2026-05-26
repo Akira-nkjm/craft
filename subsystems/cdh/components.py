@@ -1,6 +1,16 @@
-"""C&DH subsystem components — Singleton 例。"""
+"""C&DH subsystem components — Singleton 例 + ネスト型 (A2) のデモ。"""
+
+from pydantic import BaseModel
 
 from schema import Component, PowerConsuming, TemperatureSensitive, fld
+
+
+class BusInterface(BaseModel):
+    """OBC のバス I/F 仕様。ネスト Pydantic model の例。"""
+
+    voltage_v: float
+    rated_current_a: float
+    protocol: str = "CAN"
 
 
 class OBC(Component, PowerConsuming, TemperatureSensitive):
@@ -10,6 +20,7 @@ class OBC(Component, PowerConsuming, TemperatureSensitive):
     ram_mb: int = fld(ge=0, unit="MB")
     storage_gb: float = fld(ge=0, unit="GB")
     architecture: str = fld(desc="CPU アーキ (ARM/RISC-V 等)")
+    bus_interface: BusInterface = fld(desc="バス I/F (ネスト model)")
 
     class Design:
         firmware_version: str = fld(default="")

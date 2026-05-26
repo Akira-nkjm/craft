@@ -51,7 +51,7 @@ async def test_list_subsystems_tool(mcp_server):
     async with create_connected_server_and_client_session(mcp_server) as client:
         result = await client.call_tool("list_subsystems", {})
     body = _decode(result)
-    assert set(body) == {"power", "cdh", "thermal", "mission"}
+    assert set(body) == {"power", "cdh", "thermal", "mission", "orbital"}
 
 
 @pytest.mark.asyncio

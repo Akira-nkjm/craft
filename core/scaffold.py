@@ -131,7 +131,7 @@ def _scaffold_component(
         )
         # 既存 instance キー or default placeholder
         instance_keys = [
-            k for k in section.keys() if k != "spec" and isinstance(section[k], (dict, Table))
+            k for k in section if k != "spec" and isinstance(section[k], (dict, Table))
         ]
         if not instance_keys:
             instance_keys = ["main"]

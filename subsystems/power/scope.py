@@ -22,9 +22,9 @@ def _build_and_attach() -> type:
 
     for adef in default_registry.analyses(subsystem="power"):
         if adef.verify:
-            power.verification(adef.name)(adef.func)
+            power.verification(adef.name, imports=adef.imports)(adef.func)
         else:
-            power.calculation(adef.name)(adef.func)
+            power.calculation(adef.name, imports=adef.imports)(adef.func)
     return root_model
 
 

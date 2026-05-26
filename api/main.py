@@ -9,7 +9,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from api.errors import register_exception_handlers
-from api.routers import analyses, components, merge, scaffold, schema, verify
+from api.routers import (
+    analyses,
+    components,
+    history,
+    merge,
+    scaffold,
+    schema,
+    verify,
+    veriq_passthrough,
+)
 from core.discovery import discover_subsystems
 
 TAGS_METADATA = [
@@ -19,6 +28,8 @@ TAGS_METADATA = [
     {"name": "verify", "description": "veriq 検証実行"},
     {"name": "merge", "description": "subsystems/*/data.toml → generated/merged.toml"},
     {"name": "scaffold", "description": "registry → data.toml 雛形生成"},
+    {"name": "veriq", "description": "veriq pass-through (graph / trace / schema)"},
+    {"name": "history", "description": "git log / diff"},
     {"name": "meta", "description": "health / version"},
 ]
 
@@ -45,6 +56,8 @@ app.include_router(analyses.router)
 app.include_router(verify.router)
 app.include_router(merge.router)
 app.include_router(scaffold.router)
+app.include_router(veriq_passthrough.router)
+app.include_router(history.router)
 
 
 @app.get("/healthz", tags=["meta"])

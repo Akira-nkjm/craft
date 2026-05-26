@@ -40,7 +40,11 @@ def test_battery_is_multi_instance():
 def test_analyses_registered():
     analyses = default_registry.analyses(subsystem="power")
     names = {a.name for a in analyses}
-    assert names == {"total_pdm_power_w", "verify_battery_capacity"}
+    assert names == {
+        "total_pdm_power_w",
+        "verify_battery_capacity",
+        "required_orbit_energy_wh",
+    }
 
     verify = default_registry.analysis("power", "verify_battery_capacity")
     assert verify.verify is True

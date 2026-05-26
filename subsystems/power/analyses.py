@@ -38,6 +38,18 @@ def verify_battery_capacity(
     )
 
 
+@analysis(
+    desc="軌道 1 周あたりに必要なエネルギー量 [Wh]",
+    imports=["orbital"],
+)
+def required_orbit_energy_wh(
+    pdm_power: Annotated[float, vq.Ref("@total_pdm_power_w")],
+    eclipse_s: Annotated[float, vq.Ref("$.orbitalparams.eclipse_duration_s", scope="orbital")],
+) -> float:
+    """eclipse 中の必要エネルギー（W * 時間）。"""
+    return pdm_power * eclipse_s / 3600.0
+
+
 # ─── (ad-hoc 例) — veriq 非登録、API/CLI 専用 ─────────────────────────
 
 

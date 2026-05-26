@@ -11,7 +11,6 @@
 
 from typing import Any
 
-import tomlkit
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo, PydanticUndefined
 from tomlkit import TOMLDocument
@@ -80,10 +79,10 @@ def write_with_comments(doc: TOMLDocument, target_path: Any) -> None:
 # ─── helpers ──────────────────────────────────────────────────────────
 
 
-class _suppress_errors:
+class _suppress_errors:  # noqa: N801 — context manager 用、private util
     """tomlkit の item に comment を付けるとき、scalar item が対応しない場合がある。"""
 
-    def __enter__(self) -> "_suppress_errors":
+    def __enter__(self) -> _suppress_errors:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> bool:
