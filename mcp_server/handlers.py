@@ -1,6 +1,5 @@
 """MCP tool handlers — registry / TOML / veriq の薄いラッパ。"""
 
-import importlib
 from typing import Any
 
 from pydantic import ValidationError
@@ -32,10 +31,10 @@ from core.instances import (
     set_shared_spec,
     set_singleton_config,
 )
-from core.merge import MERGED_TOML, merge
 from core.paths import system_data_path
 from core.serialization import to_jsonable
 from core.toml_io import read_toml
+from core.veriq_project import evaluate_project_from_merged
 from schema import default_registry
 
 
@@ -368,12 +367,7 @@ def handle_verify_single(system: str | None, name: str) -> Any:
 
 def handle_verify_all() -> Any:
     """全 scope を評価して calculation / verification を返す。"""
-    import veriq as vq
-
-    project = _build_project()
-    merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
-    result = vq.evaluate_project(project, model_data)
+    _, result = evaluate_project_from_merged()
     out: dict[str, Any] = {"success": result.success, "errors": [str(e) for e in result.errors]}
     scopes: dict[str, Any] = {}
     for scope_name in result.scopes:
@@ -396,12 +390,7 @@ def handle_verify_all() -> Any:
 
 
 def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
-    import veriq as vq
-
-    project = _build_project()
-    merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
-    result = vq.evaluate_project(project, model_data)
+    _, result = evaluate_project_from_merged()
     tree = result.get_scope_tree(system)
     if tree is None:
         return {"value": None}
@@ -411,15 +400,3 @@ def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
         if str(node.path).endswith(f"{prefix}{name}"):
             return {"value": to_jsonable(node.value)}
     return {"value": None, "note": "node not found in evaluation result"}
-
-
-def _build_project():
-    import veriq as vq
-
-    project = vq.Project("Craft")
-    for sub in sorted(default_registry.systems()):
-        mod = importlib.import_module(f"systems.{sub}.scope")
-        scope = getattr(mod, sub, None)
-        if scope is not None:
-            project.add_scope(scope)
-    return project

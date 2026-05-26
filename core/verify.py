@@ -17,21 +17,9 @@ from core.runs import (
     write_run_artifacts,
 )
 from core.serialization import to_jsonable
-from schema import default_registry
+from core.veriq_project import build_project
 
 merge_mod = importlib.import_module("core.merge")
-
-
-def build_project() -> vq.Project:
-    """登録済み system の scope を集めて Project を組み立てる。"""
-    project = vq.Project("Craft")
-    for sub in sorted(default_registry.systems()):
-        mod = importlib.import_module(f"systems.{sub}.scope")
-        scope = getattr(mod, sub, None)
-        if scope is None:
-            continue
-        project.add_scope(scope)
-    return project
 
 
 def run_verify_core() -> dict[str, Any]:
