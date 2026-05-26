@@ -43,21 +43,12 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           label_trigger: claude-implement
+          # Use tag mode (no `prompt:`) so the action loads the issue body
+          # automatically. Add quality-gate instructions via --append-system-prompt
+          # without overriding the auto-loaded user prompt.
           claude_args: |
             --allowed-tools "Bash(just check:*),Bash(just fmt:*),Bash(just lint:*),Bash(just lint-fix:*),Bash(just typecheck:*),Bash(uv run ruff:*),Bash(uv run pyrefly:*),Bash(uv run pytest:*),Bash(uv sync:*),Bash(uv run craft:*)"
-          prompt: |
-            Implement the issue body. Read the file paths and line numbers from the issue
-            with the Read tool before editing. Follow Conventional Commits format and the
-            conventions in AGENTS.md / RULES.md / .claude/rules/.
-
-            **重要**: 実装後・commit 前に必ず以下を実行し、エラーがあれば修正してから commit すること:
-            ```
-            just check    # = ruff fmt --check + ruff check --fix + pyrefly check
-            uv run pytest -q
-            ```
-
-            `just check` が pass しない状態で push しないこと。lint / 型 / テストの
-            いずれかが失敗したら、その場で修正し再実行する。
+            --append-system-prompt "実装後・commit 前に必ず `uv sync --all-extras --dev` で依存をそろえ、`just check` (= ruff fmt --check + ruff check --fix + pyrefly check) と `uv run pytest -q` を実行し、エラーがあれば修正してから commit すること。`just check` または pytest が pass しない状態で push してはならない。"
 
       - name: Validate branch passes `just check` (safety net)
         if: |
