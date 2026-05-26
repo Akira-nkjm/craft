@@ -9,6 +9,7 @@
 仕様: plan/Craft/01_仕様/Analysis詳細仕様.md
 """
 
+import importlib
 import inspect
 from typing import Annotated, Any, get_args, get_origin
 
@@ -16,11 +17,17 @@ import veriq as vq
 from fastapi import APIRouter, Body
 
 from api.errors import NotFoundError
-from core.merge import MERGED_TOML, merge
+from core.analysis_cache import (
+    code_version_for_func,
+    compute_cache_key,
+    get_cached,
+    put_cached,
+)
 from schema import default_registry
 from schema.registry import AnalysisDefinition
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
+merge_mod = importlib.import_module("core.merge")
 
 
 def _describe(adef: AnalysisDefinition) -> dict[str, Any]:
@@ -118,7 +125,12 @@ def run_analysis(
     return _run_via_veriq(adef)
 
 
-def _run_adhoc(adef: AnalysisDefinition, payload: dict[str, Any]) -> dict[str, Any]:
+def _run_adhoc(
+    adef: AnalysisDefinition,
+    payload: dict[str, Any],
+    *,
+    use_cache: bool = True,
+) -> dict[str, Any]:
     """ad-hoc: 関数を直接呼ぶ。payload は signature にバインド。"""
     sig = inspect.signature(adef.func)
     try:
@@ -128,12 +140,31 @@ def _run_adhoc(adef: AnalysisDefinition, payload: dict[str, Any]) -> dict[str, A
         from api.errors import ValidationFailedError
 
         raise ValidationFailedError(str(e)) from e
+    inputs = dict(bound.arguments)
+    cache_key: str | None = None
+    if adef.cache and use_cache:
+        code_version = code_version_for_func(adef.func)
+        cache_key = compute_cache_key(adef.name, code_version, inputs)
+        cached = get_cached(adef.name, cache_key)
+        if cached is not None:
+            return {
+                "analysis": adef.name,
+                "subsystem": adef.subsystem,
+                "value": cached.get("value"),
+                "cache_hit": True,
+            }
     value = adef.func(*bound.args, **bound.kwargs)
-    return {
+    json_value = _jsonable(value)
+    if cache_key is not None:
+        put_cached(adef.name, cache_key, {"value": json_value})
+    output = {
         "analysis": adef.name,
         "subsystem": adef.subsystem,
-        "value": _jsonable(value),
+        "value": json_value,
     }
+    if adef.cache:
+        output["cache_hit"] = False
+    return output
 
 
 def _run_via_veriq(adef: AnalysisDefinition) -> dict[str, Any]:
@@ -148,8 +179,8 @@ def _run_via_veriq(adef: AnalysisDefinition) -> dict[str, Any]:
         if scope is None:
             continue
         project.add_scope(scope)
-    merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    merge_mod.merge()
+    model_data = vq.load_model_data_from_toml(project, merge_mod.MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
     tree = result.get_scope_tree(adef.subsystem)
     if tree is None:

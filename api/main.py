@@ -14,6 +14,7 @@ from api.routers import (
     components,
     history,
     merge,
+    runs,
     scaffold,
     schema,
     verify,
@@ -26,6 +27,7 @@ TAGS_METADATA = [
     {"name": "components", "description": "TOML 上のインスタンス CRUD（ETag / If-Match）"},
     {"name": "analyses", "description": "@analysis 関数の自動 API（一覧 / 実行）"},
     {"name": "verify", "description": "veriq 検証実行"},
+    {"name": "runs", "description": "verification run history"},
     {"name": "merge", "description": "subsystems/*/data.toml → generated/merged.toml"},
     {"name": "scaffold", "description": "registry → data.toml 雛形生成"},
     {"name": "veriq", "description": "veriq pass-through (graph / trace / schema)"},
@@ -54,6 +56,7 @@ app.include_router(schema.router)
 app.include_router(components.router)
 app.include_router(analyses.router)
 app.include_router(verify.router)
+app.include_router(runs.router)
 app.include_router(merge.router)
 app.include_router(scaffold.router)
 app.include_router(veriq_passthrough.router)

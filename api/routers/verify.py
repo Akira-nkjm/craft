@@ -3,80 +3,35 @@
 実行前に自動で `generated/merged.toml` を再生成し、それを veriq の入力とする。
 """
 
-from typing import Any
-
-import veriq as vq
 from fastapi import APIRouter, HTTPException
 
-from core.merge import MERGED_TOML, MergeConflict, merge
+from api.errors import NotFoundError
+from core.jobs import get_job, job_to_dict, submit_verify_job
+from core.merge import MergeConflict
+from core.verify import run_verify_core
 
 router = APIRouter(prefix="/verify", tags=["verify"])
 
 
-def _build_project() -> vq.Project:
-    """登録済み subsystem の scope を集めて Project を組み立てる。"""
-    import importlib
-
-    from schema import default_registry
-
-    project = vq.Project("Craft")
-    for sub in sorted(default_registry.subsystems()):
-        mod = importlib.import_module(f"subsystems.{sub}.scope")
-        scope = getattr(mod, sub, None)
-        if scope is None:
-            continue
-        project.add_scope(scope)
-    return project
-
-
 @router.post("")
-def run_verify() -> dict[str, Any]:
-    project = _build_project()
-
+def run_verify():
     try:
-        merge_result, _ = merge()
+        return run_verify_core()
     except MergeConflict as e:
         raise HTTPException(status_code=409, detail=f"merge failed: {e}") from e
-
-    try:
-        model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
-        result = vq.evaluate_project(project, model_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"veriq evaluation failed: {e}") from e
 
-    scopes_payload: dict[str, dict[str, Any]] = {}
-    for scope_name in result.scopes:
-        tree = result.get_scope_tree(scope_name)
-        if tree is None:
-            scopes_payload[scope_name] = {"calculations": [], "verifications": []}
-            continue
-        scopes_payload[scope_name] = {
-            "calculations": [
-                {"path": str(node.path), "value": _jsonable(node.value)}
-                for node in tree.calculations
-            ],
-            "verifications": [
-                {"path": str(node.path), "value": _jsonable(node.value)}
-                for node in tree.verifications
-            ],
-        }
 
-    return {
-        "success": result.success,
-        "errors": [str(e) for e in result.errors],
-        "merge": {
-            "subsystems": list(merge_result.subsystems),
-            "source_files": merge_result.source_files,
-        },
-        "scopes": scopes_payload,
-    }
+@router.post("/async")
+async def run_verify_async():
+    job = submit_verify_job()
+    return {"job_id": job.id, "status": job.status}
 
 
-def _jsonable(value: Any) -> Any:
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if isinstance(value, dict):
-        return {str(k): _jsonable(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_jsonable(v) for v in value]
-    return value
+@router.get("/jobs/{job_id}")
+def get_verify_job(job_id: str):
+    job = get_job(job_id)
+    if job is None:
+        raise NotFoundError(f"Job '{job_id}' not found")
+    return job_to_dict(job)

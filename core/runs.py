@@ -17,20 +17,21 @@ short hash: `sha256(input + registry_sha)[:6]`
 
 import contextlib
 import hashlib
+import importlib
 import json
 import os
 import shutil
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from core.merge import GENERATED_DIR
+merge_mod = importlib.import_module("core.merge")
 
 
 def _runs_dir() -> Path:
-    return GENERATED_DIR / "runs"
+    return merge_mod.GENERATED_DIR / "runs"
 
 
 def _latest_marker() -> Path:
@@ -66,7 +67,7 @@ def _short_hash(*parts: str) -> str:
 
 
 def new_run_id(*, input_sha: str = "", registry_sha: str = "") -> str:
-    ts = _format_timestamp(datetime.now(tz=timezone.utc))
+    ts = _format_timestamp(datetime.now(tz=UTC))
     short = _short_hash(input_sha, registry_sha, str(time.monotonic_ns()))
     return f"{ts}-{short}"
 
@@ -79,6 +80,17 @@ def create_run_dir(run_id: str) -> Path:
     d = run_dir(run_id)
     d.mkdir(parents=True, exist_ok=False)
     return d
+
+
+def _is_run_dir(path: Path) -> bool:
+    reserved = {"latest", "analyses", "jobs"}
+    return (
+        path.is_dir()
+        and not path.is_symlink()
+        and not path.name.startswith("_")
+        and path.name not in reserved
+        and (path / "meta.json").exists()
+    )
 
 
 def write_run_artifacts(
@@ -149,7 +161,7 @@ def latest_run_id() -> str | None:
     runs = _runs_dir()
     if not runs.exists():
         return None
-    candidates = [p.name for p in runs.iterdir() if p.is_dir() and not p.name.startswith("_")]
+    candidates = [p.name for p in runs.iterdir() if _is_run_dir(p)]
     if not candidates:
         return None
     candidates.sort()
@@ -163,7 +175,7 @@ def list_runs(*, limit: int | None = None) -> list[Run]:
         return []
     entries: list[Run] = []
     for d in sorted(runs.iterdir(), reverse=True):
-        if not d.is_dir() or d.name.startswith("_"):
+        if not _is_run_dir(d):
             continue
         run = _load_run(d)
         if run is not None:
@@ -176,7 +188,7 @@ def list_runs(*, limit: int | None = None) -> list[Run]:
 def get_run(run_id: str) -> Run | None:
     """単一 run の Run。存在しなければ None。"""
     d = run_dir(run_id)
-    if not d.exists():
+    if not _is_run_dir(d):
         return None
     return _load_run(d)
 
@@ -213,7 +225,7 @@ def prune_runs(*, keep: int) -> list[str]:
     """最新 `keep` 件を残し、それ以前を削除。削除した run_id のリストを返す。"""
     runs = (
         sorted(
-            (p for p in _runs_dir().iterdir() if p.is_dir() and not p.name.startswith("_")),
+            (p for p in _runs_dir().iterdir() if _is_run_dir(p)),
             reverse=True,
         )
         if _runs_dir().exists()

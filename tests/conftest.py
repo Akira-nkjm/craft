@@ -34,5 +34,5 @@ def clean_generated_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(core_merge_mod, "MERGED_TOML", new_toml)
     monkeypatch.setattr(core_merge_mod, "MERGED_LOCK", new_lock)
     monkeypatch.setattr(merge_router, "MERGED_TOML", new_toml)
-    monkeypatch.setattr(verify_router, "MERGED_TOML", new_toml)
+    monkeypatch.setattr(verify_router, "MERGED_TOML", new_toml, raising=False)
     yield gen_dir

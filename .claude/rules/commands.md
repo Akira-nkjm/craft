@@ -44,9 +44,13 @@ uv run craft schema show <sub> <comp>               # JSON Schema
 uv run craft get <sub> <comp> [<inst>]              # インスタンス取得
 uv run craft merge [--check] [--dry-run]            # data.toml → merged.toml
 uv run craft scaffold [<sub>] [--dry-run]           # registry → data.toml 雛形
-uv run craft verify [--no-fail-on-verify]           # merge → veriq evaluate
+uv run craft verify [--async] [--no-fail-on-verify] # merge → veriq evaluate / job 発行
+uv run craft runs list                              # verification run 一覧
+uv run craft runs latest                            # 最新 verification run
+uv run craft runs show <run_id>                     # verification run 詳細
+uv run craft runs artifact <run_id> <name>          # result.toml 等を stdout
 uv run craft analysis list                          # @analysis 一覧
-uv run craft analysis run <sub|_> <name> [--payload JSON]
+uv run craft analysis run <sub|_> <name> [--payload JSON] [--no-cache]
 uv run craft init subsystem <name> [--kind hardware|config-only|default]
 ```
 

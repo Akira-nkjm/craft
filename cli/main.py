@@ -42,10 +42,12 @@ schema_app = typer.Typer(no_args_is_help=True, help="Pydantic Schema 配信")
 analysis_app = typer.Typer(no_args_is_help=True, help="@analysis 関数の実行")
 init_app = typer.Typer(no_args_is_help=True, help="プロジェクト/サブシステム雛形生成")
 spec_app = typer.Typer(no_args_is_help=True, help="MultiInstance の shared spec 操作")
+runs_app = typer.Typer(no_args_is_help=True, help="verification run history")
 app.add_typer(schema_app, name="schema")
 app.add_typer(analysis_app, name="analysis")
 app.add_typer(init_app, name="init")
 app.add_typer(spec_app, name="spec")
+app.add_typer(runs_app, name="runs")
 
 
 def _bootstrap() -> None:
@@ -539,42 +541,88 @@ def verify_cmd(
         "--fail-on-verify/--no-fail-on-verify",
         help="verification が 1 つでも False なら exit 1",
     ),
+    async_: bool = typer.Option(False, "--async", help="job_id を発行して即終了"),
 ) -> None:
     """merge → veriq evaluate_project を実行。"""
     _bootstrap()
-    import veriq as vq
+    if async_:
+        from core.jobs import job_to_dict, submit_verify_job
 
-    from core.merge import MERGED_TOML, merge
-    from schema import default_registry
+        _print_json(job_to_dict(submit_verify_job()))
+        return
 
-    project = vq.Project("Craft")
-    for sub in sorted(default_registry.subsystems()):
-        mod = importlib.import_module(f"subsystems.{sub}.scope")
-        scope = getattr(mod, sub, None)
-        if scope is None:
-            continue
-        project.add_scope(scope)
+    from core.verify import run_verify_core
 
-    merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
-    result = vq.evaluate_project(project, model_data)
+    result = run_verify_core()
 
     any_failed = False
-    for scope_name in result.scopes:
-        tree = result.get_scope_tree(scope_name)
-        if tree is None:
-            continue
-        for node in tree.calculations:
-            typer.echo(f"  CALC {node.path}  =  {node.value}")
-        for node in tree.verifications:
-            mark = "✓" if node.value else "✗"
-            typer.echo(f"  VERI {mark} {node.path}  =  {node.value}")
-            if node.value is False:
+    for scope in result["scopes"].values():
+        for node in scope["calculations"]:
+            typer.echo(f"  CALC {node['path']}  =  {node['value']}")
+        for node in scope["verifications"]:
+            mark = "✓" if node["value"] else "✗"
+            typer.echo(f"  VERI {mark} {node['path']}  =  {node['value']}")
+            if node["value"] is False:
                 any_failed = True
 
-    typer.echo(f"success={result.success}, errors={len(result.errors)}")
+    typer.echo(
+        f"success={result['success']}, "
+        f"errors={len(result['errors'])}, "
+        f"run_id={result['run_id']}"
+    )
     if any_failed and fail_on_verify:
         raise typer.Exit(code=1)
+
+
+# ─── runs ────────────────────────────────────────────────────────────
+
+
+@runs_app.command("list")
+def runs_list(limit: int = typer.Option(20, "--limit", "-n", min=0, help="最大件数")) -> None:
+    """verification run 一覧を新しい順に表示。"""
+    from core.runs import list_runs, run_to_dict
+
+    _print_json({"runs": [run_to_dict(run) for run in list_runs(limit=limit)]})
+
+
+@runs_app.command("show")
+def runs_show(run_id: str) -> None:
+    """単一 verification run の詳細を表示。"""
+    from core.runs import get_run, run_to_dict
+
+    run = get_run(run_id)
+    if run is None:
+        typer.echo(f"Error: run '{run_id}' not found", err=True)
+        raise typer.Exit(code=1)
+    _print_json(run_to_dict(run))
+
+
+@runs_app.command("latest")
+def runs_latest() -> None:
+    """最新 verification run を表示。"""
+    from core.runs import get_run, latest_run_id, run_to_dict
+
+    run_id = latest_run_id()
+    if run_id is None:
+        typer.echo("Error: no runs found", err=True)
+        raise typer.Exit(code=1)
+    run = get_run(run_id)
+    if run is None:
+        typer.echo(f"Error: run '{run_id}' not found", err=True)
+        raise typer.Exit(code=1)
+    _print_json(run_to_dict(run))
+
+
+@runs_app.command("artifact")
+def runs_artifact(run_id: str, name: str) -> None:
+    """指定 artifact の中身を stdout に出力。"""
+    from core.runs import get_run_artifact
+
+    content = get_run_artifact(run_id, name)
+    if content is None:
+        typer.echo(f"Error: artifact '{name}' not found for run '{run_id}'", err=True)
+        raise typer.Exit(code=1)
+    sys.stdout.buffer.write(content)
 
 
 # ─── analysis ────────────────────────────────────────────────────────
@@ -605,6 +653,7 @@ def analysis_run(
     payload_json: str | None = typer.Option(
         None, "--payload", "-p", help="JSON payload (ad-hoc analysis のみ)"
     ),
+    no_cache: bool = typer.Option(False, "--no-cache", help="ad-hoc cache をスキップ"),
 ) -> None:
     """analysis を実行（veriq 連携 or ad-hoc）。"""
     _bootstrap()
@@ -621,11 +670,33 @@ def analysis_run(
     if adef.subsystem is None:
         import inspect
 
+        from core.analysis_cache import (
+            code_version_for_func,
+            compute_cache_key,
+            get_cached,
+            put_cached,
+        )
+
         sig = inspect.signature(adef.func)
         bound = sig.bind_partial(**payload)
         bound.apply_defaults()
+        inputs = dict(bound.arguments)
+        cache_key: str | None = None
+        if adef.cache and not no_cache:
+            code_version = code_version_for_func(adef.func)
+            cache_key = compute_cache_key(adef.name, code_version, inputs)
+            cached = get_cached(adef.name, cache_key)
+            if cached is not None:
+                _print_json({"value": cached.get("value"), "cache_hit": True})
+                return
         value = adef.func(*bound.args, **bound.kwargs)
-        _print_json({"value": _jsonable(value)})
+        json_value = _jsonable(value)
+        if cache_key is not None:
+            put_cached(adef.name, cache_key, {"value": json_value})
+        output = {"value": json_value}
+        if adef.cache:
+            output["cache_hit"] = False
+        _print_json(output)
         return
 
     # veriq 経由
