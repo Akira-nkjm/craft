@@ -50,7 +50,8 @@ jobs:
             --allowed-tools "Bash(just check:*),Bash(just fmt:*),Bash(just lint:*),Bash(just lint-fix:*),Bash(just typecheck:*),Bash(uv run ruff:*),Bash(uv run pyrefly:*),Bash(uv run pytest:*),Bash(uv sync:*),Bash(uv run craft:*)"
             --append-system-prompt "実装後・commit 前に必ず `uv sync --all-extras --dev` で依存をそろえ、`just check` (= ruff fmt --check + ruff check --fix + pyrefly check) と `uv run pytest -q` を実行し、エラーがあれば修正してから commit すること。`just check` または pytest が pass しない状態で push してはならない。"
 
-      - name: Validate branch passes `just check` (safety net)
+      - name: Resolve claude branch
+        id: branch
         if: |
           (github.event_name == 'issue_comment' && github.event.issue.pull_request == null) ||
           (github.event_name == 'issues')
@@ -62,15 +63,22 @@ jobs:
           BRANCH=$(gh api "repos/${GITHUB_REPOSITORY}/branches" --paginate \
             --jq ".[] | select(.name | startswith(\"claude/issue-${ISSUE_NUMBER}-\")) | .name" \
             | sort -r | head -1)
-          if [ -z "$BRANCH" ]; then
-            echo "::notice::No branch to validate"
-            exit 0
-          fi
-          git fetch origin "$BRANCH" --depth=1
-          git checkout "$BRANCH"
+          echo "name=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Re-checkout claude branch for safety net
+        if: steps.branch.outputs.name != ''
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.branch.outputs.name }}
+          fetch-depth: 1
+
+      - name: Validate branch passes `just check` (safety net)
+        if: steps.branch.outputs.name != ''
+        run: |
+          set -e
           uv sync --all-extras --dev
-          just check || (echo "::error::just check failed on $BRANCH — PR creation skipped" && exit 1)
-          uv run pytest -q || (echo "::error::pytest failed on $BRANCH — PR creation skipped" && exit 1)
+          just check || (echo "::error::just check failed on ${{ steps.branch.outputs.name }} — PR creation skipped" && exit 1)
+          uv run pytest -q || (echo "::error::pytest failed on ${{ steps.branch.outputs.name }} — PR creation skipped" && exit 1)
 
       - name: Auto-create PR for new claude branch
         if: |
