@@ -21,7 +21,6 @@
     craft init system <name>         system 雛形生成
 """
 
-import importlib
 import json
 import sys
 from pathlib import Path
@@ -123,16 +122,16 @@ def diff_cmd(
 def schema_list() -> None:
     """登録済み system / component を一覧表示。"""
     _bootstrap()
-    from schema import default_registry
+    from core.introspection import list_components_summary
 
     out: dict[str, list[dict[str, Any]]] = {}
-    for c in default_registry.components():
-        out.setdefault(c.system, []).append(
+    for s in list_components_summary():
+        out.setdefault(s.system, []).append(
             {
-                "name": c.name,
-                "plural": c.plural,
-                "cardinality": c.cardinality,
-                "traits": list(c.traits),
+                "name": s.name,
+                "plural": s.plural,
+                "cardinality": s.cardinality,
+                "traits": list(s.traits),
             }
         )
     _print_json(out)
@@ -595,16 +594,16 @@ def runs_artifact(run_id: str, name: str) -> None:
 def analysis_list() -> None:
     """登録済み @analysis 関数を一覧。"""
     _bootstrap()
-    from schema import default_registry
+    from core.introspection import list_analyses_summary
 
     items = [
         {
-            "name": a.name,
-            "system": a.system,
-            "verify": a.verify,
-            "desc": a.desc,
+            "name": s.name,
+            "system": s.system,
+            "verify": s.verify,
+            "desc": s.desc,
         }
-        for a in default_registry.analyses()
+        for s in list_analyses_summary()
     ]
     _print_json(items)
 
@@ -621,73 +620,24 @@ def analysis_run(
     """analysis を実行（veriq 連携 or ad-hoc）。"""
     _bootstrap()
     sub = None if system == "_" else system
-    from schema import default_registry
-
-    adef = default_registry.analysis_or_none(sub, name)
-    if adef is None:
-        typer.echo(f"Error: analysis '{system}.{name}' not found", err=True)
-        raise typer.Exit(code=1)
-
     payload = json.loads(payload_json) if payload_json else {}
 
-    if adef.system is None:
-        import inspect
+    from core.analysis_runner import AnalysisArgumentError, AnalysisNotFound
+    from core.analysis_runner import run_analysis as _run_analysis
 
-        from core.analysis_cache import (
-            code_version_for_func,
-            compute_cache_key,
-            get_cached,
-            put_cached,
-        )
+    try:
+        result = _run_analysis(sub, name, payload, use_cache=not no_cache)
+    except AnalysisNotFound:
+        typer.echo(f"Error: analysis '{system}.{name}' not found", err=True)
+        raise typer.Exit(code=1) from None
+    except AnalysisArgumentError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from None
 
-        sig = inspect.signature(adef.func)
-        bound = sig.bind_partial(**payload)
-        bound.apply_defaults()
-        inputs = dict(bound.arguments)
-        cache_key: str | None = None
-        if adef.cache and not no_cache:
-            code_version = code_version_for_func(adef.func)
-            cache_key = compute_cache_key(adef.name, code_version, inputs)
-            cached = get_cached(adef.name, cache_key)
-            if cached is not None:
-                _print_json({"value": cached.get("value"), "cache_hit": True})
-                return
-        value = adef.func(*bound.args, **bound.kwargs)
-        json_value = to_jsonable(value)
-        if cache_key is not None:
-            put_cached(adef.name, cache_key, {"value": json_value})
-        output = {"value": json_value}
-        if adef.cache:
-            output["cache_hit"] = False
-        _print_json(output)
-        return
-
-    # veriq 経由
-    import veriq as vq
-
-    from core.merge import MERGED_TOML
-    from core.merge import merge as merge_func
-
-    project = vq.Project("Craft")
-    for s in sorted(default_registry.systems()):
-        mod = importlib.import_module(f"systems.{s}.scope")
-        scope = getattr(mod, s, None)
-        if scope is not None:
-            project.add_scope(scope)
-    merge_func()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
-    result = vq.evaluate_project(project, model_data)
-    tree = result.get_scope_tree(adef.system)
-    if tree is None:
-        _print_json({"value": None})
-        return
-    nodes = tree.verifications if adef.verify else tree.calculations
-    prefix = "?" if adef.verify else "@"
-    for node in nodes:
-        if str(node.path).endswith(f"{prefix}{adef.name}"):
-            _print_json({"value": to_jsonable(node.value)})
-            return
-    _print_json({"value": None})
+    output: dict[str, Any] = {"value": result.value}
+    if result.cache_hit is not None:
+        output["cache_hit"] = result.cache_hit
+    _print_json(output)
 
 
 # ─── gen-stubs ───────────────────────────────────────────────────────
