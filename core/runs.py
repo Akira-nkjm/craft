@@ -140,7 +140,7 @@ def update_latest(run_id: str) -> None:
     try:
         os.symlink(run_id, tmp_symlink)
         os.replace(tmp_symlink, symlink)
-    except OSError, NotImplementedError:
+    except (OSError, NotImplementedError):
         # symlink 不可な FS なら text fallback
         _latest_marker().write_text(run_id, encoding="utf-8")
 
@@ -206,7 +206,7 @@ def _load_run(d: Path) -> Run | None:
     if meta_path.exists():
         try:
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        except OSError, json.JSONDecodeError:
+        except (OSError, json.JSONDecodeError):
             meta = {}
     else:
         meta = {}
