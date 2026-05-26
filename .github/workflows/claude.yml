@@ -46,8 +46,11 @@ jobs:
           # Use tag mode (no `prompt:`) so the action loads the issue body
           # automatically. Add quality-gate instructions via --append-system-prompt
           # without overriding the auto-loaded user prompt.
+          # IMPORTANT: --allowed-tools REPLACES the action's defaults — must re-include
+          # git/commit/push and the github_comment MCP tool, otherwise Claude can do
+          # all the work but never push or post a tracking comment.
           claude_args: |
-            --allowed-tools "Bash(just check:*),Bash(just fmt:*),Bash(just lint:*),Bash(just lint-fix:*),Bash(just typecheck:*),Bash(uv run ruff:*),Bash(uv run pyrefly:*),Bash(uv run pytest:*),Bash(uv sync:*),Bash(uv run craft:*)"
+            --allowed-tools "Glob,Grep,LS,Read,Edit,Write,mcp__github_comment__update_claude_comment,Bash(git add:*),Bash(git commit:*),Bash(git rm:*),Bash(/home/runner/work/_actions/anthropics/claude-code-action/v1/scripts/git-push.sh:*),Bash(just check:*),Bash(just fmt:*),Bash(just lint:*),Bash(just lint-fix:*),Bash(just typecheck:*),Bash(uv run ruff:*),Bash(uv run pyrefly:*),Bash(uv run pytest:*),Bash(uv sync:*),Bash(uv run craft:*)"
             --append-system-prompt "実装後・commit 前に必ず `uv sync --all-extras --dev` で依存をそろえ、`just check` (= ruff fmt --check + ruff check --fix + pyrefly check) と `uv run pytest -q` を実行し、エラーがあれば修正してから commit すること。`just check` または pytest が pass しない状態で push してはならない。"
 
       - name: Resolve claude branch
