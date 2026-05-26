@@ -16,7 +16,7 @@ craft/
 ├── pyproject.toml          # 全 deps をここに集約
 ├── schema/                 # framework: base classes
 ├── core/                   # framework: I/O 等
-├── subsystems/             # ユーザ領域 (subsystem ごとに 1 ディレクトリ)
+├── systems/                # ユーザ領域 (system ごとに 1 ディレクトリ)
 │   └── power/
 ├── api/                    # FastAPI
 └── tests/
