@@ -32,7 +32,9 @@ from core.instances import (
     set_shared_spec,
     set_singleton_config,
 )
-from core.merge import MERGED_TOML, merge
+import sys as _sys
+
+from core.merge import merge
 from core.paths import system_data_path
 from core.toml_io import read_toml
 from schema import default_registry
@@ -371,7 +373,7 @@ def handle_verify_all() -> Any:
 
     project = _build_project()
     merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, _sys.modules["core.merge"].MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
     out: dict[str, Any] = {"success": result.success, "errors": [str(e) for e in result.errors]}
     scopes: dict[str, Any] = {}
@@ -399,7 +401,7 @@ def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
 
     project = _build_project()
     merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, _sys.modules["core.merge"].MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
     tree = result.get_scope_tree(system)
     if tree is None:
