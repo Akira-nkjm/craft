@@ -11,9 +11,10 @@
 """
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import tomlkit
 from pydantic import BaseModel
@@ -31,6 +32,8 @@ from core.toml_io import read_toml_doc, write_toml_atomic
 from schema import default_registry
 from schema.registry import ComponentDefinition, ConfigDefinition
 
+ScaffoldMode = Literal["add-missing", "overwrite", "format-only"]
+
 
 @dataclass(frozen=True, slots=True)
 class ScaffoldResult:
@@ -46,14 +49,12 @@ def scaffold_system(
     system: str,
     *,
     dry_run: bool = False,
-    format_only: bool = False,
-    overwrite: bool = False,
+    mode: ScaffoldMode = "add-missing",
 ) -> tuple[ScaffoldResult, TOMLDocument]:
     """1 つの system の data.toml を雛形と diff merge する。
 
     Args:
-        format_only: 既存値を触らず順序・コメントのみ整形
-        overwrite: 既存値を default に戻す（破壊的）
+        mode: "add-missing" (default) / "format-only" / "overwrite"
 
     Returns:
         (result, updated TOMLDocument)
@@ -68,12 +69,11 @@ def scaffold_system(
 
     added: list[str] = []
     removed: list[str] = []
-    mode = "format-only" if format_only else ("overwrite" if overwrite else "add-missing")
 
     for cdef in components:
-        _scaffold_component(doc, cdef, added, removed, format_only=format_only, overwrite=overwrite)
+        _scaffold_component(doc, cdef, added, removed, mode=mode)
     for cfg in configs:
-        _scaffold_config(doc, cfg, added, removed, format_only=format_only, overwrite=overwrite)
+        _scaffold_config(doc, cfg, added, removed, mode=mode)
 
     result = ScaffoldResult(
         system=system,
@@ -94,14 +94,11 @@ def scaffold_system(
 def scaffold_all(
     *,
     dry_run: bool = False,
-    format_only: bool = False,
-    overwrite: bool = False,
+    mode: ScaffoldMode = "add-missing",
 ) -> list[ScaffoldResult]:
     out: list[ScaffoldResult] = []
     for sub in sorted(default_registry.systems()):
-        result, _ = scaffold_system(
-            sub, dry_run=dry_run, format_only=format_only, overwrite=overwrite
-        )
+        result, _ = scaffold_system(sub, dry_run=dry_run, mode=mode)
         out.append(result)
     return out
 
@@ -115,8 +112,7 @@ def _scaffold_component(
     added: list[str],
     removed: list[str],
     *,
-    format_only: bool,
-    overwrite: bool,
+    mode: ScaffoldMode,
 ) -> None:
     if cdef.cardinality == "multi":
         _ensure_section_comment(target, cdef.plural, _class_name_to_title(cdef.cls))
@@ -129,8 +125,7 @@ def _scaffold_component(
             f"{cdef.plural}.spec",
             added,
             removed,
-            format_only=format_only,
-            overwrite=overwrite,
+            mode=mode,
         )
         # 既存 instance キー or default placeholder
         instance_keys = [
@@ -146,8 +141,7 @@ def _scaffold_component(
                 base_path=f"{cdef.plural}.{inst}",
                 added=added,
                 removed=removed,
-                format_only=format_only,
-                overwrite=overwrite,
+                mode=mode,
                 include_spec=False,  # shared_spec のため per-instance spec は出さない
             )
     else:
@@ -159,8 +153,7 @@ def _scaffold_component(
             base_path=cdef.name,
             added=added,
             removed=removed,
-            format_only=format_only,
-            overwrite=overwrite,
+            mode=mode,
             include_spec=True,
         )
 
@@ -172,8 +165,7 @@ def _fill_instance_subsections(
     base_path: str,
     added: list[str],
     removed: list[str],
-    format_only: bool,
-    overwrite: bool,
+    mode: ScaffoldMode,
     include_spec: bool,
 ) -> None:
     """1 instance の spec / design / requirements を埋める。"""
@@ -185,8 +177,7 @@ def _fill_instance_subsections(
             f"{base_path}.spec",
             added,
             removed,
-            format_only=format_only,
-            overwrite=overwrite,
+            mode=mode,
         )
     if cdef.design is not None:
         design_section = _ensure_table(section, "design")
@@ -196,8 +187,7 @@ def _fill_instance_subsections(
             f"{base_path}.design",
             added,
             removed,
-            format_only=format_only,
-            overwrite=overwrite,
+            mode=mode,
         )
     if cdef.requirements is not None:
         req_section = _ensure_table(section, "requirements")
@@ -207,8 +197,7 @@ def _fill_instance_subsections(
             f"{base_path}.requirements",
             added,
             removed,
-            format_only=format_only,
-            overwrite=overwrite,
+            mode=mode,
         )
 
 
@@ -218,8 +207,7 @@ def _scaffold_config(
     added: list[str],
     removed: list[str],
     *,
-    format_only: bool,
-    overwrite: bool,
+    mode: ScaffoldMode,
 ) -> None:
     if cfg.cardinality == "multi":
         _ensure_section_comment(target, cfg.plural, _class_name_to_title(cfg.cls))
@@ -235,8 +223,7 @@ def _scaffold_config(
                 f"{cfg.plural}.{inst}",
                 added,
                 removed,
-                format_only=format_only,
-                overwrite=overwrite,
+                mode=mode,
             )
     else:
         _ensure_section_comment(target, cfg.name, _class_name_to_title(cfg.cls))
@@ -247,8 +234,7 @@ def _scaffold_config(
             cfg.name,
             added,
             removed,
-            format_only=format_only,
-            overwrite=overwrite,
+            mode=mode,
         )
 
 
@@ -264,6 +250,51 @@ def _extract_nested_model(annotation: Any) -> type[BaseModel] | None:
     return None
 
 
+# ─── per-mode field appliers ──────────────────────────────────────────
+
+
+def _apply_field_add_missing(
+    section: Table, fname: str, finfo: Any, base_path: str, added: list[str]
+) -> None:
+    if fname in section:
+        return
+    default = default_value(finfo)
+    if default is None:
+        return
+    section[fname] = default
+    added.append(f"{base_path}.{fname}")
+
+
+def _apply_field_overwrite(
+    section: Table, fname: str, finfo: Any, base_path: str, added: list[str]
+) -> None:
+    default = default_value(finfo)
+    if default is None:
+        return
+    if fname in section:
+        section[fname] = default
+        added.append(f"{base_path}.{fname} (overwrite)")
+        return
+    section[fname] = default
+    added.append(f"{base_path}.{fname}")
+
+
+def _apply_field_format_only(
+    section: Table, fname: str, finfo: Any, base_path: str, added: list[str]
+) -> None:
+    pass  # format-only never adds or modifies fields
+
+
+_FIELD_APPLIERS: dict[
+    ScaffoldMode,
+    Callable[[Table, str, Any, str, list[str]], None],
+] = {
+    "add-missing": _apply_field_add_missing,
+    "overwrite": _apply_field_overwrite,
+    "format-only": _apply_field_format_only,
+}
+
+
 def _fill_model_section(
     section: Table,
     model: type[BaseModel],
@@ -271,11 +302,11 @@ def _fill_model_section(
     added: list[str],
     removed: list[str],
     *,
-    format_only: bool,
-    overwrite: bool,
+    mode: ScaffoldMode,
 ) -> None:
     """model.model_fields に対して section を整える。"""
     expected = set(model.model_fields.keys())
+    apply_field = _FIELD_APPLIERS[mode]
 
     for fname, finfo in model.model_fields.items():
         _ks = (
@@ -285,13 +316,13 @@ def _fill_model_section(
         )
         key_source = _ks if isinstance(_ks, str) else None
         if key_source is not None:
-            _fill_keyed_dict(section, fname, key_source, base_path, added, format_only=format_only)
+            _fill_keyed_dict(section, fname, key_source, base_path, added, mode=mode)
             continue
 
         # Nested BaseModel field → recursive subsection
         nested = _extract_nested_model(finfo.annotation)
         if nested is not None:
-            if fname not in section and format_only:
+            if fname not in section and mode == "format-only":
                 continue
             subsection = _ensure_table(section, fname)
             _fill_model_section(
@@ -300,24 +331,11 @@ def _fill_model_section(
                 f"{base_path}.{fname}",
                 added,
                 removed,
-                format_only=format_only,
-                overwrite=overwrite,
+                mode=mode,
             )
             continue
 
-        if fname in section:
-            if overwrite:
-                section[fname] = default_value(finfo)
-                added.append(f"{base_path}.{fname} (overwrite)")
-            # format_only か add-missing で既存値がある場合は触らない
-            continue
-        if format_only:
-            continue
-        default = default_value(finfo)
-        if default is None:
-            continue
-        section[fname] = default
-        added.append(f"{base_path}.{fname}")
+        apply_field(section, fname, finfo, base_path, added)
 
     # registry に無い field は警告のみ
     for fname in list(section.keys()):
@@ -448,14 +466,14 @@ def _fill_keyed_dict(
     base_path: str,
     added: list[str],
     *,
-    format_only: bool,
+    mode: ScaffoldMode,
 ) -> None:
     """key_source が示す config の instance キーを dict フィールドに補完する。
 
     既存キーは触らず、不足しているキーだけ False で追加する。
     key_source 形式: "<system>.<config_plural>" (例: "mission.operation_mode_configs")
     """
-    if format_only:
+    if mode == "format-only":
         return
     parts = key_source.split(".", 1)
     if len(parts) != 2:

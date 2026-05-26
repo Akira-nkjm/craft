@@ -20,7 +20,7 @@ def test_scaffold_format_only_does_not_add_fields(power_data_backup):
     data["batteries"]["spec"].pop("manufacturer")
     write_toml_atomic(power_data_backup, data)
 
-    result, _ = scaffold_system("power", format_only=True)
+    result, _ = scaffold_system("power", mode="format-only")
 
     # format-only は欠落 field を補わない
     assert result.added_paths == ()
@@ -51,7 +51,7 @@ def test_scaffold_format_only_reorders_fields(power_data_backup):
         spec[k] = saved[k]
     write_toml_atomic(power_data_backup, doc)
 
-    scaffold_system("power", format_only=True)
+    scaffold_system("power", mode="format-only")
 
     after = read_toml(power_data_backup)
     keys = list(after["batteries"]["spec"].keys())
@@ -72,7 +72,7 @@ def test_scaffold_overwrite_resets_values(power_data_backup):
     data["batteries"]["spec"]["capacity_wh"] = 999.0
     write_toml_atomic(power_data_backup, data)
 
-    result, _ = scaffold_system("power", overwrite=True)
+    result, _ = scaffold_system("power", mode="overwrite")
 
     after = read_toml(power_data_backup)
     # capacity_wh は default 無し → placeholder 0.0
@@ -90,7 +90,7 @@ def test_scaffold_overwrite_does_not_affect_unrelated_subsystem(power_data_backu
         if path.exists():
             snapshots[sub] = path.read_bytes()
 
-    scaffold_system("power", overwrite=True)
+    scaffold_system("power", mode="overwrite")
 
     for sub, original in snapshots.items():
         path = system_data_path(sub)
@@ -108,7 +108,7 @@ def test_scaffold_format_only_normalizes_float(power_data_backup):
     pre = read_toml(power_data_backup)
     assert isinstance(pre["batteries"]["spec"]["capacity_wh"], int)
 
-    scaffold_system("power", format_only=True)
+    scaffold_system("power", mode="format-only")
 
     after = read_toml(power_data_backup)
     val = after["batteries"]["spec"]["capacity_wh"]
@@ -119,8 +119,8 @@ def test_scaffold_format_only_normalizes_float(power_data_backup):
 def test_scaffold_mode_field_in_result(power_data_backup):
     """ScaffoldResult.mode が 3 つのモードを区別する。"""
     res_default, _ = scaffold_system("power", dry_run=True)
-    res_format, _ = scaffold_system("power", dry_run=True, format_only=True)
-    res_overwrite, _ = scaffold_system("power", dry_run=True, overwrite=True)
+    res_format, _ = scaffold_system("power", dry_run=True, mode="format-only")
+    res_overwrite, _ = scaffold_system("power", dry_run=True, mode="overwrite")
 
     assert res_default.mode == "add-missing"
     assert res_format.mode == "format-only"
