@@ -750,7 +750,7 @@ def gen_stubs_cmd(
 ) -> None:
     """各 system に `_stubs.pyi` を生成する。"""
     _bootstrap()
-    from schema.stubgen import check_stubs, generate_stubs
+    from core.stubgen import check_stubs, generate_stubs
 
     if check:
         mismatches = check_stubs()
