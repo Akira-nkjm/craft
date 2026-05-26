@@ -30,20 +30,63 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Set up Python 3.14 (for just check)
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install just
+        uses: taiki-e/install-action@just
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           label_trigger: claude-implement
-          # No `prompt:` — let the action auto-detect tag mode from @claude mentions /
-          # claude-implement label. Tag mode creates a tracking comment and reads CLAUDE.md
-          # for project conventions automatically.
+          claude_args: |
+            --allowed-tools "Bash(just check:*),Bash(just fmt:*),Bash(just lint:*),Bash(just lint-fix:*),Bash(just typecheck:*),Bash(uv run ruff:*),Bash(uv run pyrefly:*),Bash(uv run pytest:*),Bash(uv sync:*),Bash(uv run craft:*)"
+          prompt: |
+            Implement the issue body. Read the file paths and line numbers from the issue
+            with the Read tool before editing. Follow Conventional Commits format and the
+            conventions in AGENTS.md / RULES.md / .claude/rules/.
 
-      - name: Auto-create PR for new claude branch
+            **重要**: 実装後・commit 前に必ず以下を実行し、エラーがあれば修正してから commit すること:
+            ```
+            just check    # = ruff fmt --check + ruff check --fix + pyrefly check
+            uv run pytest -q
+            ```
+
+            `just check` が pass しない状態で push しないこと。lint / 型 / テストの
+            いずれかが失敗したら、その場で修正し再実行する。
+
+      - name: Validate branch passes `just check` (safety net)
         if: |
           (github.event_name == 'issue_comment' && github.event.issue.pull_request == null) ||
           (github.event_name == 'issues')
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          BRANCH=$(gh api "repos/${GITHUB_REPOSITORY}/branches" --paginate \
+            --jq ".[] | select(.name | startswith(\"claude/issue-${ISSUE_NUMBER}-\")) | .name" \
+            | sort -r | head -1)
+          if [ -z "$BRANCH" ]; then
+            echo "::notice::No branch to validate"
+            exit 0
+          fi
+          git fetch origin "$BRANCH" --depth=1
+          git checkout "$BRANCH"
+          uv sync --all-extras --dev
+          just check || (echo "::error::just check failed on $BRANCH — PR creation skipped" && exit 1)
+          uv run pytest -q || (echo "::error::pytest failed on $BRANCH — PR creation skipped" && exit 1)
+
+      - name: Auto-create PR for new claude branch
+        if: |
+          success() && (
+            (github.event_name == 'issue_comment' && github.event.issue.pull_request == null) ||
+            (github.event_name == 'issues')
+          )
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
