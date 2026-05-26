@@ -29,24 +29,38 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --allowed-tools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(git log:*),Bash(git diff:*)"
           prompt: |
-            Review this pull request thoroughly. Read AGENTS.md, RULES.md, SOUL.md,
-            and the relevant files in .claude/rules/ first to understand the
-            project conventions.
+            Review pull request #${{ github.event.pull_request.number }}.
 
-            For each file changed in this PR:
-            - Read the full context (not just the diff)
-            - Use codegraph_* MCP tools if available for structural understanding
-            - Check against project conventions in .claude/rules/
+            Steps:
+            1. `gh pr diff ${{ github.event.pull_request.number }}` で差分を取得
+            2. 変更ファイルを Read で読む（diff だけでなく前後の文脈も）
+            3. PR が `Closes #N` を含むなら `gh issue view N` で要件を確認
+            4. AGENTS.md と RULES.md を必要なら参照
 
-            Post a single summary review comment covering:
-            1. **何が変わったか** (brief)
-            2. **🔴 Critical issues** if any (correctness, security, layer violation)
-            3. **🟡 Suggestions** for improvement (3-5 max, prioritized)
-            4. **🟢 What's done well** (acknowledge good patterns)
-            5. **承認判断**: approve / request-changes / comment
+            最後に `gh pr comment ${{ github.event.pull_request.number }} --body "..."` で
+            **1 つの comment** を投稿する。フォーマット:
 
-            Be concise. Reference specific line numbers with file paths.
-            Skip lint-level nits. Focus on design and correctness.
-            If the PR closes an issue, verify it actually addresses the
-            requirements in that issue.
+            ```
+            ## 🔍 Code Review
+
+            **何が変わったか**: 1 文
+
+            ### 🔴 Critical (あれば、なければセクション省略)
+            - file:line — 問題と修正案
+
+            ### 🟡 Suggestions (3-5 件まで、優先度順、なければ省略)
+            - file:line — 改善提案
+
+            ### 🟢 良い点
+            - 簡潔に
+
+            **判断**: approve / request-changes / comment
+            ```
+
+            指示:
+            - 簡潔。lint レベル指摘はスキップ。design / correctness にフォーカス
+            - file:line 形式で参照
+            - 推測ではなく差分の根拠を示す
