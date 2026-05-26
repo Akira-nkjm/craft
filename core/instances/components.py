@@ -313,7 +313,7 @@ def get_component_view(
     Raises InstanceNotFound if not found.
     """
     defn = _component_defn(system, component)
-    resolved = instance if defn.cardinality == "multi" else ""
+    resolved = instance if defn.cardinality == "multi" and instance is not None else ""
     data = read_toml(system_data_path(system))
     view = _instance_view(defn, data, resolved)
     if view is None:
