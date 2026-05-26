@@ -1,4 +1,4 @@
-"""`schema.stubgen` の単体テストと CLI スモークテスト。"""
+"""`schema.stubgen` (純粋レンダリング) と `core.stubgen` (I/O・discovery) の単体テストと CLI スモークテスト。"""
 
 import pytest
 from typer.testing import CliRunner

@@ -13,7 +13,7 @@ from pathlib import Path
 from core.discovery import discover_systems
 from core.paths import subsystem_dir
 from schema.registry import UnifiedRegistry, default_registry
-from schema.stubgen import STUB_FILENAME, _apply_ruff_format, render_subsystem_stub
+from schema.stubgen import STUB_FILENAME, apply_ruff_format, render_subsystem_stub
 
 
 def _stub_path_for(system: str, *, output_root: Path | None = None) -> Path:
@@ -43,7 +43,7 @@ def generate_stubs(
     reg = _ensure_bootstrap(registry)
     written: list[Path] = []
     for sub in sorted(reg.systems()):
-        content = _apply_ruff_format(render_subsystem_stub(sub, registry=reg))
+        content = apply_ruff_format(render_subsystem_stub(sub, registry=reg))
         path = _stub_path_for(sub, output_root=output_root)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
@@ -63,7 +63,7 @@ def check_stubs(
     reg = _ensure_bootstrap(registry)
     mismatches: list[tuple[Path, str]] = []
     for sub in sorted(reg.systems()):
-        expected = _apply_ruff_format(render_subsystem_stub(sub, registry=reg))
+        expected = apply_ruff_format(render_subsystem_stub(sub, registry=reg))
         path = _stub_path_for(sub, output_root=output_root)
         actual = path.read_text(encoding="utf-8") if path.exists() else ""
         if actual != expected:
