@@ -20,6 +20,7 @@ from core.instances import (
     create_instance,
     delete_config_instance,
     delete_instance,
+    get_component_view,
     get_config_instance,
     get_instance,
     get_shared_spec,
@@ -34,9 +35,6 @@ from core.instances import (
 )
 from core.introspection import list_analyses_summary, list_components_summary, list_configs_summary
 from core.merge import MERGED_TOML, merge
-from core.paths import system_data_path
-from core.serialization import to_jsonable
-from core.toml_io import read_toml
 from schema import default_registry
 
 
@@ -91,8 +89,11 @@ def handle_get_component(system: str, component: str, instance: str | None) -> A
     if defn is None:
         return {"error": f"component '{system}.{component}' not found"}
     if defn.cardinality == "single":
-        data = read_toml(system_data_path(system))
-        return data.get(defn.name, {"error": "no data"})
+        try:
+            view, _ = get_component_view(system, component, None)
+        except InstanceNotFound:
+            return {"error": "no data"}
+        return view
     if instance is None or not instance:
         return {"error": "name required for MultiInstance component"}
     try:
@@ -356,7 +357,7 @@ def handle_analysis(system: str | None, name: str, payload: dict[str, Any]) -> A
         except TypeError as e:
             return {"error": f"argument error: {e}"}
         value = adef.func(*bound.args, **bound.kwargs)
-        return {"value": to_jsonable(value)}
+        return {"value": _jsonable(value)}
 
     return _run_veriq_node(adef.system, adef.name, verify=False)
 
@@ -384,11 +385,11 @@ def handle_verify_all() -> Any:
             continue
         scopes[scope_name] = {
             "calculations": [
-                {"path": str(node.path), "value": to_jsonable(node.value)}
+                {"path": str(node.path), "value": _jsonable(node.value)}
                 for node in tree.calculations
             ],
             "verifications": [
-                {"path": str(node.path), "value": to_jsonable(node.value)}
+                {"path": str(node.path), "value": _jsonable(node.value)}
                 for node in tree.verifications
             ],
         }
@@ -410,7 +411,7 @@ def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
     prefix = "?" if verify else "@"
     for node in nodes:
         if str(node.path).endswith(f"{prefix}{name}"):
-            return {"value": to_jsonable(node.value)}
+            return {"value": _jsonable(node.value)}
     return {"value": None, "note": "node not found in evaluation result"}
 
 
@@ -424,3 +425,15 @@ def _build_project():
         if scope is not None:
             project.add_scope(scope)
     return project
+
+
+def _jsonable(value: Any) -> Any:
+    if hasattr(value, "model_dump"):
+        return value.model_dump()
+    if isinstance(value, (str, int, float, bool, type(None))):
+        return value
+    if isinstance(value, dict):
+        return {str(k): _jsonable(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(v) for v in value]
+    return str(value)
