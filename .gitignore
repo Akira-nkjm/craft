@@ -1,0 +1,13 @@
+# 実行中のタスクファイル（ディレクトリ自体は追跡）
+.tasks/*.md
+
+# セッションログ（個人ごと、共有しない）
+.claude/sessions/
+
+# 並列 Codex 実行用の git worktree（codex-run-isolated が生成）
+.worktrees/
+
+# codegraph の SQLite DB は .codegraph/.gitignore で管理される（リポジトリ自体は追跡）
+
+# グローバル gitignore の除外を上書き（設定管理リポジトリなので追跡する）
+!.claude/settings.local.json
