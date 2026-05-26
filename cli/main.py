@@ -32,6 +32,7 @@ from pydantic import ValidationError
 
 from core.discovery import discover_systems
 from core.errors import ETagMismatch, PreconditionRequired
+from core.serialization import to_jsonable
 
 # Typer サブアプリ
 app = typer.Typer(
@@ -57,21 +58,7 @@ def _bootstrap() -> None:
 
 
 def _print_json(obj: Any) -> None:
-    typer.echo(json.dumps(obj, indent=2, ensure_ascii=False, default=_jsonable))
-
-
-def _jsonable(value: Any) -> Any:
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if isinstance(value, Path):
-        return str(value)
-    if isinstance(value, (str, int, float, bool, type(None))):
-        return value
-    if isinstance(value, dict):
-        return {str(k): _jsonable(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_jsonable(v) for v in value]
-    return str(value)
+    typer.echo(json.dumps(obj, indent=2, ensure_ascii=False, default=to_jsonable))
 
 
 # ─── history / diff ─────────────────────────────────────────────────
@@ -713,7 +700,7 @@ def analysis_run(
                 _print_json({"value": cached.get("value"), "cache_hit": True})
                 return
         value = adef.func(*bound.args, **bound.kwargs)
-        json_value = _jsonable(value)
+        json_value = to_jsonable(value)
         if cache_key is not None:
             put_cached(adef.name, cache_key, {"value": json_value})
         output = {"value": json_value}
@@ -745,7 +732,7 @@ def analysis_run(
     prefix = "?" if adef.verify else "@"
     for node in nodes:
         if str(node.path).endswith(f"{prefix}{adef.name}"):
-            _print_json({"value": _jsonable(node.value)})
+            _print_json({"value": to_jsonable(node.value)})
             return
     _print_json({"value": None})
 

@@ -22,7 +22,7 @@ class SourceLocation:
         try:
             file = inspect.getsourcefile(obj) or "<unknown>"
             _, line = inspect.getsourcelines(obj)
-        except (TypeError, OSError):
+        except TypeError, OSError:
             file = "<unknown>"
             line = 0
         module = getattr(obj, "__module__", "<unknown>")

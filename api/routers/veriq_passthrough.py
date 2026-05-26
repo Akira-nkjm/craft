@@ -14,6 +14,7 @@ from fastapi import APIRouter, Query
 
 from api.errors import CraftAPIError, NotFoundError, ValidationFailedError
 from core.merge import MERGED_TOML, MergeConflict, merge
+from core.serialization import to_jsonable
 from schema import default_registry
 
 router = APIRouter(prefix="/veriq", tags=["veriq"])
@@ -45,7 +46,7 @@ def _node_payload(node_spec: vq.NodeSpec) -> dict[str, Any]:
         "is_input": _resolve_is_input(node_spec),
         "dependencies": sorted(str(dep) for dep in node_spec.dependencies),
         "param_mapping": {name: str(target) for name, target in node_spec.param_mapping.items()},
-        "metadata": _jsonable(node_spec.metadata),
+        "metadata": to_jsonable(node_spec.metadata),
     }
 
 
@@ -64,28 +65,6 @@ def _type_name(t: Any) -> str:
     if t is None:
         return "None"
     return getattr(t, "__name__", None) or repr(t)
-
-
-def _jsonable(value: Any) -> Any:
-    if value is None or isinstance(value, (bool, int, float, str)):
-        return value
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if isinstance(value, dict):
-        return {str(k): _jsonable(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple, set, frozenset)):
-        return [_jsonable(v) for v in value]
-    if isinstance(value, type):
-        return _type_name(value)
-    if callable(value):
-        return repr(value)
-    try:
-        import json
-
-        json.dumps(value)
-        return value
-    except (TypeError, ValueError):
-        return str(value)
 
 
 @router.get("/scopes")
@@ -200,7 +179,7 @@ def get_trace() -> dict[str, Any]:
                 "child_ids": list(entry.child_ids),
                 "depends_on_ids": list(entry.depends_on_ids),
                 "linked_verifications": [str(v) for v in entry.linked_verifications],
-                "verification_results": _jsonable(entry.verification_results),
+                "verification_results": to_jsonable(entry.verification_results),
             }
         )
 
