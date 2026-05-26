@@ -91,8 +91,11 @@ lint-fix:
 typecheck:
     uv run pyrefly check
 
-# format + lint-fix + typecheck をまとめて実行
-check: fmt lint-fix typecheck
+test:
+    uv run pytest .
+
+# format + lint-fix + typecheck + test をまとめて実行
+check: fmt lint-fix typecheck test
 
 # CodeGraph index を作成・再構築する（初回または手動再構築時）
 # 通常はファイル監視で自動更新されるので不要
