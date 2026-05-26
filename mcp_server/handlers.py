@@ -1,6 +1,7 @@
 """MCP tool handlers — registry / TOML / veriq の薄いラッパ。"""
 
 import importlib
+import sys as _sys
 from typing import Any
 
 from pydantic import ValidationError
@@ -32,8 +33,6 @@ from core.instances import (
     set_shared_spec,
     set_singleton_config,
 )
-import sys as _sys
-
 from core.merge import merge
 from core.paths import system_data_path
 from core.serialization import to_jsonable
