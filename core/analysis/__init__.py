@@ -12,8 +12,11 @@ from core.analysis.runner import (
     extract_analysis_value,
     run_analysis,
 )
+from core.errors import AnalysisArgumentError, AnalysisNotFound
 
 __all__ = [
+    "AnalysisArgumentError",
+    "AnalysisNotFound",
     "AnalysisRunResult",
     "cache_dir",
     "code_version_for_func",
