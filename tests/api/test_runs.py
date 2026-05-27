@@ -2,7 +2,7 @@
 
 from fastapi.testclient import TestClient
 
-from api.main import app
+from craft.api.main import app
 
 
 def test_verify_creates_run_artifact(clean_generated_dir):

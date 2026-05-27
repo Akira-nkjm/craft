@@ -11,15 +11,15 @@ import pytest
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
-from api.main import app as fastapi_app
-from cli.main import app as cli_app
-from core.errors import ETagMismatch, PreconditionRequired
-from core.instances import (
+from craft.api.main import app as fastapi_app
+from craft.cli.main import app as cli_app
+from craft.core.errors import ETagMismatch, PreconditionRequired
+from craft.core.instances import (
     InstanceNotFound,
     SharedSpecConflict,
     SingletonNotInstanceable,
 )
-from mcp_server.handlers import handle_add_instance, handle_delete_instance, handle_patch_instance
+from craft.mcp_server.handlers import handle_add_instance, handle_delete_instance, handle_patch_instance
 
 # ── helpers ─────────────────────────────────────────────────────────
 

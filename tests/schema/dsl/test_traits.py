@@ -3,8 +3,8 @@
 import systems.aocs.scope  # noqa: F401 — trigger aocs system registration
 import systems.power.scope  # noqa: F401 — trigger power system registration
 import systems.thermal.scope  # noqa: F401 — trigger thermal system registration
-from schema import default_registry
-from schema.dsl.traits import (
+from craft.schema import default_registry
+from craft.schema.dsl.traits import (
     MultiInstance,
     Placeable,
     PowerConsuming,
@@ -55,7 +55,7 @@ def test_component_with_placeable_has_placement():
 
 
 def test_component_without_placeable_no_placement_field():
-    from schema import Component, fld
+    from craft.schema import Component, fld
 
     # Use a unique system name to avoid leaking into other tests'
     # default_registry.components(system="power") assertions.

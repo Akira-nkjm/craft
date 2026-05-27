@@ -2,7 +2,7 @@
 
 import pytest
 
-from core.paths import system_data_path
+from craft.core.paths import system_data_path
 
 
 @pytest.fixture
@@ -28,13 +28,13 @@ def clean_generated_dir(tmp_path, monkeypatch):
     """`generated/` をテスト用 tmp に差し替える。"""
     import sys
 
-    from api.routers import merge as merge_router
-    from api.routers import verify as verify_router
-    from core import paths as core_paths
-    from core.pipeline import verify as core_verify
+    from craft.api.routers import merge as merge_router
+    from craft.api.routers import verify as verify_router
+    from craft.core import paths as core_paths
+    from craft.core.pipeline import verify as core_verify
 
     # core.pipeline.merge re-exports these, but the source of truth is core.paths.
-    core_merge_mod = sys.modules["core.pipeline.merge"]
+    core_merge_mod = sys.modules["craft.core.pipeline.merge"]
 
     gen_dir = tmp_path / "generated"
     gen_dir.mkdir()

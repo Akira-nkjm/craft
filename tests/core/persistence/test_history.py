@@ -5,9 +5,9 @@ import re
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
-from api.main import app as api_app
-from cli.main import app as cli_app
-from core.persistence.history import GitRefNotFound, git_diff, git_log
+from craft.api.main import app as api_app
+from craft.cli.main import app as cli_app
+from craft.core.persistence.history import GitRefNotFound, git_diff, git_log
 
 
 def test_git_log_returns_entries():

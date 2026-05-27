@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from core.pipeline.veriq_project import build_project
+from craft.core.pipeline.veriq_project import build_project
 
 
 def _make_fake_importlib(system_to_scope: dict) -> MagicMock:

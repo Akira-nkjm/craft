@@ -3,8 +3,8 @@
 import sys
 
 import systems.power.scope  # noqa: F401
-from core.io.toml_io import read_toml
-from core.pipeline.merge import is_merge_stale, merge
+from craft.core.io.toml_io import read_toml
+from craft.core.pipeline.merge import is_merge_stale, merge
 
 
 def _merge_mod():

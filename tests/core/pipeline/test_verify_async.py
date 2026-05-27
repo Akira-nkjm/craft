@@ -4,7 +4,7 @@ import time
 
 from fastapi.testclient import TestClient
 
-from api.main import app
+from craft.api.main import app
 
 
 def test_verify_async_returns_job_id(clean_generated_dir):

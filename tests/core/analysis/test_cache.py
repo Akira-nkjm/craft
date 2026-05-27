@@ -5,8 +5,8 @@ import json
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
-from api.main import app as api_app
-from cli.main import app as cli_app
+from craft.api.main import app as api_app
+from craft.cli.main import app as cli_app
 
 
 def test_cache_hit_returns_same_value(clean_generated_dir):

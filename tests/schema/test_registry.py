@@ -1,7 +1,7 @@
 """Registry auto-registration の確認。"""
 
 import systems.power.scope  # noqa: F401 — トリガ
-from schema import default_registry
+from craft.schema import default_registry
 
 
 def test_power_subsystem_registered():

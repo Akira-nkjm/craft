@@ -7,9 +7,9 @@ import systems.mission.scope  # noqa: F401
 import systems.orbital.scope  # noqa: F401
 import systems.power.scope  # noqa: F401
 import systems.thermal.scope  # noqa: F401
-from core.io.toml_io import read_toml, read_toml_doc, write_toml_atomic
-from core.paths import system_data_path
-from core.pipeline.scaffold import scaffold_system
+from craft.core.io.toml_io import read_toml, read_toml_doc, write_toml_atomic
+from craft.core.paths import system_data_path
+from craft.core.pipeline.scaffold import scaffold_system
 
 
 def test_scaffold_format_only_does_not_add_fields(power_data_backup):

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from cli.main import app
+from craft.cli.main import app
 
 
 @pytest.fixture
