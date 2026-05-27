@@ -70,8 +70,16 @@ def test_callable_returns_repr():
     def my_func():
         pass
 
-    result = to_jsonable(my_func)
+    result = to_jsonable(my_func, allow_callable=True)
     assert "my_func" in result
+
+
+def test_callable_allow_false_returns_none():
+    def my_func():
+        pass
+
+    assert to_jsonable(my_func) is None
+    assert to_jsonable(my_func, allow_callable=False) is None
 
 
 def test_unknown_object_falls_back_to_str():
