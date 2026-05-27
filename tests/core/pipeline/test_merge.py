@@ -9,7 +9,7 @@ from craft.core.pipeline.merge import is_merge_stale, merge
 
 def _merge_mod():
     """`core.pipeline.merge` モジュール本体（`core/__init__.py` の関数 re-export と区別）。"""
-    return sys.modules["core.pipeline.merge"]
+    return sys.modules["craft.core.pipeline.merge"]
 
 
 def test_merge_dry_run_does_not_write(clean_generated_dir):
