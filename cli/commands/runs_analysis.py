@@ -103,8 +103,8 @@ def analysis_run(
     sub = None if system == "_" else system
     payload = json.loads(payload_json) if payload_json else {}
 
-    from core.analysis_runner import AnalysisArgumentError, AnalysisNotFound
-    from core.analysis_runner import run_analysis as _run_analysis
+    from core.analysis.runner import AnalysisArgumentError, AnalysisNotFound
+    from core.analysis.runner import run_analysis as _run_analysis
 
     try:
         result = _run_analysis(sub, name, payload, use_cache=not no_cache)

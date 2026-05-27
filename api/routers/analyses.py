@@ -16,8 +16,8 @@ import veriq as vq
 from fastapi import APIRouter, Body
 
 from api.errors import NotFoundError, ValidationFailedError
-from core.analysis_runner import AnalysisArgumentError, AnalysisNotFound
-from core.analysis_runner import run_analysis as _run_analysis
+from core.analysis.runner import AnalysisArgumentError, AnalysisNotFound
+from core.analysis.runner import run_analysis as _run_analysis
 from schema import default_registry
 from schema.registry import AnalysisDefinition
 

@@ -4,7 +4,7 @@ import inspect
 from dataclasses import dataclass
 from typing import Any
 
-from core.analysis_cache import (
+from core.analysis.cache import (
     code_version_for_func,
     compute_cache_key,
     get_cached,
