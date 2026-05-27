@@ -2,7 +2,6 @@
 
 from schema._subclass_helpers import auto_pluralize
 
-
 # ─── basic cases (regression) ────────────────────────────────────────
 
 

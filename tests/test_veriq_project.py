@@ -50,9 +50,11 @@ def test_build_project_adds_scope_for_each_system():
 
     mock_importlib.import_module.side_effect = _fake_import
 
-    with patch("core.veriq_project.importlib", mock_importlib):
-        with patch("core.veriq_project.vq.Project", return_value=mock_project):
-            result = build_project(registry)
+    with (
+        patch("core.veriq_project.importlib", mock_importlib),
+        patch("core.veriq_project.vq.Project", return_value=mock_project),
+    ):
+        result = build_project(registry)
 
     assert result is mock_project
     assert mock_project.add_scope.call_count == 2
@@ -76,9 +78,11 @@ def test_build_project_skips_system_without_scope_attribute():
     mock_importlib.import_module.side_effect = _fake_import
     mock_project = MagicMock()
 
-    with patch("core.veriq_project.importlib", mock_importlib):
-        with patch("core.veriq_project.vq.Project", return_value=mock_project):
-            build_project(registry)
+    with (
+        patch("core.veriq_project.importlib", mock_importlib),
+        patch("core.veriq_project.vq.Project", return_value=mock_project),
+    ):
+        build_project(registry)
 
     mock_project.add_scope.assert_not_called()
 
@@ -99,9 +103,11 @@ def test_build_project_iterates_systems_in_sorted_order():
 
     mock_importlib.import_module.side_effect = _fake_import
 
-    with patch("core.veriq_project.importlib", mock_importlib):
-        with patch("core.veriq_project.vq.Project", return_value=MagicMock()):
-            build_project(registry)
+    with (
+        patch("core.veriq_project.importlib", mock_importlib),
+        patch("core.veriq_project.vq.Project", return_value=MagicMock()),
+    ):
+        build_project(registry)
 
     assert call_order == sorted(call_order)
 
