@@ -1,13 +1,5 @@
-"""Craft core — paths, TOML I/O, discovery, merge, scaffold。"""
+"""core.pipeline — merge, scaffold, verify pipeline."""
 
-from core.discovery import discover_systems
-from core.io.toml_io import read_toml, write_toml_atomic
-from core.paths import (
-    REPO_ROOT,
-    subsystem_dir,
-    subsystems_root,
-    system_data_path,
-)
 from core.pipeline.merge import (
     GENERATED_DIR,
     MERGED_LOCK,
@@ -18,6 +10,8 @@ from core.pipeline.merge import (
     merge,
 )
 from core.pipeline.scaffold import ScaffoldResult, scaffold_all, scaffold_system
+from core.pipeline.verify import run_verify_core
+from core.pipeline.veriq_project import build_project, evaluate_project_from_merged
 
 __all__ = [
     "GENERATED_DIR",
@@ -25,16 +19,12 @@ __all__ = [
     "MERGED_TOML",
     "MergeConflict",
     "MergeResult",
-    "REPO_ROOT",
     "ScaffoldResult",
-    "discover_systems",
+    "build_project",
+    "evaluate_project_from_merged",
     "is_merge_stale",
     "merge",
-    "read_toml",
+    "run_verify_core",
     "scaffold_all",
     "scaffold_system",
-    "system_data_path",
-    "subsystem_dir",
-    "subsystems_root",
-    "write_toml_atomic",
 ]

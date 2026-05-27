@@ -9,8 +9,9 @@ from typing import Any
 
 import veriq as vq
 
-from core.merge import merge
 from core.paths import MERGED_TOML
+from core.pipeline.merge import merge
+from core.pipeline.veriq_project import build_project
 from core.runs import (
     create_run_dir,
     new_run_id,
@@ -18,7 +19,6 @@ from core.runs import (
     write_run_artifacts,
 )
 from core.serialization import to_jsonable
-from core.veriq_project import build_project
 
 
 def run_verify_core() -> dict[str, Any]:

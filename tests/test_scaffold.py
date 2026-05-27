@@ -2,7 +2,7 @@
 
 import systems.power.scope  # noqa: F401
 from core.io.toml_io import read_toml, write_toml_atomic
-from core.scaffold import scaffold_system
+from core.pipeline.scaffold import scaffold_system
 
 
 def test_scaffold_existing_data_is_noop(power_data_backup):

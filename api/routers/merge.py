@@ -6,7 +6,7 @@ from fastapi import APIRouter
 from fastapi.responses import Response
 
 from api.errors import ConflictError, NotFoundError
-from core.merge import MERGED_TOML, MergeConflict, is_merge_stale, merge
+from core.pipeline.merge import MERGED_TOML, MergeConflict, is_merge_stale, merge
 
 router = APIRouter(tags=["merge"])
 

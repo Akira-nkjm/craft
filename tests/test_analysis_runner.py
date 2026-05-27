@@ -103,7 +103,7 @@ def test_run_veriq_verification(clean_generated_dir):
 
 
 def test_extract_analysis_value_calculation(clean_generated_dir):
-    from core.veriq_project import evaluate_project_from_merged
+    from core.pipeline.veriq_project import evaluate_project_from_merged
 
     _, vq_result = evaluate_project_from_merged()
     value = extract_analysis_value(vq_result, "power", "total_pdm_power_w", verify=False)
@@ -111,7 +111,7 @@ def test_extract_analysis_value_calculation(clean_generated_dir):
 
 
 def test_extract_analysis_value_verification(clean_generated_dir):
-    from core.veriq_project import evaluate_project_from_merged
+    from core.pipeline.veriq_project import evaluate_project_from_merged
 
     _, vq_result = evaluate_project_from_merged()
     value = extract_analysis_value(vq_result, "power", "verify_battery_capacity", verify=True)
@@ -119,7 +119,7 @@ def test_extract_analysis_value_verification(clean_generated_dir):
 
 
 def test_extract_analysis_value_missing_scope(clean_generated_dir):
-    from core.veriq_project import evaluate_project_from_merged
+    from core.pipeline.veriq_project import evaluate_project_from_merged
 
     _, vq_result = evaluate_project_from_merged()
     value = extract_analysis_value(vq_result, "nonexistent_scope", "some_analysis", verify=False)
@@ -127,7 +127,7 @@ def test_extract_analysis_value_missing_scope(clean_generated_dir):
 
 
 def test_extract_analysis_value_missing_node(clean_generated_dir):
-    from core.veriq_project import evaluate_project_from_merged
+    from core.pipeline.veriq_project import evaluate_project_from_merged
 
     _, vq_result = evaluate_project_from_merged()
     value = extract_analysis_value(vq_result, "power", "nonexistent_node", verify=False)

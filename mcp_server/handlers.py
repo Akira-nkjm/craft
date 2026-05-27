@@ -25,7 +25,6 @@ from core.instances import (
     set_shared_spec,
 )
 from core.io.toml_io import read_toml
-from core.merge import merge
 from core.operations import (
     create_component_op,
     delete_component_op,
@@ -36,6 +35,7 @@ from core.operations import (
     set_singleton_config_op,
 )
 from core.paths import MERGED_TOML, system_data_path
+from core.pipeline.merge import merge
 from core.serialization import to_jsonable
 from mcp_server.error_mapping import error_or_none
 from schema import default_registry

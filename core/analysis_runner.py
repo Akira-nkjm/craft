@@ -119,7 +119,7 @@ def _run_adhoc(
 
 def _run_via_veriq(adef: AnalysisDefinition) -> AnalysisRunResult:
     assert adef.system is not None
-    from core.veriq_project import evaluate_project_from_merged
+    from core.pipeline.veriq_project import evaluate_project_from_merged
 
     _, result = evaluate_project_from_merged()
     value = extract_analysis_value(result, adef.system, adef.name, verify=adef.verify)

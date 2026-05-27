@@ -13,7 +13,7 @@ import veriq as vq
 from fastapi import APIRouter, Query
 
 from api.errors import CraftAPIError, NotFoundError, ValidationFailedError
-from core.merge import MERGED_TOML, MergeConflict, merge
+from core.pipeline.merge import MERGED_TOML, MergeConflict, merge
 from schema import default_registry
 
 router = APIRouter(prefix="/veriq", tags=["veriq"])
