@@ -9,7 +9,7 @@ from typing import Any
 
 from core.io.atomic_write import atomic_write_json
 from core.paths import jobs_dir
-from core.verify import run_verify_core
+from core.pipeline.verify import run_verify_core
 
 
 @dataclass(frozen=True, slots=True)

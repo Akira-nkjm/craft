@@ -4,7 +4,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from core.scaffold import scaffold_all, scaffold_system
+from core.pipeline.scaffold import scaffold_all, scaffold_system
 
 router = APIRouter(prefix="/scaffold", tags=["scaffold"])
 

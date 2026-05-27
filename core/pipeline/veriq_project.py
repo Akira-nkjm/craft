@@ -34,7 +34,7 @@ def evaluate_project_from_merged(
 
     surface layer で "merge して veriq 評価したい" 場合はこれを使う。
     """
-    from core.merge import MERGED_TOML, merge
+    from core.pipeline.merge import MERGED_TOML, merge
 
     project = build_project(registry)
     merge()

@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from api.main import app
 from core.discovery import discover_systems
-from core.merge import MERGED_TOML, merge
+from core.pipeline.merge import MERGED_TOML, merge
 from schema import default_registry
 
 

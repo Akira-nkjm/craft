@@ -16,7 +16,7 @@ def merge_cmd(
 ) -> None:
     """全 systems/*/data.toml を generated/merged.toml に統合。"""
     _bootstrap()
-    from core.merge import is_merge_stale, merge
+    from core.pipeline.merge import is_merge_stale, merge
 
     if check:
         stale = is_merge_stale()
@@ -44,7 +44,7 @@ def scaffold_cmd(
 ) -> None:
     """registry → data.toml 雛形生成 (add-missing, 既存値保持)。"""
     _bootstrap()
-    from core.scaffold import scaffold_all, scaffold_system
+    from core.pipeline.scaffold import scaffold_all, scaffold_system
 
     if format_only and overwrite:
         typer.echo(
@@ -91,7 +91,7 @@ def verify_cmd(
         _print_json(job_to_dict(submit_verify_job()))
         return
 
-    from core.verify import run_verify_core
+    from core.pipeline.verify import run_verify_core
 
     result = run_verify_core()
 

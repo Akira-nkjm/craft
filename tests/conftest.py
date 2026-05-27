@@ -31,10 +31,10 @@ def clean_generated_dir(tmp_path, monkeypatch):
     from api.routers import merge as merge_router
     from api.routers import verify as verify_router
     from core import paths as core_paths
-    from core import verify as core_verify
+    from core.pipeline import verify as core_verify
 
-    # core.merge re-exports these for backward compat, but the source of truth is core.paths.
-    core_merge_mod = sys.modules["core.merge"]
+    # core.pipeline.merge re-exports these, but the source of truth is core.paths.
+    core_merge_mod = sys.modules["core.pipeline.merge"]
 
     gen_dir = tmp_path / "generated"
     gen_dir.mkdir()
