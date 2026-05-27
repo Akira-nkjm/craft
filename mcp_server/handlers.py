@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from core.concurrency import ETagMode, resolve_expected_etag
 from core.errors import ETagMismatch, PreconditionRequired
 from core.history import (
     GitError,
@@ -143,13 +144,18 @@ def handle_patch_config_instance(system: str, name: str, payload: dict[str, Any]
     if not isinstance(delta, dict):
         return {"error": "delta must be an object"}
     etag = payload.get("etag")
-    if etag is None:
-        try:
-            _, etag = get_config_instance(system, name, key)
-        except InstanceNotFound as e:
-            return {"error": str(e)}
+    auto_etag = bool(payload.get("auto_etag", False))
+    mode: ETagMode = "auto" if auto_etag else "required"
     try:
-        result = patch_config_entry_op(system, name, key, delta, if_match=etag)
+        resolved_etag = resolve_expected_etag(
+            etag, mode, fetch=lambda: get_config_instance(system, name, key)[1]
+        )
+    except PreconditionRequired as e:
+        return {"error": str(e)}
+    except InstanceNotFound as e:
+        return {"error": str(e)}
+    try:
+        result = patch_config_entry_op(system, name, key, delta, if_match=resolved_etag)
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
     if err := error_or_none(result):
@@ -162,12 +168,17 @@ def handle_delete_config_instance(system: str, name: str, payload: dict[str, Any
     if not key:
         return {"error": "key required"}
     etag = payload.get("etag")
-    if etag is None:
-        try:
-            _, etag = get_config_instance(system, name, key)
-        except InstanceNotFound as e:
-            return {"error": str(e)}
-    result = delete_config_entry_op(system, name, key, if_match=etag)
+    auto_etag = bool(payload.get("auto_etag", False))
+    mode: ETagMode = "auto" if auto_etag else "required"
+    try:
+        resolved_etag = resolve_expected_etag(
+            etag, mode, fetch=lambda: get_config_instance(system, name, key)[1]
+        )
+    except PreconditionRequired as e:
+        return {"error": str(e)}
+    except InstanceNotFound as e:
+        return {"error": str(e)}
+    result = delete_config_entry_op(system, name, key, if_match=resolved_etag)
     if err := error_or_none(result):
         return err
     return {"deleted": True, "key": key}
@@ -192,7 +203,7 @@ def handle_add_instance(system: str, component: str, payload: dict[str, Any]) ->
 
 
 def handle_patch_instance(system: str, component: str, payload: dict[str, Any]) -> Any:
-    """multi: name 必須 / singleton: name 不要。etag 省略時は内部で補完。"""
+    """multi: name 必須 / singleton: name 不要。auto_etag=true 時のみ ETag を自動取得。"""
     defn = default_registry.component_or_none(system, component)
     if defn is None:
         return {"error": f"component '{system}.{component}' not found"}
@@ -208,14 +219,19 @@ def handle_patch_instance(system: str, component: str, payload: dict[str, Any]) 
         name = ""
 
     etag = payload.get("etag")
-    if etag is None:
-        try:
-            _, etag = get_instance(system, component, name)
-        except InstanceNotFound as e:
-            return {"error": str(e)}
+    auto_etag = bool(payload.get("auto_etag", False))
+    mode: ETagMode = "auto" if auto_etag else "required"
+    try:
+        resolved_etag = resolve_expected_etag(
+            etag, mode, fetch=lambda: get_instance(system, component, name)[1]
+        )
+    except PreconditionRequired as e:
+        return {"error": str(e)}
+    except InstanceNotFound as e:
+        return {"error": str(e)}
 
     try:
-        result = patch_component_op(system, component, name, delta, if_match=etag)
+        result = patch_component_op(system, component, name, delta, if_match=resolved_etag)
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
     if err := error_or_none(result):
@@ -228,12 +244,17 @@ def handle_delete_instance(system: str, component: str, payload: dict[str, Any])
     if not name:
         return {"error": "name required"}
     etag = payload.get("etag")
-    if etag is None:
-        try:
-            _, etag = get_instance(system, component, name)
-        except InstanceNotFound as e:
-            return {"error": str(e)}
-    result = delete_component_op(system, component, name, if_match=etag)
+    auto_etag = bool(payload.get("auto_etag", False))
+    mode: ETagMode = "auto" if auto_etag else "required"
+    try:
+        resolved_etag = resolve_expected_etag(
+            etag, mode, fetch=lambda: get_instance(system, component, name)[1]
+        )
+    except PreconditionRequired as e:
+        return {"error": str(e)}
+    except InstanceNotFound as e:
+        return {"error": str(e)}
+    result = delete_component_op(system, component, name, if_match=resolved_etag)
     if err := error_or_none(result):
         return err
     return {"deleted": True, "name": name}
@@ -254,20 +275,30 @@ def handle_set_config(system: str, name: str, payload: dict[str, Any]) -> Any:
 
 
 def handle_set_shared_spec(system: str, component: str, payload: dict[str, Any]) -> Any:
-    """MultiInstance の shared spec 全置換。"""
+    """MultiInstance の shared spec 全置換。auto_etag=true 時のみ ETag を自動取得。"""
     spec = payload.get("spec")
     if not isinstance(spec, dict):
         return {"error": "spec (object) required"}
     etag = payload.get("etag")
-    if etag is None:
-        try:
-            _, etag = get_shared_spec(system, component)
-        except InstanceNotFound:
-            etag = None  # まだ spec が無い場合は etag 検査スキップ
-        except SingletonNotInstanceable as e:
-            return {"error": str(e)}
+    auto_etag = bool(payload.get("auto_etag", False))
+
+    # spec が既に存在する場合のみ ETag policy を適用
+    # 存在しない場合は新規作成のため etag 不要
+    resolved_etag: str | None
     try:
-        new_spec, new_etag = set_shared_spec(system, component, spec, expected_etag=etag)
+        _, fetched_etag = get_shared_spec(system, component)
+        mode: ETagMode = "auto" if auto_etag else "required"
+        try:
+            resolved_etag = resolve_expected_etag(etag, mode, fetch=lambda: fetched_etag)
+        except PreconditionRequired as e:
+            return {"error": str(e)}
+    except InstanceNotFound:
+        resolved_etag = etag  # 新規作成: etag 不要
+    except SingletonNotInstanceable as e:
+        return {"error": str(e)}
+
+    try:
+        new_spec, new_etag = set_shared_spec(system, component, spec, expected_etag=resolved_etag)
     except (ETagMismatch, PreconditionRequired) as e:
         return {"error": str(e)}
     except SingletonNotInstanceable as e:

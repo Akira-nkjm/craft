@@ -78,7 +78,9 @@ def test_create_singleton_fails(runner, power_data_backup):
 
 def test_patch_instance(runner, power_data_backup):
     payload = json.dumps({"design": {"depth_of_discharge": 0.5}})
-    result = runner.invoke(app, ["patch", "power", "battery", "main", "--json", payload])
+    result = runner.invoke(
+        app, ["patch", "power", "battery", "main", "--auto-etag", "--json", payload]
+    )
     assert result.exit_code == 0, result.stdout
     body = _parse_body(result.stdout)
     assert body["design"]["depth_of_discharge"] == 0.5
@@ -100,7 +102,9 @@ def test_put_instance(runner, power_data_backup):
             "requirements": {"depth_of_discharge_max": 0.85},
         }
     )
-    result = runner.invoke(app, ["put", "power", "battery", "main", "--json", payload])
+    result = runner.invoke(
+        app, ["put", "power", "battery", "main", "--auto-etag", "--json", payload]
+    )
     assert result.exit_code == 0, result.stdout
     body = _parse_body(result.stdout)
     assert body["design"]["depth_of_discharge"] == 0.55
@@ -113,7 +117,7 @@ def test_put_instance(runner, power_data_backup):
 
 
 def test_delete_instance(runner, power_data_backup):
-    result = runner.invoke(app, ["delete", "power", "battery", "aux"])
+    result = runner.invoke(app, ["delete", "power", "battery", "aux", "--auto-etag"])
     assert result.exit_code == 0, result.stdout
     assert "Deleted" in result.stdout
 
@@ -148,7 +152,9 @@ def test_spec_set(runner, power_data_backup):
             "temp_max_c": 60.0,
         }
     )
-    result = runner.invoke(app, ["spec", "set", "power", "battery", "--json", payload])
+    result = runner.invoke(
+        app, ["spec", "set", "power", "battery", "--auto-etag", "--json", payload]
+    )
     assert result.exit_code == 0, result.stdout
     body = _parse_body(result.stdout)
     assert body["capacity_wh"] == 120.0

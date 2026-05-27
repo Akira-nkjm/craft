@@ -80,7 +80,22 @@ def test_cli_delete_etag_mismatch(runner, power_data_backup):
 
 
 def test_cli_put_correct_etag_succeeds(runner, power_data_backup):
-    """Happy path: auto-resolved ETag (no --etag flag) succeeds."""
+    """Happy path: --auto-etag flag fetches current ETag and write succeeds."""
+    payload = json.dumps(
+        {
+            "design": {"depth_of_discharge": 0.65},
+            "requirements": {"depth_of_discharge_max": 0.8},
+        }
+    )
+    result = runner.invoke(
+        app, ["put", "power", "battery", "main", "--auto-etag", "--json", payload]
+    )
+    assert result.exit_code == 0, result.output
+    assert "# ETag:" in result.output
+
+
+def test_cli_put_required_mode_no_etag_fails(runner, power_data_backup):
+    """Without --etag and without --auto-etag, required mode raises error."""
     payload = json.dumps(
         {
             "design": {"depth_of_discharge": 0.65},
@@ -88,8 +103,23 @@ def test_cli_put_correct_etag_succeeds(runner, power_data_backup):
         }
     )
     result = runner.invoke(app, ["put", "power", "battery", "main", "--json", payload])
-    assert result.exit_code == 0, result.output
-    assert "# ETag:" in result.output
+    assert result.exit_code == 1
+    assert "Error:" in result.output or "Error:" in (result.stderr or "")
+
+
+def test_cli_patch_required_mode_no_etag_fails(runner, power_data_backup):
+    """Without --etag and without --auto-etag, required mode raises error."""
+    delta = json.dumps({"design": {"depth_of_discharge": 0.5}})
+    result = runner.invoke(app, ["patch", "power", "battery", "main", "--json", delta])
+    assert result.exit_code == 1
+    assert "Error:" in result.output or "Error:" in (result.stderr or "")
+
+
+def test_cli_delete_required_mode_no_etag_fails(runner, power_data_backup):
+    """Without --etag and without --auto-etag, required mode raises error."""
+    result = runner.invoke(app, ["delete", "power", "battery", "main"])
+    assert result.exit_code == 1
+    assert "Error:" in result.output or "Error:" in (result.stderr or "")
 
 
 # ─── MCP ETag mismatch ───────────────────────────────────────────────
@@ -123,7 +153,33 @@ def test_mcp_delete_instance_etag_mismatch(power_data_backup):
 
 
 def test_mcp_patch_instance_happy_path(power_data_backup):
-    """handle_patch_instance with no explicit etag (auto-resolve) succeeds."""
+    """handle_patch_instance with auto_etag=True fetches ETag and succeeds."""
+    result = handle_patch_instance(
+        "power",
+        "battery",
+        {
+            "name": "main",
+            "delta": {"design": {"depth_of_discharge": 0.5}},
+            "auto_etag": True,
+        },
+    )
+    assert "error" not in result, result
+    assert "etag" in result
+
+
+def test_mcp_delete_instance_happy_path(power_data_backup):
+    """handle_delete_instance with auto_etag=True fetches ETag and succeeds."""
+    result = handle_delete_instance(
+        "power",
+        "battery",
+        {"name": "aux", "auto_etag": True},
+    )
+    assert "error" not in result, result
+    assert result.get("deleted") is True
+
+
+def test_mcp_patch_required_mode_no_etag(power_data_backup):
+    """handle_patch_instance with no etag and auto_etag=False returns error."""
     result = handle_patch_instance(
         "power",
         "battery",
@@ -132,19 +188,20 @@ def test_mcp_patch_instance_happy_path(power_data_backup):
             "delta": {"design": {"depth_of_discharge": 0.5}},
         },
     )
-    assert "error" not in result, result
-    assert "etag" in result
+    assert "error" in result
+    assert isinstance(result["error"], str)
+    assert len(result["error"]) > 0
 
 
-def test_mcp_delete_instance_happy_path(power_data_backup):
-    """handle_delete_instance with no explicit etag (auto-resolve) succeeds."""
+def test_mcp_delete_required_mode_no_etag(power_data_backup):
+    """handle_delete_instance with no etag and auto_etag=False returns error."""
     result = handle_delete_instance(
         "power",
         "battery",
-        {"name": "aux"},
+        {"name": "main"},
     )
-    assert "error" not in result, result
-    assert result.get("deleted") is True
+    assert "error" in result
+    assert isinstance(result["error"], str)
 
 
 # ─── core.errors direct unit tests ──────────────────────────────────
