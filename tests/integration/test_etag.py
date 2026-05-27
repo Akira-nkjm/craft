@@ -27,7 +27,7 @@ from mcp_server.handlers import (
 
 def test_no_api_import_in_core():
     """core/ must not import from api.*"""
-    core_dir = Path(__file__).parent.parent / "core"
+    core_dir = Path(__file__).resolve().parents[2] / "core"
     violations: list[str] = []
     for py_file in sorted(core_dir.rglob("*.py")):
         tree = ast.parse(py_file.read_text(encoding="utf-8"))

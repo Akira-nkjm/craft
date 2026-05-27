@@ -57,7 +57,9 @@ def test_component_with_placeable_has_placement():
 def test_component_without_placeable_no_placement_field():
     from schema import Component, fld
 
-    class TestNoPlaceable(Component, system="power"):
+    # Use a unique system name to avoid leaking into other tests'
+    # default_registry.components(system="power") assertions.
+    class TestNoPlaceable(Component, system="_trait_test"):
         value: float = fld(default=0.0)
 
     assert TestNoPlaceable.Design is not None  # pyrefly: ignore[missing-attribute]
