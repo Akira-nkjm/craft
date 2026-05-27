@@ -9,7 +9,7 @@ from core.discovery import discover_systems
 # runner tests must do it explicitly.
 discover_systems()
 
-from core.analysis_runner import (  # noqa: E402
+from core.analysis.runner import (  # noqa: E402
     AnalysisArgumentError,
     AnalysisNotFound,
     AnalysisRunResult,
