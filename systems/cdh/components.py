@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 
-from schema import Component, Placeable, PowerConsuming, TemperatureSensitive, fld
+from craft.schema import Component, Placeable, PowerConsuming, TemperatureSensitive, fld
 
 
 class BusInterface(BaseModel):

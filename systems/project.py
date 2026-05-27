@@ -1,6 +1,6 @@
 """veriq CLI 用 project entrypoint。
 
-`python -m veriq calc project:project -i generated/merged.toml` のように使う。
+`python -m veriq calc systems.project:project -i generated/merged.toml` のように使う。
 
 `discover_systems()` で全 system を import し、scope を集めて Project に追加。
 """
@@ -9,8 +9,8 @@ import importlib
 
 import veriq as vq
 
-from core.discovery import discover_systems
-from schema import default_registry
+from craft.core.discovery import discover_systems
+from craft.schema import default_registry
 
 
 def build_project() -> vq.Project:

@@ -5,8 +5,8 @@
 
 import veriq as vq
 
-from core.paths import system_data_path
-from schema import build_system_root_model, default_registry
+from craft.core.paths import system_data_path
+from craft.schema import build_system_root_model, default_registry
 
 # components / analyses を先に登録させる
 from systems.power import analyses as _analyses  # noqa: F401
