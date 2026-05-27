@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from core.io.toml_io import read_toml, write_toml_atomic
 from core.paths import (
     GENERATED_DIR,
     MERGED_LOCK,
@@ -16,7 +17,6 @@ from core.paths import (
     subsystems_root,
     system_data_path,
 )
-from core.toml_io import read_toml, write_toml_atomic
 
 # Re-export path constants for backward compatibility.
 __all__ = [

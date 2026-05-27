@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from core.atomic_write import (
+from core.io.atomic_write import (
     atomic_write_bytes,
     atomic_write_bytes_or_text,
     atomic_write_json,
@@ -59,7 +59,7 @@ def test_atomic_write_bytes_cleans_temp_on_error(tmp_path: Path) -> None:
     p.write_bytes(b"original")
 
     with (
-        patch("core.atomic_write.os.replace", side_effect=OSError("disk full")),
+        patch("core.io.atomic_write.os.replace", side_effect=OSError("disk full")),
         pytest.raises(OSError, match="disk full"),
     ):
         atomic_write_bytes(p, b"new content")
@@ -74,7 +74,7 @@ def test_atomic_write_text_cleans_temp_on_error(tmp_path: Path) -> None:
     p.write_text("original", encoding="utf-8")
 
     with (
-        patch("core.atomic_write.os.replace", side_effect=OSError("disk full")),
+        patch("core.io.atomic_write.os.replace", side_effect=OSError("disk full")),
         pytest.raises(OSError, match="disk full"),
     ):
         atomic_write_text(p, "new content")
@@ -138,8 +138,8 @@ def test_atomic_write_bytes_closes_fd_on_fdopen_error(tmp_path: Path) -> None:
             original_close(fd)
 
     with (
-        patch("core.atomic_write.os.fdopen", side_effect=OSError("fdopen failed")),
-        patch("core.atomic_write.os.close", side_effect=tracking_close),
+        patch("core.io.atomic_write.os.fdopen", side_effect=OSError("fdopen failed")),
+        patch("core.io.atomic_write.os.close", side_effect=tracking_close),
         pytest.raises(OSError, match="fdopen failed"),
     ):
         atomic_write_bytes(p, b"data")

@@ -16,7 +16,7 @@ from typing import Any
 import tomlkit
 from tomlkit import TOMLDocument
 
-from core.atomic_write import atomic_write_text
+from core.io.atomic_write import atomic_write_text
 
 
 def read_toml(path: Path) -> dict[str, Any]:

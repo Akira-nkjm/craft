@@ -24,6 +24,7 @@ from core.instances import (
     list_instances,
     set_shared_spec,
 )
+from core.io.toml_io import read_toml
 from core.merge import merge
 from core.operations import (
     create_component_op,
@@ -36,7 +37,6 @@ from core.operations import (
 )
 from core.paths import MERGED_TOML, system_data_path
 from core.serialization import to_jsonable
-from core.toml_io import read_toml
 from mcp_server.error_mapping import error_or_none
 from schema import default_registry
 

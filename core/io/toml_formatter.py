@@ -69,9 +69,9 @@ def apply_field_comments(table: Table, model: type[BaseModel]) -> None:
 
 
 def write_with_comments(doc: TOMLDocument, target_path: Any) -> None:
-    """`tomlkit.dumps` でファイル書き出し。`core.toml_io.write_toml_atomic`
+    """`tomlkit.dumps` でファイル書き出し。`core.io.toml_io.write_toml_atomic`
     と用途が被るが、こちらは「formatter が組んだ doc」専用。"""
-    from core.toml_io import write_toml_atomic
+    from core.io.toml_io import write_toml_atomic
 
     write_toml_atomic(target_path, doc)
 
