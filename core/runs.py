@@ -27,15 +27,15 @@ from pathlib import Path
 from typing import Any
 
 from core.atomic_write import atomic_write_bytes_or_text, atomic_write_json
-from core.paths import runs_dir as _runs_dir
+from core.paths import runs_dir
 
 
 def _latest_marker() -> Path:
-    return _runs_dir() / "latest.txt"
+    return runs_dir() / "latest.txt"
 
 
 def _latest_symlink() -> Path:
-    return _runs_dir() / "latest"
+    return runs_dir() / "latest"
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,7 +69,7 @@ def new_run_id(*, input_sha: str = "", registry_sha: str = "") -> str:
 
 
 def run_dir(run_id: str) -> Path:
-    return _runs_dir() / run_id
+    return runs_dir() / run_id
 
 
 def create_run_dir(run_id: str) -> Path:
@@ -113,7 +113,7 @@ def write_run_artifacts(
 
 def update_latest(run_id: str) -> None:
     """`latest` symlink (or fallback) を更新。"""
-    runs = _runs_dir()
+    runs = runs_dir()
     runs.mkdir(parents=True, exist_ok=True)
     symlink = _latest_symlink()
     # symlink update を atomic に
@@ -141,7 +141,7 @@ def latest_run_id() -> str | None:
     if marker.exists():
         return marker.read_text(encoding="utf-8").strip() or None
     # fallback: dir 内最大値
-    runs = _runs_dir()
+    runs = runs_dir()
     if not runs.exists():
         return None
     candidates = [p.name for p in runs.iterdir() if _is_run_dir(p)]
@@ -153,7 +153,7 @@ def latest_run_id() -> str | None:
 
 def list_runs(*, limit: int | None = None) -> list[Run]:
     """全 run の Run dataclass リストを新しい順で返す。"""
-    runs = _runs_dir()
+    runs = runs_dir()
     if not runs.exists():
         return []
     entries: list[Run] = []
@@ -208,10 +208,10 @@ def prune_runs(*, keep: int) -> list[str]:
     """最新 `keep` 件を残し、それ以前を削除。削除した run_id のリストを返す。"""
     runs = (
         sorted(
-            (p for p in _runs_dir().iterdir() if _is_run_dir(p)),
+            (p for p in runs_dir().iterdir() if _is_run_dir(p)),
             reverse=True,
         )
-        if _runs_dir().exists()
+        if runs_dir().exists()
         else []
     )
     removed: list[str] = []

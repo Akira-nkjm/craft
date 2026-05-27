@@ -1,7 +1,6 @@
 """MCP tool handlers — registry / TOML / veriq の薄いラッパ。"""
 
 import importlib
-import sys as _sys
 from typing import Any
 
 from pydantic import ValidationError
@@ -35,7 +34,7 @@ from core.operations import (
     set_config_entry_op,
     set_singleton_config_op,
 )
-from core.paths import system_data_path
+from core.paths import MERGED_TOML, system_data_path
 from core.serialization import to_jsonable
 from core.toml_io import read_toml
 from mcp_server.error_mapping import error_or_none
@@ -381,7 +380,7 @@ def handle_verify_all() -> Any:
 
     project = _build_project()
     merge()
-    model_data = vq.load_model_data_from_toml(project, _sys.modules["core.merge"].MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
     out: dict[str, Any] = {"success": result.success, "errors": [str(e) for e in result.errors]}
     scopes: dict[str, Any] = {}
@@ -409,7 +408,7 @@ def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
 
     project = _build_project()
     merge()
-    model_data = vq.load_model_data_from_toml(project, _sys.modules["core.merge"].MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
     tree = result.get_scope_tree(system)
     if tree is None:
