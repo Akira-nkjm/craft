@@ -8,12 +8,26 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from core.paths import REPO_ROOT, subsystems_root, system_data_path
+from core.paths import (
+    GENERATED_DIR,
+    MERGED_LOCK,
+    MERGED_TOML,
+    REPO_ROOT,
+    subsystems_root,
+    system_data_path,
+)
 from core.toml_io import read_toml, write_toml_atomic
 
-GENERATED_DIR: Path = REPO_ROOT / "generated"
-MERGED_TOML: Path = GENERATED_DIR / "merged.toml"
-MERGED_LOCK: Path = GENERATED_DIR / "merged.lock"
+# Re-export path constants for backward compatibility.
+__all__ = [
+    "GENERATED_DIR",
+    "MERGED_LOCK",
+    "MERGED_TOML",
+    "MergeConflict",
+    "MergeResult",
+    "is_merge_stale",
+    "merge",
+]
 
 
 class MergeConflict(Exception):  # noqa: N818

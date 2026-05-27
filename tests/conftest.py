@@ -30,15 +30,20 @@ def clean_generated_dir(tmp_path, monkeypatch):
 
     from api.routers import merge as merge_router
     from api.routers import verify as verify_router
+    from core import paths as core_paths
 
-    # core/__init__.py が `from core.merge import merge` で関数名と
-    # サブモジュール名がぶつかるため、sys.modules 経由でモジュールを取得する。
+    # core.merge re-exports these for backward compat, but the source of truth is core.paths.
     core_merge_mod = sys.modules["core.merge"]
 
     gen_dir = tmp_path / "generated"
     gen_dir.mkdir()
     new_toml = gen_dir / "merged.toml"
     new_lock = gen_dir / "merged.lock"
+    # Primary patch: the source of truth in core.paths.
+    monkeypatch.setattr(core_paths, "GENERATED_DIR", gen_dir)
+    monkeypatch.setattr(core_paths, "MERGED_TOML", new_toml)
+    monkeypatch.setattr(core_paths, "MERGED_LOCK", new_lock)
+    # Re-exported names in core.merge (callers that imported earlier still see old refs).
     monkeypatch.setattr(core_merge_mod, "GENERATED_DIR", gen_dir)
     monkeypatch.setattr(core_merge_mod, "MERGED_TOML", new_toml)
     monkeypatch.setattr(core_merge_mod, "MERGED_LOCK", new_lock)
