@@ -18,6 +18,8 @@ from core.errors import ETagMismatch, PreconditionRequired
 from mcp_server.handlers import (
     handle_delete_instance,
     handle_patch_instance,
+    handle_set_config,
+    handle_set_config_instance,
 )
 
 # ─── architecture guard ─────────────────────────────────────────────
@@ -221,3 +223,103 @@ def test_etag_mismatch_is_craft_error():
     exc = ETagMismatch("mismatch")
     assert isinstance(exc, CraftError)
     assert str(exc) == "mismatch"
+
+
+# ─── MCP set_config (singleton) ETag — PR #37 / issue #53 ────────────
+# set_config uses optional-ETag semantics: no etag = upsert without concurrency
+# check; etag provided = validated against existing record if it exists.
+
+
+_MISSION_PROFILE_PAYLOAD = {
+    "duration_years": 3.0,
+    "target_altitude_km": 550.0,
+    "primary_payload": "radar",
+    "contact_frequency_per_day": 3,
+    "launch_window_start": "2028-01-01T00:00:00Z",
+}
+
+
+def test_set_config_no_etag_succeeds(mission_data_backup):
+    """handle_set_config without etag succeeds (upsert, no concurrency check)."""
+    result = handle_set_config("mission", "missionprofile", {"data": _MISSION_PROFILE_PAYLOAD})
+    assert "error" not in result, result
+    assert "etag" in result
+    assert result["duration_years"] == 3.0
+
+
+def test_set_config_correct_etag_succeeds(mission_data_backup):
+    """handle_set_config with matching etag succeeds."""
+    from core.instances import get_singleton_config
+
+    _, etag = get_singleton_config("mission", "missionprofile")
+    result = handle_set_config(
+        "mission", "missionprofile", {"data": _MISSION_PROFILE_PAYLOAD, "etag": etag}
+    )
+    assert "error" not in result, result
+    assert "etag" in result
+
+
+def test_set_config_wrong_etag_returns_error(mission_data_backup):
+    """handle_set_config with wrong etag returns {"error": ...}."""
+    result = handle_set_config(
+        "mission",
+        "missionprofile",
+        {"data": _MISSION_PROFILE_PAYLOAD, "etag": 'W/"sha256:wrong"'},
+    )
+    assert "error" in result
+    assert isinstance(result["error"], str)
+
+
+# ─── MCP set_config_instance (multi) ETag — PR #37 / issue #53 ───────
+# Bug fixed in issue #53: handler was passing the wrapper dict (including "data"
+# and "etag" keys) directly to Pydantic, causing validation_error on every call.
+# Now correctly extracts payload["data"] before validation.
+
+
+_SAFE_MODE_PAYLOAD = {
+    "description": "Test safe mode",
+    "max_duration_s": 0.0,
+    "is_initial_mode": True,
+    "allowed_transitions": ["nominal"],
+}
+
+
+def test_set_config_instance_no_etag_succeeds(mission_data_backup):
+    """handle_set_config_instance without etag succeeds (upsert)."""
+    result = handle_set_config_instance(
+        "mission", "operationmodeconfig", {"key": "safe", "data": _SAFE_MODE_PAYLOAD}
+    )
+    assert "error" not in result, result
+    assert "etag" in result
+    assert result["description"] == "Test safe mode"
+
+
+def test_set_config_instance_correct_etag_succeeds(mission_data_backup):
+    """handle_set_config_instance with matching etag succeeds."""
+    from core.instances import get_config_instance
+
+    _, etag = get_config_instance("mission", "operationmodeconfig", "safe")
+    result = handle_set_config_instance(
+        "mission",
+        "operationmodeconfig",
+        {"key": "safe", "data": _SAFE_MODE_PAYLOAD, "etag": etag},
+    )
+    assert "error" not in result, result
+    assert "etag" in result
+
+
+def test_set_config_instance_wrong_etag_returns_error(mission_data_backup):
+    """handle_set_config_instance with wrong etag returns {"error": ...}."""
+    result = handle_set_config_instance(
+        "mission",
+        "operationmodeconfig",
+        {"key": "safe", "data": _SAFE_MODE_PAYLOAD, "etag": 'W/"sha256:wrong"'},
+    )
+    assert "error" in result
+    assert isinstance(result["error"], str)
+
+
+def test_set_config_instance_missing_data_returns_error(mission_data_backup):
+    """handle_set_config_instance without 'data' key returns {"error": ...}."""
+    result = handle_set_config_instance("mission", "operationmodeconfig", {"key": "safe"})
+    assert "error" in result

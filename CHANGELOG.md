@@ -4,6 +4,31 @@
 
 ### Breaking Changes
 
+#### GET /components/{system}/{component} — singleton `instances` format (PR #34, issue #11)
+
+The `instances` field for singleton components now contains the component's raw data dict
+directly (same fields you'd see in a single-instance GET), instead of the previous format
+that wrapped data under a key.
+
+**Before PR #34**:
+```json
+{
+  "system": "cdh", "component": "obc", "cardinality": "single",
+  "instances": {"obc": {"spec": {...}, "design": {...}}}
+}
+```
+
+**After PR #34** (current):
+```json
+{
+  "system": "cdh", "component": "obc", "cardinality": "single",
+  "instances": {"spec": {...}, "design": {...}}
+}
+```
+
+**Migration**: Access `body["instances"]["spec"]` directly instead of
+`body["instances"]["obc"]["spec"]`.
+
 #### ETag policy unified across CLI and MCP (issue #13)
 
 **Before**: `craft put/patch/delete` and MCP write tools silently fetched the
@@ -37,7 +62,27 @@ re-enable auto-fetch.
   `mode="required"` raises `PreconditionRequired` when no ETag is supplied;
   `mode="auto"` delegates to the `fetch()` callable.
 
+### Changed
+
+#### MCP `set_<config>` / `set_<name>` (multi-instance) — optional ETag now honoured (PR #37, issue #53)
+
+MCP tool handlers that do a full-replace of a config entry previously ignored any `"etag"`
+field in the payload. They now forward it to the underlying write operation.
+
+**Semantics (upsert — not a breaking change)**:
+- No `"etag"` in payload → write proceeds without a concurrency check (same as before)
+- `"etag"` provided, record **exists** → ETag is validated; mismatch returns `{"error": ...}`
+- `"etag"` provided, record **does not exist** → ETag is ignored (creation path)
+
+**Affected handlers**: `handle_set_config` (singleton), `handle_set_config_instance` (multi)
+
 ### Fixed
+
+- `mcp_server/handlers.py`: `handle_set_config_instance` was passing the entire payload
+  dict (including the `"data"` wrapper key and `"etag"`) to Pydantic `model_validate`
+  instead of the unwrapped model fields. Since all Config models use `extra="forbid"`,
+  this caused a `validation_error` on every call. Now extracts `payload["data"]` before
+  validation, matching the pattern used by `handle_set_config`. (issue #53)
 
 - `mcp_server/handlers.py`: corrected Python 2 `except TypeError, ValueError:`
   syntax to `except (TypeError, ValueError):` in `handle_history`.
