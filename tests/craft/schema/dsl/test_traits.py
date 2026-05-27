@@ -62,8 +62,14 @@ def test_component_without_placeable_no_placement_field():
     class TestNoPlaceable(Component, system="_trait_test"):
         value: float = fld(default=0.0)
 
-    assert TestNoPlaceable.Design is not None  # pyrefly: ignore[missing-attribute]
-    assert "placement" not in TestNoPlaceable.Design.model_fields  # pyrefly: ignore[missing-attribute]
+    try:
+        assert TestNoPlaceable.Design is not None  # pyrefly: ignore[missing-attribute]
+        assert "placement" not in TestNoPlaceable.Design.model_fields  # pyrefly: ignore[missing-attribute]
+    finally:
+        # `default_registry` は process-global なので、`_trait_test` system の
+        # 登録を残すと後続の build_project などが import エラーで落ちる。
+        for key in [k for k in default_registry._components if k[0] == "_trait_test"]:
+            default_registry._components.pop(key)
 
 
 def test_battery_is_multi_instance_with_placeable():
