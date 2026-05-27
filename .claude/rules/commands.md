@@ -13,7 +13,7 @@ Python 3.14 以上が必要。`uv` 未導入なら <https://docs.astral.sh/uv/> 
 ## 実行
 
 ```bash
-uv run uvicorn api.main:app --reload     # FastAPI (http://127.0.0.1:8000/docs)
+uv run uvicorn craft.api.main:app --reload  # FastAPI (http://127.0.0.1:8000/docs)
 uv run craft-mcp                         # MCP サーバ (stdio)
 uv run craft <command>                   # CLI（下記参照）
 ```
