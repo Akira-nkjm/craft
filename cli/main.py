@@ -31,6 +31,7 @@ from pydantic import ValidationError
 
 from cli._etag import _resolve_instance_etag
 from cli._io import _format_validation_error, _load_payload, _print_json
+from cli.commands.maintenance import diff_cmd, gen_stubs_cmd, history_cmd, init_app
 from core.discovery import discover_systems
 from core.errors import ETagMismatch, PreconditionRequired
 
@@ -42,7 +43,6 @@ app = typer.Typer(
 )
 schema_app = typer.Typer(no_args_is_help=True, help="Pydantic Schema 配信")
 analysis_app = typer.Typer(no_args_is_help=True, help="@analysis 関数の実行")
-init_app = typer.Typer(no_args_is_help=True, help="プロジェクト/サブシステム雛形生成")
 spec_app = typer.Typer(no_args_is_help=True, help="MultiInstance の shared spec 操作")
 runs_app = typer.Typer(no_args_is_help=True, help="verification run history")
 app.add_typer(schema_app, name="schema")
@@ -50,66 +50,14 @@ app.add_typer(analysis_app, name="analysis")
 app.add_typer(init_app, name="init")
 app.add_typer(spec_app, name="spec")
 app.add_typer(runs_app, name="runs")
+app.command("history")(history_cmd)
+app.command("diff")(diff_cmd)
+app.command("gen-stubs")(gen_stubs_cmd)
 
 
 def _bootstrap() -> None:
     """全 system を import → registry 確定。"""
     discover_systems()
-
-
-# ─── history / diff ─────────────────────────────────────────────────
-
-
-@app.command("history")
-def history_cmd(
-    path: str | None = typer.Argument(None, help="対象 path (省略時はリポジトリ全体)"),
-    limit: int = typer.Option(20, "--limit", "-n", min=0, help="最大件数"),
-) -> None:
-    """git log 由来の変更履歴を表示。"""
-    from core.history import GitError, GitRefNotFound, git_log
-
-    try:
-        entries = git_log(path, limit=limit)
-    except GitRefNotFound as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
-    except GitError as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
-
-    _print_json(
-        {
-            "path": path,
-            "entries": [
-                {
-                    "sha": entry.sha,
-                    "author": entry.author,
-                    "date": entry.date,
-                    "message": entry.message,
-                }
-                for entry in entries
-            ],
-        }
-    )
-
-
-@app.command("diff")
-def diff_cmd(
-    from_sha: str = typer.Argument(..., help="比較元 commit/ref"),
-    to_sha: str = typer.Argument(..., help="比較先 commit/ref"),
-    path: str | None = typer.Argument(None, help="対象 path (省略時は全体)"),
-) -> None:
-    """2 点間の git diff を表示。"""
-    from core.history import GitError, GitRefNotFound, git_diff
-
-    try:
-        typer.echo(git_diff(from_sha, to_sha, path), nl=False)
-    except GitRefNotFound as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
-    except GitError as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
 
 
 # ─── schema ──────────────────────────────────────────────────────────
@@ -602,75 +550,6 @@ def analysis_run(
     if result.cache_hit is not None:
         output["cache_hit"] = result.cache_hit
     _print_json(output)
-
-
-# ─── gen-stubs ───────────────────────────────────────────────────────
-
-
-@app.command("gen-stubs")
-def gen_stubs_cmd(
-    check: bool = typer.Option(
-        False,
-        "--check",
-        help="既存 .pyi が古ければ exit 1 (書き込みなし、CI 用)",
-    ),
-) -> None:
-    """各 system に `_stubs.pyi` を生成する。"""
-    _bootstrap()
-    from core.stubgen import check_stubs, generate_stubs
-
-    if check:
-        mismatches = check_stubs()
-        if mismatches:
-            typer.echo("Stale stubs detected:", err=True)
-            for path, diff in mismatches:
-                typer.echo(f"  {path}", err=True)
-                if diff:
-                    typer.echo(diff, err=True)
-            raise typer.Exit(code=1)
-        typer.echo("OK: all stubs are up to date.")
-        return
-
-    written = generate_stubs()
-    for path in written:
-        typer.echo(f"Wrote {path}")
-
-    if written:
-        import subprocess
-
-        subprocess.run(
-            ["uv", "run", "ruff", "format", *[str(p) for p in written]],
-            check=True,
-        )
-
-
-# ─── init ────────────────────────────────────────────────────────────
-
-
-@init_app.command("system")
-def init_subsystem(
-    name: str,
-    kind: str = typer.Option(
-        "hardware",
-        "--kind",
-        help="hardware | config-only | default (= 空のスケルトン)",
-    ),
-) -> None:
-    """新しい system ディレクトリ雛形を生成。"""
-    from cli import templates
-
-    target = Path("systems") / name
-    if target.exists():
-        typer.echo(f"Error: {target} already exists", err=True)
-        raise typer.Exit(code=1)
-
-    templates.create_subsystem(target, name=name, kind=kind)
-    typer.echo(f"Created {target}/ ({kind})")
-    typer.echo("Next steps:")
-    typer.echo(f"  1. edit systems/{name}/components.py (or configs.py)")
-    typer.echo(f"  2. craft scaffold {name}")
-    typer.echo(f"  3. fill values in systems/{name}/data.toml")
-    typer.echo("  4. craft verify")
 
 
 def main() -> None:
