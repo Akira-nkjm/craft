@@ -21,9 +21,13 @@
     craft init system <name>         system 雛形生成
 """
 
-
 import typer
 
+from cli.commands.data import merge_cmd, scaffold_cmd, verify_cmd
+from cli.commands.instances import create_cmd, delete_cmd, patch_cmd, put_cmd, spec_app
+from cli.commands.maintenance import diff_cmd, gen_stubs_cmd, history_cmd, init_app
+from cli.commands.runs_analysis import analysis_app, runs_app
+from cli.commands.schema import get, schema_app
 from core.discovery import discover_systems
 
 # Typer サブアプリ
@@ -38,6 +42,18 @@ app.add_typer(analysis_app, name="analysis")
 app.add_typer(init_app, name="init")
 app.add_typer(spec_app, name="spec")
 app.add_typer(runs_app, name="runs")
+
+# Top-level commands from split modules
+app.command("create")(create_cmd)
+app.command("put")(put_cmd)
+app.command("patch")(patch_cmd)
+app.command("delete")(delete_cmd)
+app.command("merge")(merge_cmd)
+app.command("scaffold")(scaffold_cmd)
+app.command("verify")(verify_cmd)
+app.command("history")(history_cmd)
+app.command("diff")(diff_cmd)
+app.command("gen-stubs")(gen_stubs_cmd)
 
 
 def _bootstrap() -> None:
