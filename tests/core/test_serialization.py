@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from core.serialization import to_jsonable
+from craft.core.serialization import to_jsonable
 
 
 class _Model(BaseModel):

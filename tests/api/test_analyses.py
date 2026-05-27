@@ -2,7 +2,7 @@
 
 from fastapi.testclient import TestClient
 
-from api.main import app
+from craft.api.main import app
 
 
 def _client() -> TestClient:

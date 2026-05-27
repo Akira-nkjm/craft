@@ -4,7 +4,7 @@ from urllib.parse import quote
 
 from fastapi.testclient import TestClient
 
-from api.main import app
+from craft.api.main import app
 
 
 def test_scopes_lists_registered_scopes():

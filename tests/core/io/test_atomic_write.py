@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from core.io.atomic_write import (
+from craft.core.io.atomic_write import (
     atomic_write_bytes,
     atomic_write_bytes_or_text,
     atomic_write_json,

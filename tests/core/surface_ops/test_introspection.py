@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from core.surface_ops.introspection import (
+from craft.core.surface_ops.introspection import (
     AnalysisSummary,
     ComponentSummary,
     ConfigSummary,

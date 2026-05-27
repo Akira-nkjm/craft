@@ -2,8 +2,8 @@
 
 import pytest
 
-from core.errors import PreconditionRequired
-from core.surface_ops.concurrency import resolve_expected_etag
+from craft.core.errors import PreconditionRequired
+from craft.core.surface_ops.concurrency import resolve_expected_etag
 
 
 def test_provided_etag_returned_directly():

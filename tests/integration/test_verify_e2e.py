@@ -2,7 +2,7 @@
 
 import veriq as vq
 
-from core.pipeline.merge import MERGED_TOML, merge
+from craft.core.pipeline.merge import MERGED_TOML, merge
 from systems.mission.scope import mission
 from systems.orbital.scope import orbital
 from systems.power.scope import power

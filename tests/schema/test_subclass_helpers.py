@@ -1,6 +1,6 @@
 """Unit tests for schema._subclass_helpers.auto_pluralize edge cases."""
 
-from schema._subclass_helpers import auto_pluralize
+from craft.schema._subclass_helpers import auto_pluralize
 
 # ─── basic cases (regression) ────────────────────────────────────────
 

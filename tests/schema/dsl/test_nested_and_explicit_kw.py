@@ -27,8 +27,8 @@ def test_obc_bus_interface_is_nested_pydantic_model():
 
 def test_obc_bus_interface_loads_from_toml():
     """data.toml の `[obc.spec.bus_interface]` がネスト model に validate される。"""
-    from core.io.toml_io import read_toml
-    from core.paths import system_data_path
+    from craft.core.io.toml_io import read_toml
+    from craft.core.paths import system_data_path
     from systems.cdh.components import OBC
 
     data = read_toml(system_data_path("cdh"))
@@ -62,7 +62,7 @@ def test_obc_bus_interface_validation_error_on_missing():
 
 def test_explicit_subsystem_keyword_registers_under_given_name():
     """ファイルパスから推論されない system で登録できる。"""
-    from schema import Component, default_registry, fld
+    from craft.schema import Component, default_registry, fld
 
     # 一意な名前にして既存テストを汚染しない
     class A4ExampleProbe(Component, system="_a4_test"):
@@ -77,7 +77,7 @@ def test_explicit_subsystem_keyword_registers_under_given_name():
 
 def test_explicit_plural_keyword():
     """`plural=` を明示できる。"""
-    from schema import Component, MultiInstance, default_registry, fld
+    from craft.schema import Component, MultiInstance, default_registry, fld
 
     class A4PluralProbe(Component, MultiInstance, system="_a4_test", plural="probes"):
         rating: float = fld(ge=0)
