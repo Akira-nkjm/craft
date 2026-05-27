@@ -22,6 +22,8 @@ nav = [
       { "Analysis" = "reference/cli/analysis.md" },
       { "Tools" = "reference/cli/tools.md" },
     ]},
+    { "REST API" = "reference/api.md" },
+    { "MCP サーバ" = "reference/mcp.md" },
     { "fld()" = "reference/fld.md" },
     { "Traits" = "reference/traits.md" },
   ]},

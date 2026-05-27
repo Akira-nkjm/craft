@@ -32,7 +32,21 @@ uv run craft verify
 
 # 4. API サーバ起動 → http://127.0.0.1:8000/docs
 uv run uvicorn api.main:app --reload
+
+# 5. MCP サーバ起動（Claude Code / Desktop 等から接続）
+uv run craft-mcp
 ```
+
+## 3 つの surface
+
+Component / Config / Analysis を 1 度だけ定義すると、以下の **3 つの surface** が
+自動で同じ機能を公開する。
+
+| Surface | 入口 | 主なユースケース | ドキュメント |
+|---|---|---|---|
+| **CLI** | `uv run craft <cmd>` | スクリプト・CI・端末からの操作 | [CLI リファレンス](reference/cli/index.md) |
+| **REST API** | `uv run uvicorn api.main:app` | Web UI / 外部システム連携 / Swagger UI で GUI 操作 | [REST API リファレンス](reference/api.md) |
+| **MCP サーバ** | `uv run craft-mcp` | Claude Code / Desktop 等の LLM エージェントから自然言語で操作 | [MCP リファレンス](reference/mcp.md) |
 
 ---
 
@@ -83,4 +97,7 @@ craft/
 
 - [コア概念](concepts.md) — Component / Config / Analysis / Traits / `data.toml` の詳細
 - [チュートリアル](tutorial.md) — 新しい system をゼロから追加するハンズオン
-- [CLI リファレンス](reference/cli/index.md) — 全コマンドの詳細説明
+- [Analysis の書き方](guide/analysis.md) — veriq バインド型 / ad-hoc 型の使い分け
+- [CLI リファレンス](reference/cli/index.md) — 全コマンドの詳細
+- [REST API リファレンス](reference/api.md) — HTTP エンドポイント一覧（Swagger / ReDoc 同梱）
+- [MCP リファレンス](reference/mcp.md) — Claude Code / Desktop からの操作と tool 体系

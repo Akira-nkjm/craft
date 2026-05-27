@@ -113,3 +113,7 @@ codegraph-sync:
 # CodeGraph の健康確認
 codegraph-status:
     npx -y @colbymchenry/codegraph status
+
+# craft-mcp を起動する（CodeGraph と連携してコード理解を提供）
+craft-mcp:
+    uv run craft-mcp
