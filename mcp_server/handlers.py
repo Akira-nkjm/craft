@@ -125,9 +125,11 @@ def handle_set_config_instance(system: str, name: str, payload: dict[str, Any]) 
     key = payload.get("key", "")
     if not key:
         return {"error": "key required"}
-    body = {k: v for k, v in payload.items() if k != "key"}
+    data_payload = payload.get("data")
+    if not isinstance(data_payload, dict):
+        return {"error": "data (object) required"}
     try:
-        result = set_config_entry_op(system, name, key, body, if_match=payload.get("etag"))
+        result = set_config_entry_op(system, name, key, data_payload, if_match=payload.get("etag"))
     except ValidationError as e:
         return {"error": f"validation_error: {e}"}
     if err := error_or_none(result):
