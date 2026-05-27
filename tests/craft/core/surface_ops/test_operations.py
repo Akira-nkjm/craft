@@ -19,7 +19,11 @@ from craft.core.instances import (
     SharedSpecConflict,
     SingletonNotInstanceable,
 )
-from craft.mcp_server.handlers import handle_add_instance, handle_delete_instance, handle_patch_instance
+from craft.mcp_server.handlers import (
+    handle_add_instance,
+    handle_delete_instance,
+    handle_patch_instance,
+)
 
 # ── helpers ─────────────────────────────────────────────────────────
 
