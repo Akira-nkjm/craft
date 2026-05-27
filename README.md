@@ -23,7 +23,7 @@
 └──────────────────────────────────────────────────────────────┘
                           │  (introspect)
 ┌──────────────────────────────────────────────────────────────┐
-│  UnifiedRegistry  (schema/)                                  │
+│  UnifiedRegistry  (craft.schema)                             │
 │  Components / Configs / Analyses の定義一覧                  │
 └──────────────────────────────────────────────────────────────┘
                           │  (registered by)
@@ -46,16 +46,18 @@
 
 ## ディレクトリ構成
 
-フラット構成。ユーザが直接触るのは `systems/` のみで、`schema/` は基盤として固定する。
+`src/craft/` レイアウト。ユーザが直接触るのは `systems/` のみで、framework 実装は `src/craft/` 配下に隠す。
 
 ```
 craft/
-├── schema/                 # 基盤: Component / Config base class, UnifiedRegistry
-├── core/                   # TOML I/O, merge, scaffold, instance CRUD
-├── api/                    # FastAPI 本体 (routers/, errors.py, main.py)
-├── cli/                    # Typer CLI エントリ (craft コマンド)
-├── mcp_server/             # MCP サーバ (craft-mcp、stdio)
-├── systems/             # ユーザ領域 (power / cdh / thermal / mission)
+├── src/craft/              # framework 本体（craft.* モジュール）
+│   ├── schema/             # 基盤: Component / Config base class, UnifiedRegistry
+│   ├── core/               # TOML I/O, merge, scaffold, instance CRUD
+│   ├── api/                # FastAPI 本体 (routers/, errors.py, main.py)
+│   ├── cli/                # Typer CLI エントリ (craft コマンド)
+│   └── mcp_server/         # MCP サーバ (craft-mcp、stdio)
+├── systems/                # ユーザ領域 (power / cdh / thermal / mission)
+│   ├── project.py          # veriq CLI エントリポイント
 │   └── <name>/
 │       ├── components.py   # Component 派生クラス
 │       ├── configs.py      # Config 派生クラス
@@ -63,7 +65,7 @@ craft/
 │       ├── scope.py        # vq.Scope 定義
 │       └── data.toml       # インスタンスデータ
 ├── generated/              # merged.toml / merged.lock など生成物
-├── tests/                  # pytest (72 件)
+├── tests/                  # pytest
 ├── plan/                   # 設計ドキュメント
 ├── pyproject.toml          # uv 単一プロジェクト
 └── README.md
@@ -94,7 +96,7 @@ uv run craft schema list
 uv run craft verify
 
 # FastAPI 起動 → Swagger UI: http://127.0.0.1:8000/docs
-uv run uvicorn api.main:app --reload
+uv run uvicorn craft.api.main:app --reload
 
 # MCP サーバ (stdio) — Claude Code / Desktop から利用
 uv run craft-mcp
