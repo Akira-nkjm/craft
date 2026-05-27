@@ -21,7 +21,7 @@ from core.instances import (
     get_singleton_config,
     list_config_instances,
 )
-from core.operations import (
+from core.surface_ops.operations import (
     delete_config_entry_op,
     patch_config_entry_op,
     set_config_entry_op,

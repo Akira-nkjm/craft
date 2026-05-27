@@ -36,15 +36,15 @@ def runner():
 
 
 def _patch_create(exc: Exception):
-    return patch("core.operations.create_instance", side_effect=exc)
+    return patch("core.surface_ops.operations.create_instance", side_effect=exc)
 
 
 def _patch_delete(exc: Exception):
-    return patch("core.operations.delete_instance", side_effect=exc)
+    return patch("core.surface_ops.operations.delete_instance", side_effect=exc)
 
 
 def _patch_patch(exc: Exception):
-    return patch("core.operations.patch_instance", side_effect=exc)
+    return patch("core.surface_ops.operations.patch_instance", side_effect=exc)
 
 
 # ── SharedSpecConflict: create ───────────────────────────────────────

@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from core.introspection import (
+from core.surface_ops.introspection import (
     AnalysisSummary,
     ComponentSummary,
     ConfigSummary,
@@ -52,7 +52,7 @@ def _mock_analysis(system="power", name="total_pdm_power_w", verify=False, desc=
 def test_list_components_summary_returns_component_summaries():
     comp = _mock_comp()
 
-    with patch("core.introspection.default_registry") as mock_reg:
+    with patch("core.surface_ops.introspection.default_registry") as mock_reg:
         mock_reg.components.return_value = [comp]
         result = list_components_summary()
 
@@ -67,7 +67,7 @@ def test_list_components_summary_returns_component_summaries():
 
 
 def test_list_components_summary_filters_by_system():
-    with patch("core.introspection.default_registry") as mock_reg:
+    with patch("core.surface_ops.introspection.default_registry") as mock_reg:
         mock_reg.components.return_value = []
         list_components_summary(system="power")
 
@@ -75,7 +75,7 @@ def test_list_components_summary_filters_by_system():
 
 
 def test_list_components_summary_no_filter_passes_none():
-    with patch("core.introspection.default_registry") as mock_reg:
+    with patch("core.surface_ops.introspection.default_registry") as mock_reg:
         mock_reg.components.return_value = []
         list_components_summary()
 
@@ -88,7 +88,7 @@ def test_list_components_summary_multiple_entries():
         _mock_comp(system="cdh", name="obc", plural="obcs", cardinality="single", traits=()),
     ]
 
-    with patch("core.introspection.default_registry") as mock_reg:
+    with patch("core.surface_ops.introspection.default_registry") as mock_reg:
         mock_reg.components.return_value = comps
         result = list_components_summary()
 
@@ -103,7 +103,7 @@ def test_list_components_summary_multiple_entries():
 def test_list_configs_summary_returns_config_summaries():
     cfg = _mock_cfg()
 
-    with patch("core.introspection.default_registry") as mock_reg:
+    with patch("core.surface_ops.introspection.default_registry") as mock_reg:
         mock_reg.configs.return_value = [cfg]
         result = list_configs_summary()
 
@@ -117,7 +117,7 @@ def test_list_configs_summary_returns_config_summaries():
 
 
 def test_list_configs_summary_filters_by_system():
-    with patch("core.introspection.default_registry") as mock_reg:
+    with patch("core.surface_ops.introspection.default_registry") as mock_reg:
         mock_reg.configs.return_value = []
         list_configs_summary(system="mission")
 
@@ -125,7 +125,7 @@ def test_list_configs_summary_filters_by_system():
 
 
 def test_list_configs_summary_empty_registry():
-    with patch("core.introspection.default_registry") as mock_reg:
+    with patch("core.surface_ops.introspection.default_registry") as mock_reg:
         mock_reg.configs.return_value = []
         result = list_configs_summary()
 
@@ -138,7 +138,7 @@ def test_list_configs_summary_empty_registry():
 def test_list_analyses_summary_returns_analysis_summaries():
     analysis = _mock_analysis()
 
-    with patch("core.introspection.default_registry") as mock_reg:
+    with patch("core.surface_ops.introspection.default_registry") as mock_reg:
         mock_reg.analyses.return_value = [analysis]
         result = list_analyses_summary()
 
@@ -157,7 +157,7 @@ def test_list_analyses_summary_verify_flag_preserved():
         _mock_analysis(name="total_power", verify=False, desc=None),
     ]
 
-    with patch("core.introspection.default_registry") as mock_reg:
+    with patch("core.surface_ops.introspection.default_registry") as mock_reg:
         mock_reg.analyses.return_value = analyses
         result = list_analyses_summary()
 
@@ -167,7 +167,7 @@ def test_list_analyses_summary_verify_flag_preserved():
 
 
 def test_list_analyses_summary_filters_by_system():
-    with patch("core.introspection.default_registry") as mock_reg:
+    with patch("core.surface_ops.introspection.default_registry") as mock_reg:
         mock_reg.analyses.return_value = []
         list_analyses_summary(system="power")
 
@@ -177,7 +177,7 @@ def test_list_analyses_summary_filters_by_system():
 def test_list_analyses_summary_none_system_preserved():
     analysis = _mock_analysis(system=None)
 
-    with patch("core.introspection.default_registry") as mock_reg:
+    with patch("core.surface_ops.introspection.default_registry") as mock_reg:
         mock_reg.analyses.return_value = [analysis]
         result = list_analyses_summary()
 

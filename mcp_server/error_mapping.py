@@ -1,6 +1,6 @@
 """MCP surface: convert OperationResult failure to error dict."""
 
-from core.operations import OperationResult
+from core.surface_ops.operations import OperationResult
 
 
 def error_or_none(result: OperationResult) -> dict | None:

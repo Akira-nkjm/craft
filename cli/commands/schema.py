@@ -14,7 +14,7 @@ schema_app = typer.Typer(no_args_is_help=True, help="Pydantic Schema 配信")
 def schema_list() -> None:
     """登録済み system / component を一覧表示。"""
     discover_systems()
-    from core.introspection import list_components_summary
+    from core.surface_ops.introspection import list_components_summary
 
     out: dict[str, list[dict[str, Any]]] = {}
     for s in list_components_summary():

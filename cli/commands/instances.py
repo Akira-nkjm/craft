@@ -27,7 +27,7 @@ def create_cmd(
     """新規インスタンス作成（MultiInstance のみ）。"""
     _bootstrap()
     from cli.error_mapping import exit_if_error
-    from core.operations import create_component_op
+    from core.surface_ops.operations import create_component_op
 
     payload = _load_payload(data, json_str)
     try:
@@ -54,8 +54,8 @@ def put_cmd(
     """インスタンス全置換。"""
     _bootstrap()
     from cli.error_mapping import exit_if_error
-    from core.concurrency import ETagMode, resolve_expected_etag
-    from core.operations import replace_component_op
+    from core.surface_ops.concurrency import ETagMode, resolve_expected_etag
+    from core.surface_ops.operations import replace_component_op
 
     payload = _load_payload(data, json_str)
     mode: ETagMode = "auto" if auto_etag else "required"
@@ -90,8 +90,8 @@ def patch_cmd(
     """インスタンス部分更新（deep merge）。"""
     _bootstrap()
     from cli.error_mapping import exit_if_error
-    from core.concurrency import ETagMode, resolve_expected_etag
-    from core.operations import patch_component_op
+    from core.surface_ops.concurrency import ETagMode, resolve_expected_etag
+    from core.surface_ops.operations import patch_component_op
 
     delta = _load_payload(data, json_str)
     mode: ETagMode = "auto" if auto_etag else "required"
@@ -124,8 +124,8 @@ def delete_cmd(
     """インスタンス削除（MultiInstance のみ）。"""
     _bootstrap()
     from cli.error_mapping import exit_if_error
-    from core.concurrency import ETagMode, resolve_expected_etag
-    from core.operations import delete_component_op
+    from core.surface_ops.concurrency import ETagMode, resolve_expected_etag
+    from core.surface_ops.operations import delete_component_op
 
     mode: ETagMode = "auto" if auto_etag else "required"
     try:
@@ -173,13 +173,13 @@ def spec_set(
 ) -> None:
     """shared spec を更新。"""
     _bootstrap()
-    from core.concurrency import ETagMode, resolve_expected_etag
     from core.instances import (
         InstanceNotFound,
         SingletonNotInstanceable,
         get_shared_spec,
         set_shared_spec,
     )
+    from core.surface_ops.concurrency import ETagMode, resolve_expected_etag
 
     payload = _load_payload(data, json_str)
     resolved_etag: str | None
