@@ -6,8 +6,8 @@ from fastapi import APIRouter
 from fastapi.responses import Response
 
 from api.errors import NotFoundError
-from core.jobs import get_job, job_to_dict
-from core.runs import get_run, get_run_artifact, latest_run_id, list_runs, run_to_dict
+from core.persistence.jobs import get_job, job_to_dict
+from core.persistence.runs import get_run, get_run_artifact, latest_run_id, list_runs, run_to_dict
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 

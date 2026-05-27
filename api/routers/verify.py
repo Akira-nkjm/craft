@@ -6,7 +6,7 @@
 from fastapi import APIRouter
 
 from api.errors import ConflictError, CraftAPIError, NotFoundError
-from core.jobs import get_job, job_to_dict, submit_verify_job
+from core.persistence.jobs import get_job, job_to_dict, submit_verify_job
 from core.pipeline.merge import MergeConflict
 from core.pipeline.verify import run_verify_core
 

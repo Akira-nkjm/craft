@@ -14,7 +14,7 @@ def history_cmd(
     limit: int = typer.Option(20, "--limit", "-n", min=0, help="最大件数"),
 ) -> None:
     """git log 由来の変更履歴を表示。"""
-    from core.history import GitError, GitRefNotFound, git_log
+    from core.persistence.history import GitError, GitRefNotFound, git_log
 
     try:
         entries = git_log(path, limit=limit)
@@ -47,7 +47,7 @@ def diff_cmd(
     path: str | None = typer.Argument(None, help="対象 path (省略時は全体)"),
 ) -> None:
     """2 点間の git diff を表示。"""
-    from core.history import GitError, GitRefNotFound, git_diff
+    from core.persistence.history import GitError, GitRefNotFound, git_diff
 
     try:
         typer.echo(git_diff(from_sha, to_sha, path), nl=False)

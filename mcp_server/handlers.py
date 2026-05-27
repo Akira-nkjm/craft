@@ -7,12 +7,6 @@ from pydantic import ValidationError
 
 from core.concurrency import ETagMode, resolve_expected_etag
 from core.errors import ETagMismatch, PreconditionRequired
-from core.history import (
-    GitError,
-    GitRefNotFound,
-    git_diff,
-    git_log,
-)
 from core.instances import (
     InstanceNotFound,
     SingletonNotInstanceable,
@@ -35,6 +29,12 @@ from core.operations import (
     set_singleton_config_op,
 )
 from core.paths import MERGED_TOML, system_data_path
+from core.persistence.history import (
+    GitError,
+    GitRefNotFound,
+    git_diff,
+    git_log,
+)
 from core.pipeline.merge import merge
 from core.serialization import to_jsonable
 from mcp_server.error_mapping import error_or_none
