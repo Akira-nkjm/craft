@@ -1,6 +1,6 @@
 """aocs system components."""
 
-from schema import Component, Placeable, fld
+from craft.schema import Component, Placeable, fld
 
 
 class SunSenser(Component, Placeable):

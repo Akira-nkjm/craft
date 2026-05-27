@@ -1,6 +1,6 @@
 """Orbital system configs."""
 
-from schema import Config, fld
+from craft.schema import Config, fld
 
 
 class OrbitalParams(Config):

@@ -9,7 +9,7 @@ from typing import Annotated
 
 import veriq as vq
 
-from schema import analysis
+from craft.schema import analysis
 
 
 @analysis(desc="全 PDM の想定消費電力合計（W）")

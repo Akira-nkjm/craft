@@ -3,7 +3,7 @@
 注意: `from __future__ import annotations` は書かない（veriq の inspect.signature を壊す）。
 """
 
-from schema import (
+from craft.schema import (
     Component,
     MultiInstance,
     Placeable,
