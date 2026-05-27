@@ -7,8 +7,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from core.io.toml_io import read_toml, write_toml_atomic
 from core.paths import analysis_cache_dir
-from core.toml_io import read_toml, write_toml_atomic
 
 
 def cache_dir() -> Path:

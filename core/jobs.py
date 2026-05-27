@@ -7,7 +7,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from core.atomic_write import atomic_write_json
+from core.io.atomic_write import atomic_write_json
 from core.paths import jobs_dir
 from core.verify import run_verify_core
 

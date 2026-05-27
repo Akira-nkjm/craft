@@ -1,8 +1,8 @@
 """scaffold engine のテスト。"""
 
 import systems.power.scope  # noqa: F401
+from core.io.toml_io import read_toml, write_toml_atomic
 from core.scaffold import scaffold_system
-from core.toml_io import read_toml, write_toml_atomic
 
 
 def test_scaffold_existing_data_is_noop(power_data_backup):
@@ -43,7 +43,7 @@ def test_scaffold_key_source_adds_missing_mode(mission_data_backup):
     import tomlkit
 
     import systems.mission.scope  # noqa: F401
-    from core.toml_io import write_toml_atomic
+    from core.io.toml_io import write_toml_atomic
 
     # mission に新モードを追加
     mission_doc = tomlkit.parse(mission_data_backup.read_text())

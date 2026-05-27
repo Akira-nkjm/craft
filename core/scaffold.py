@@ -21,14 +21,14 @@ from pydantic import BaseModel
 from tomlkit import TOMLDocument
 from tomlkit.items import Table
 
-from core.paths import system_data_path
-from core.toml_formatter import (
+from core.io.toml_formatter import (
     apply_field_comments,
     default_value,
     normalize_float_values,
     order_fields_by_registry,
 )
-from core.toml_io import read_toml_doc, write_toml_atomic
+from core.io.toml_io import read_toml_doc, write_toml_atomic
+from core.paths import system_data_path
 from schema import default_registry
 from schema.registry import ComponentDefinition, ConfigDefinition
 

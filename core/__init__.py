@@ -1,6 +1,7 @@
 """Craft core — paths, TOML I/O, discovery, merge, scaffold。"""
 
 from core.discovery import discover_systems
+from core.io.toml_io import read_toml, write_toml_atomic
 from core.merge import (
     GENERATED_DIR,
     MERGED_LOCK,
@@ -17,7 +18,6 @@ from core.paths import (
     system_data_path,
 )
 from core.scaffold import ScaffoldResult, scaffold_all, scaffold_system
-from core.toml_io import read_toml, write_toml_atomic
 
 __all__ = [
     "GENERATED_DIR",

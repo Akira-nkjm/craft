@@ -27,8 +27,8 @@ def test_obc_bus_interface_is_nested_pydantic_model():
 
 def test_obc_bus_interface_loads_from_toml():
     """data.toml の `[obc.spec.bus_interface]` がネスト model に validate される。"""
+    from core.io.toml_io import read_toml
     from core.paths import system_data_path
-    from core.toml_io import read_toml
     from systems.cdh.components import OBC
 
     data = read_toml(system_data_path("cdh"))

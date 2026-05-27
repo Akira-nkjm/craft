@@ -22,7 +22,7 @@ def _load_payload(data_path: Path | None, json_str: str | None) -> dict[str, Any
             raise typer.BadParameter(f"file not found: {data_path}")
         suffix = data_path.suffix.lower()
         if suffix == ".toml":
-            from core.toml_io import read_toml
+            from core.io.toml_io import read_toml
 
             return read_toml(data_path)
         if suffix == ".json":

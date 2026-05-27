@@ -16,6 +16,8 @@ from pydantic.fields import FieldInfo, PydanticUndefined
 from tomlkit import TOMLDocument
 from tomlkit.items import Table
 
+from core.io.toml_io import write_toml_atomic
+
 
 def format_field_comment(finfo: FieldInfo) -> str | None:
     """`# <desc> [unit]` 形式のコメント文字列を返す（不要なら None）。"""
@@ -69,10 +71,8 @@ def apply_field_comments(table: Table, model: type[BaseModel]) -> None:
 
 
 def write_with_comments(doc: TOMLDocument, target_path: Any) -> None:
-    """`tomlkit.dumps` でファイル書き出し。`core.toml_io.write_toml_atomic`
+    """`tomlkit.dumps` でファイル書き出し。`core.io.toml_io.write_toml_atomic`
     と用途が被るが、こちらは「formatter が組んだ doc」専用。"""
-    from core.toml_io import write_toml_atomic
-
     write_toml_atomic(target_path, doc)
 
 

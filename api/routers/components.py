@@ -15,6 +15,7 @@ from core.instances import (
     get_instance,
     list_instances,
 )
+from core.io.toml_io import read_toml
 from core.operations import (
     create_component_op,
     delete_component_op,
@@ -22,7 +23,6 @@ from core.operations import (
     replace_component_op,
 )
 from core.paths import system_data_path
-from core.toml_io import read_toml
 from schema import default_registry
 
 router = APIRouter(prefix="/components", tags=["components"])
