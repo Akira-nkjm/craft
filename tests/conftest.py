@@ -31,6 +31,7 @@ def clean_generated_dir(tmp_path, monkeypatch):
     from api.routers import merge as merge_router
     from api.routers import verify as verify_router
     from core import paths as core_paths
+    from core import verify as core_verify
 
     # core.merge re-exports these for backward compat, but the source of truth is core.paths.
     core_merge_mod = sys.modules["core.merge"]
@@ -49,4 +50,5 @@ def clean_generated_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(core_merge_mod, "MERGED_LOCK", new_lock)
     monkeypatch.setattr(merge_router, "MERGED_TOML", new_toml)
     monkeypatch.setattr(verify_router, "MERGED_TOML", new_toml, raising=False)
+    monkeypatch.setattr(core_verify, "MERGED_TOML", new_toml)
     yield gen_dir
