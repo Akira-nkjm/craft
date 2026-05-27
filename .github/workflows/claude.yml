@@ -138,8 +138,14 @@ jobs:
           fi
           ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --json title --jq .title)
           BODY=$(printf 'Closes #%s\n\nAuto-created by Claude Code GitHub Action.\n\nNOTE: This PR was created by `GITHUB_TOKEN`, so CI and `@claude review` chains do NOT auto-fire. To run CI / request review, either close+reopen this PR, push an empty commit, or comment `@claude review` manually.\n\n🤖 Generated with Claude Code' "$ISSUE_NUMBER")
-          gh pr create \
+          PR_URL=$(gh pr create \
             --base main \
             --head "$BRANCH" \
             --title "$ISSUE_TITLE" \
-            --body "$BODY"
+            --body "$BODY")
+          PR_NUM=$(basename "$PR_URL")
+          # Force GitHub to re-parse the "Closes #N" keyword for issue linking.
+          # Bot-created PRs sometimes skip the link; re-saving the body with a
+          # trailing space triggers re-parsing.
+          gh pr edit "$PR_NUM" --body "${BODY} " > /dev/null
+          echo "::notice::Created PR #${PR_NUM} and refreshed for issue link"
