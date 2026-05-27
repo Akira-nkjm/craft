@@ -21,7 +21,7 @@ class _Trait:
     """全 trait の基底マーカー。Component と区別するため。"""
 
     cardinality: ClassVar[str] = "single"
-    design_extra: ClassVar[dict[str, Any]] = {}
+    design_extra: ClassVar[dict[str, Any]] = {}  # Must NOT be mutated in-place
     spec_only: ClassVar[bool] = False
 
 

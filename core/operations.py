@@ -7,6 +7,7 @@ ValidationError (pydantic) is intentionally NOT caught here so the API's global
 handler keeps its rich field-level error format.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -37,7 +38,7 @@ class OperationResult:
     error_message: str | None = None
 
 
-def _wrap_write(fn, *args, **kwargs) -> OperationResult:  # type: ignore[type-arg]
+def _wrap_write(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> OperationResult:
     """Call fn(*args, **kwargs) and map domain exceptions to OperationResult.
 
     Catches InstanceNotFound, InstanceAlreadyExists, SingletonNotInstanceable,

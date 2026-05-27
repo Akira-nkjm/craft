@@ -54,14 +54,17 @@ def infer_system_from_caller() -> str:
     `.../systems/<name>/...` から `<name>` を取得。
     """
     frame = inspect.currentframe()
-    while frame is not None:
-        path = Path(frame.f_code.co_filename)
-        parts = path.parts
-        if "systems" in parts:
-            idx = parts.index("systems")
-            if idx + 1 < len(parts):
-                return parts[idx + 1]
-        frame = frame.f_back
+    try:
+        while frame is not None:
+            path = Path(frame.f_code.co_filename)
+            parts = path.parts
+            if "systems" in parts:
+                idx = parts.index("systems")
+                if idx + 1 < len(parts):
+                    return parts[idx + 1]
+            frame = frame.f_back
+    finally:
+        del frame
     raise RuntimeError(
         "Cannot infer system from caller stack. Pass `system='...'` as a class keyword argument."
     )
