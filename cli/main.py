@@ -31,6 +31,7 @@ from pydantic import ValidationError
 
 from cli._etag import _resolve_instance_etag
 from cli._io import _format_validation_error, _load_payload, _print_json
+from cli.commands.schema import get, schema_app
 from core.discovery import discover_systems
 from core.errors import ETagMismatch, PreconditionRequired
 
@@ -40,12 +41,12 @@ app = typer.Typer(
     no_args_is_help=True,
     help="Craft — Concept Registry for Automated spacecraFT design",
 )
-schema_app = typer.Typer(no_args_is_help=True, help="Pydantic Schema 配信")
 analysis_app = typer.Typer(no_args_is_help=True, help="@analysis 関数の実行")
 init_app = typer.Typer(no_args_is_help=True, help="プロジェクト/サブシステム雛形生成")
 spec_app = typer.Typer(no_args_is_help=True, help="MultiInstance の shared spec 操作")
 runs_app = typer.Typer(no_args_is_help=True, help="verification run history")
 app.add_typer(schema_app, name="schema")
+app.command("get")(get)
 app.add_typer(analysis_app, name="analysis")
 app.add_typer(init_app, name="init")
 app.add_typer(spec_app, name="spec")
@@ -110,70 +111,6 @@ def diff_cmd(
     except GitError as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1) from e
-
-
-# ─── schema ──────────────────────────────────────────────────────────
-
-
-@schema_app.command("list")
-def schema_list() -> None:
-    """登録済み system / component を一覧表示。"""
-    _bootstrap()
-    from core.introspection import list_components_summary
-
-    out: dict[str, list[dict[str, Any]]] = {}
-    for s in list_components_summary():
-        out.setdefault(s.system, []).append(
-            {
-                "name": s.name,
-                "plural": s.plural,
-                "cardinality": s.cardinality,
-                "traits": list(s.traits),
-            }
-        )
-    _print_json(out)
-
-
-@schema_app.command("show")
-def schema_show(system: str, component: str) -> None:
-    """単一 component の JSON Schema (Entry model) を表示。"""
-    _bootstrap()
-    from schema import default_registry
-
-    defn = default_registry.component_or_none(system, component)
-    if defn is None:
-        typer.echo(f"Error: component '{system}.{component}' not found", err=True)
-        raise typer.Exit(code=1)
-    _print_json(defn.entry.model_json_schema())
-
-
-# ─── get ─────────────────────────────────────────────────────────────
-
-
-@app.command("get")
-def get(
-    system: str,
-    component: str,
-    instance: str | None = typer.Argument(None),
-) -> None:
-    """インスタンス取得（instance 省略時は全インスタンス）。"""
-    _bootstrap()
-    from core.instances import (
-        InstanceNotFound,
-        get_instance,
-        list_instances,
-    )
-
-    if instance is None:
-        _print_json(list_instances(system, component))
-        return
-    try:
-        payload, etag = get_instance(system, component, instance)
-    except InstanceNotFound as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
-    typer.echo(f"# ETag: {etag}")
-    _print_json(payload)
 
 
 # ─── CRUD: create / put / patch / delete ────────────────────────────
