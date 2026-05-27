@@ -10,14 +10,14 @@ from typing import Any
 import veriq as vq
 
 from core.paths import MERGED_TOML
-from core.pipeline.merge import merge
-from core.pipeline.veriq_project import build_project
-from core.runs import (
+from core.persistence.runs import (
     create_run_dir,
     new_run_id,
     update_latest,
     write_run_artifacts,
 )
+from core.pipeline.merge import merge
+from core.pipeline.veriq_project import build_project
 from core.serialization import to_jsonable
 
 

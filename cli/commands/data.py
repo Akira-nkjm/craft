@@ -86,7 +86,7 @@ def verify_cmd(
     """merge → veriq evaluate_project を実行。"""
     _bootstrap()
     if async_:
-        from core.jobs import job_to_dict, submit_verify_job
+        from core.persistence.jobs import job_to_dict, submit_verify_job
 
         _print_json(job_to_dict(submit_verify_job()))
         return

@@ -23,7 +23,7 @@ def _bootstrap() -> None:
 @runs_app.command("list")
 def runs_list(limit: int = typer.Option(20, "--limit", "-n", min=0, help="最大件数")) -> None:
     """verification run 一覧を新しい順に表示。"""
-    from core.runs import list_runs, run_to_dict
+    from core.persistence.runs import list_runs, run_to_dict
 
     _print_json({"runs": [run_to_dict(run) for run in list_runs(limit=limit)]})
 
@@ -31,7 +31,7 @@ def runs_list(limit: int = typer.Option(20, "--limit", "-n", min=0, help="最大
 @runs_app.command("show")
 def runs_show(run_id: str) -> None:
     """単一 verification run の詳細を表示。"""
-    from core.runs import get_run, run_to_dict
+    from core.persistence.runs import get_run, run_to_dict
 
     run = get_run(run_id)
     if run is None:
@@ -43,7 +43,7 @@ def runs_show(run_id: str) -> None:
 @runs_app.command("latest")
 def runs_latest() -> None:
     """最新 verification run を表示。"""
-    from core.runs import get_run, latest_run_id, run_to_dict
+    from core.persistence.runs import get_run, latest_run_id, run_to_dict
 
     run_id = latest_run_id()
     if run_id is None:
@@ -59,7 +59,7 @@ def runs_latest() -> None:
 @runs_app.command("artifact")
 def runs_artifact(run_id: str, name: str) -> None:
     """指定 artifact の中身を stdout に出力。"""
-    from core.runs import get_run_artifact
+    from core.persistence.runs import get_run_artifact
 
     content = get_run_artifact(run_id, name)
     if content is None:

@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import APIRouter, Query
 
 from api.errors import CraftAPIError, NotFoundError
-from core.history import GitError, GitRefNotFound, git_diff, git_log
+from core.persistence.history import GitError, GitRefNotFound, git_diff, git_log
 
 router = APIRouter(tags=["history"])
 
