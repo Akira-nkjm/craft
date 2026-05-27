@@ -6,16 +6,15 @@ from fastapi import Response
 
 from api.errors import (
     ConflictError,
-    ETagMismatchError,
-    IfMatchRequiredError,
     NotFoundError,
     ValidationFailedError,
 )
+from core.errors import ETagMismatch, PreconditionRequired
 from core.operations import OperationResult
 
 
 def raise_for_error(result: OperationResult) -> None:
-    """Raise the appropriate CraftAPIError if result.status is not 'ok'."""
+    """Raise the appropriate error if result.status is not 'ok'."""
     if result.status == "ok":
         return
     if result.status == "not_found":
@@ -23,9 +22,9 @@ def raise_for_error(result: OperationResult) -> None:
     if result.status == "conflict":
         raise ConflictError(result.error_message)
     if result.status == "etag_mismatch":
-        raise ETagMismatchError(result.error_message)
+        raise ETagMismatch(result.error_message)
     if result.status == "precondition":
-        raise IfMatchRequiredError(result.error_message)
+        raise PreconditionRequired(result.error_message)
     raise ValidationFailedError(result.error_message)
 
 

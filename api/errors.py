@@ -65,18 +65,6 @@ class ConflictError(CraftAPIError):
     title = "Resource conflict"
 
 
-class ETagMismatchError(CraftAPIError):
-    status_code = 412
-    type_id = "etag_mismatch"
-    title = "ETag precondition failed"
-
-
-class IfMatchRequiredError(CraftAPIError):
-    status_code = 428
-    type_id = "if_match_required"
-    title = "If-Match header required"
-
-
 class ValidationFailedError(CraftAPIError):
     status_code = 422
     type_id = "validation_error"

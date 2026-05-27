@@ -16,14 +16,6 @@ class ETagMismatch(CraftError):  # noqa: N818
     """If-Match header did not match the current ETag."""
 
 
-class ResourceNotFound(CraftError):  # noqa: N818
-    """Requested resource does not exist."""
-
-
-class ResourceConflict(CraftError):  # noqa: N818
-    """Resource already exists or conflicts with existing state."""
-
-
 class AnalysisNotFound(CraftError):  # noqa: N818
     """Requested analysis is not registered."""
 

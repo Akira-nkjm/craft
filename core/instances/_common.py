@@ -52,7 +52,7 @@ def _pop_dig(d: dict[str, Any], keys: list[str]) -> dict[str, Any] | None:
         return None
     removed = parent.pop(leaf)
     for i in range(len(parents), 0, -1):
-        upper = _dig(d, parents[: i - 1]) if i > 0 else d
+        upper = _dig(d, parents[: i - 1])
         key = parents[i - 1]
         if upper is None:
             break

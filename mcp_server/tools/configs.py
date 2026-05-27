@@ -17,10 +17,6 @@ from mcp_server.handlers import (
 from schema import default_registry
 
 
-def _list_config(system: str, name: str, _payload: dict[str, Any]) -> Any:
-    return handle_get_config(system, name)
-
-
 def _get_singleton_config(system: str, name: str, _payload: dict[str, Any]) -> Any:
     return handle_get_config(system, name)
 
@@ -118,7 +114,7 @@ def handlers() -> dict[str, Callable[[dict[str, Any]], Any]]:
     h: dict[str, Callable[[dict[str, Any]], Any]] = {}
     for cfg in default_registry.configs():
         if cfg.cardinality == "multi":
-            h[f"list_{cfg.plural}"] = partial(_list_config, cfg.system, cfg.name)
+            h[f"list_{cfg.plural}"] = partial(_get_singleton_config, cfg.system, cfg.name)
             h[f"get_{cfg.name}"] = partial(_get_config_instance, cfg.system, cfg.name)
             h[f"set_{cfg.name}"] = partial(handle_set_config_instance, cfg.system, cfg.name)
             h[f"patch_{cfg.name}"] = partial(handle_patch_config_instance, cfg.system, cfg.name)
