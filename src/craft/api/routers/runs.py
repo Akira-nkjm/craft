@@ -7,7 +7,13 @@ from fastapi.responses import Response
 
 from craft.api.errors import NotFoundError
 from craft.core.persistence.jobs import get_job, job_to_dict
-from craft.core.persistence.runs import get_run, get_run_artifact, latest_run_id, list_runs, run_to_dict
+from craft.core.persistence.runs import (
+    get_run,
+    get_run_artifact,
+    latest_run_id,
+    list_runs,
+    run_to_dict,
+)
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
