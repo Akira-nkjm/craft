@@ -21,17 +21,17 @@
     craft init system <name>         system 雛形生成
 """
 
-import json
-import sys
 from pathlib import Path
-from typing import Any
 
 import typer
 from pydantic import ValidationError
 
 from cli._etag import _resolve_instance_etag
 from cli._io import _format_validation_error, _load_payload, _print_json
+from cli.commands.data import merge_cmd, scaffold_cmd, verify_cmd
 from cli.commands.maintenance import diff_cmd, gen_stubs_cmd, history_cmd, init_app
+from cli.commands.runs_analysis import analysis_app, runs_app
+from cli.commands.schema import get, schema_app
 from core.discovery import discover_systems
 from core.errors import ETagMismatch, PreconditionRequired
 
@@ -41,11 +41,9 @@ app = typer.Typer(
     no_args_is_help=True,
     help="Craft — Concept Registry for Automated spacecraFT design",
 )
-schema_app = typer.Typer(no_args_is_help=True, help="Pydantic Schema 配信")
-analysis_app = typer.Typer(no_args_is_help=True, help="@analysis 関数の実行")
 spec_app = typer.Typer(no_args_is_help=True, help="MultiInstance の shared spec 操作")
-runs_app = typer.Typer(no_args_is_help=True, help="verification run history")
 app.add_typer(schema_app, name="schema")
+app.command("get")(get)
 app.add_typer(analysis_app, name="analysis")
 app.add_typer(init_app, name="init")
 app.add_typer(spec_app, name="spec")
@@ -54,74 +52,14 @@ app.command("history")(history_cmd)
 app.command("diff")(diff_cmd)
 app.command("gen-stubs")(gen_stubs_cmd)
 
+app.command("merge")(merge_cmd)
+app.command("scaffold")(scaffold_cmd)
+app.command("verify")(verify_cmd)
+
 
 def _bootstrap() -> None:
     """全 system を import → registry 確定。"""
     discover_systems()
-
-
-# ─── schema ──────────────────────────────────────────────────────────
-
-
-@schema_app.command("list")
-def schema_list() -> None:
-    """登録済み system / component を一覧表示。"""
-    _bootstrap()
-    from core.introspection import list_components_summary
-
-    out: dict[str, list[dict[str, Any]]] = {}
-    for s in list_components_summary():
-        out.setdefault(s.system, []).append(
-            {
-                "name": s.name,
-                "plural": s.plural,
-                "cardinality": s.cardinality,
-                "traits": list(s.traits),
-            }
-        )
-    _print_json(out)
-
-
-@schema_app.command("show")
-def schema_show(system: str, component: str) -> None:
-    """単一 component の JSON Schema (Entry model) を表示。"""
-    _bootstrap()
-    from schema import default_registry
-
-    defn = default_registry.component_or_none(system, component)
-    if defn is None:
-        typer.echo(f"Error: component '{system}.{component}' not found", err=True)
-        raise typer.Exit(code=1)
-    _print_json(defn.entry.model_json_schema())
-
-
-# ─── get ─────────────────────────────────────────────────────────────
-
-
-@app.command("get")
-def get(
-    system: str,
-    component: str,
-    instance: str | None = typer.Argument(None),
-) -> None:
-    """インスタンス取得（instance 省略時は全インスタンス）。"""
-    _bootstrap()
-    from core.instances import (
-        InstanceNotFound,
-        get_instance,
-        list_instances,
-    )
-
-    if instance is None:
-        _print_json(list_instances(system, component))
-        return
-    try:
-        payload, etag = get_instance(system, component, instance)
-    except InstanceNotFound as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from e
-    typer.echo(f"# ETag: {etag}")
-    _print_json(payload)
 
 
 # ─── CRUD: create / put / patch / delete ────────────────────────────
@@ -332,224 +270,6 @@ def spec_set(
 
     typer.echo(f"# ETag: {new_etag}")
     _print_json(new_spec)
-
-
-# ─── merge ───────────────────────────────────────────────────────────
-
-
-@app.command("merge")
-def merge_cmd(
-    dry_run: bool = typer.Option(False, "--dry-run", help="書き込まず stdout に出力"),
-    check: bool = typer.Option(False, "--check", help="lock が古ければ exit 1 (CI 用)"),
-) -> None:
-    """全 systems/*/data.toml を generated/merged.toml に統合。"""
-    _bootstrap()
-    from core.merge import is_merge_stale, merge
-
-    if check:
-        stale = is_merge_stale()
-        if stale:
-            typer.echo("Stale: merged.lock は元 data.toml と一致しません。", err=True)
-            raise typer.Exit(code=1)
-        typer.echo("OK: merged.toml は最新です。")
-        return
-
-    result, merged_dict = merge(dry_run=dry_run)
-    if dry_run:
-        _print_json(merged_dict)
-    else:
-        typer.echo(f"Wrote {result.output_path}")
-        typer.echo(f"Subsystems: {', '.join(result.systems)}")
-
-
-# ─── scaffold ────────────────────────────────────────────────────────
-
-
-@app.command("scaffold")
-def scaffold_cmd(
-    system: str | None = typer.Argument(None, help="対象 system (省略時は全件)"),
-    dry_run: bool = typer.Option(False, "--dry-run"),
-    format_only: bool = typer.Option(
-        False, "--format-only", help="既存値を変えず順序・コメントのみ整形"
-    ),
-    overwrite: bool = typer.Option(False, "--overwrite", help="既存値を default に戻す（破壊的）"),
-) -> None:
-    """registry → data.toml 雛形生成 (add-missing, 既存値保持)。"""
-    _bootstrap()
-    from core.scaffold import scaffold_all, scaffold_system
-
-    if format_only and overwrite:
-        typer.echo(
-            "Warning: --format-only and --overwrite are mutually exclusive; "
-            "--format-only takes precedence.",
-            err=True,
-        )
-    mode = "format-only" if format_only else ("overwrite" if overwrite else "add-missing")
-
-    if system is None:
-        results = scaffold_all(dry_run=dry_run, mode=mode)
-    else:
-        try:
-            r, _ = scaffold_system(system, dry_run=dry_run, mode=mode)
-        except ValueError as e:
-            typer.echo(f"Error: {e}", err=True)
-            raise typer.Exit(code=1) from e
-        results = [r]
-
-    for r in results:
-        marker = "(dry-run)" if dry_run else ""
-        typer.echo(
-            f"{r.system}: added={len(r.added_paths)} warnings={len(r.removed_warnings)} {marker}"
-        )
-        for p in r.added_paths:
-            typer.echo(f"  + {p}")
-        for w in r.removed_warnings:
-            typer.echo(f"  ! unknown: {w}")
-
-
-# ─── verify ──────────────────────────────────────────────────────────
-
-
-@app.command("verify")
-def verify_cmd(
-    fail_on_verify: bool = typer.Option(
-        True,
-        "--fail-on-verify/--no-fail-on-verify",
-        help="verification が 1 つでも False なら exit 1",
-    ),
-    async_: bool = typer.Option(False, "--async", help="job_id を発行して即終了"),
-) -> None:
-    """merge → veriq evaluate_project を実行。"""
-    _bootstrap()
-    if async_:
-        from core.jobs import job_to_dict, submit_verify_job
-
-        _print_json(job_to_dict(submit_verify_job()))
-        return
-
-    from core.verify import run_verify_core
-
-    result = run_verify_core()
-
-    any_failed = False
-    for scope in result["scopes"].values():
-        for node in scope["calculations"]:
-            typer.echo(f"  CALC {node['path']}  =  {node['value']}")
-        for node in scope["verifications"]:
-            mark = "✓" if node["value"] else "✗"
-            typer.echo(f"  VERI {mark} {node['path']}  =  {node['value']}")
-            if node["value"] is False:
-                any_failed = True
-
-    typer.echo(
-        f"success={result['success']}, errors={len(result['errors'])}, run_id={result['run_id']}"
-    )
-    if any_failed and fail_on_verify:
-        raise typer.Exit(code=1)
-
-
-# ─── runs ────────────────────────────────────────────────────────────
-
-
-@runs_app.command("list")
-def runs_list(limit: int = typer.Option(20, "--limit", "-n", min=0, help="最大件数")) -> None:
-    """verification run 一覧を新しい順に表示。"""
-    from core.runs import list_runs, run_to_dict
-
-    _print_json({"runs": [run_to_dict(run) for run in list_runs(limit=limit)]})
-
-
-@runs_app.command("show")
-def runs_show(run_id: str) -> None:
-    """単一 verification run の詳細を表示。"""
-    from core.runs import get_run, run_to_dict
-
-    run = get_run(run_id)
-    if run is None:
-        typer.echo(f"Error: run '{run_id}' not found", err=True)
-        raise typer.Exit(code=1)
-    _print_json(run_to_dict(run))
-
-
-@runs_app.command("latest")
-def runs_latest() -> None:
-    """最新 verification run を表示。"""
-    from core.runs import get_run, latest_run_id, run_to_dict
-
-    run_id = latest_run_id()
-    if run_id is None:
-        typer.echo("Error: no runs found", err=True)
-        raise typer.Exit(code=1)
-    run = get_run(run_id)
-    if run is None:
-        typer.echo(f"Error: run '{run_id}' not found", err=True)
-        raise typer.Exit(code=1)
-    _print_json(run_to_dict(run))
-
-
-@runs_app.command("artifact")
-def runs_artifact(run_id: str, name: str) -> None:
-    """指定 artifact の中身を stdout に出力。"""
-    from core.runs import get_run_artifact
-
-    content = get_run_artifact(run_id, name)
-    if content is None:
-        typer.echo(f"Error: artifact '{name}' not found for run '{run_id}'", err=True)
-        raise typer.Exit(code=1)
-    sys.stdout.buffer.write(content)
-
-
-# ─── analysis ────────────────────────────────────────────────────────
-
-
-@analysis_app.command("list")
-def analysis_list() -> None:
-    """登録済み @analysis 関数を一覧。"""
-    _bootstrap()
-    from core.introspection import list_analyses_summary
-
-    items = [
-        {
-            "name": s.name,
-            "system": s.system,
-            "verify": s.verify,
-            "desc": s.desc,
-        }
-        for s in list_analyses_summary()
-    ]
-    _print_json(items)
-
-
-@analysis_app.command("run")
-def analysis_run(
-    system: str = typer.Argument(..., help="ad-hoc は '_'"),
-    name: str = typer.Argument(...),
-    payload_json: str | None = typer.Option(
-        None, "--payload", "-p", help="JSON payload (ad-hoc analysis のみ)"
-    ),
-    no_cache: bool = typer.Option(False, "--no-cache", help="ad-hoc cache をスキップ"),
-) -> None:
-    """analysis を実行（veriq 連携 or ad-hoc）。"""
-    _bootstrap()
-    sub = None if system == "_" else system
-    payload = json.loads(payload_json) if payload_json else {}
-
-    from core.analysis_runner import AnalysisArgumentError, AnalysisNotFound
-    from core.analysis_runner import run_analysis as _run_analysis
-
-    try:
-        result = _run_analysis(sub, name, payload, use_cache=not no_cache)
-    except AnalysisNotFound:
-        typer.echo(f"Error: analysis '{system}.{name}' not found", err=True)
-        raise typer.Exit(code=1) from None
-    except AnalysisArgumentError as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(code=1) from None
-
-    output: dict[str, Any] = {"value": result.value}
-    if result.cache_hit is not None:
-        output["cache_hit"] = result.cache_hit
-    _print_json(output)
 
 
 def main() -> None:

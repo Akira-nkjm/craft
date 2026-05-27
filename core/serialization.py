@@ -29,5 +29,5 @@ def to_jsonable(value: Any, *, allow_callable: bool = False) -> Any:
     if isinstance(value, type):
         return getattr(value, "__name__", None) or repr(value)
     if callable(value):
-        return repr(value) if allow_callable else repr(value)
+        return repr(value) if allow_callable else None
     return str(value)
