@@ -3,25 +3,25 @@
 ユーザはここから `Component` / `Config` / `fld` / `analysis` を import する。
 """
 
-from schema.analysis import analysis
-from schema.component import Component
-from schema.config import Config
+from schema.codegen.root_model_builder import build_system_root_model
+from schema.dsl.analysis import analysis
+from schema.dsl.component import Component
+from schema.dsl.config import Config
+from schema.dsl.placement import Placement
+from schema.dsl.traits import (
+    MultiInstance,
+    Placeable,
+    PowerConsuming,
+    SpecOnly,
+    TemperatureSensitive,
+)
 from schema.fields import fld
-from schema.placement import Placement
 from schema.registry import (
     AnalysisDefinition,
     ComponentDefinition,
     ConfigDefinition,
     UnifiedRegistry,
     default_registry,
-)
-from schema.root_model_builder import build_system_root_model
-from schema.traits import (
-    MultiInstance,
-    Placeable,
-    PowerConsuming,
-    SpecOnly,
-    TemperatureSensitive,
 )
 
 __all__ = [

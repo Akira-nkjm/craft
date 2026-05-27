@@ -8,7 +8,7 @@ from cli.main import app
 from core.discovery import discover_systems
 from core.stubgen import check_stubs, generate_stubs
 from schema import default_registry
-from schema.stubgen import STUB_FILENAME, render_subsystem_stub
+from schema.codegen.stubgen import STUB_FILENAME, render_subsystem_stub
 
 
 @pytest.fixture(autouse=True)

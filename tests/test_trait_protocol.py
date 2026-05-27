@@ -4,7 +4,7 @@ import systems.aocs.scope  # noqa: F401 — trigger aocs system registration
 import systems.power.scope  # noqa: F401 — trigger power system registration
 import systems.thermal.scope  # noqa: F401 — trigger thermal system registration
 from schema import default_registry
-from schema.traits import (
+from schema.dsl.traits import (
     MultiInstance,
     Placeable,
     PowerConsuming,

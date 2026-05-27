@@ -13,8 +13,8 @@ trait を検出し、各 trait が宣言した field を Spec / Design / Require
 from typing import Any, ClassVar
 
 from schema.common import OperationMode
+from schema.dsl.placement import Placement
 from schema.fields import fld
-from schema.placement import Placement
 
 
 class _Trait:

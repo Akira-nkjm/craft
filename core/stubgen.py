@@ -12,8 +12,8 @@ from pathlib import Path
 
 from core.discovery import discover_systems
 from core.paths import subsystem_dir
+from schema.codegen.stubgen import STUB_FILENAME, apply_ruff_format, render_subsystem_stub
 from schema.registry import UnifiedRegistry, default_registry
-from schema.stubgen import STUB_FILENAME, apply_ruff_format, render_subsystem_stub
 
 
 def _stub_path_for(system: str, *, output_root: Path | None = None) -> Path:

@@ -38,7 +38,7 @@ def _camel_to_snake(name: str) -> str:
 
 def is_trait(base: type) -> bool:
     """Component 派生ではない trait class か判定。"""
-    from schema.traits import _Trait
+    from schema.dsl.traits import _Trait
 
     return base is not _Trait and isinstance(base, type) and issubclass(base, _Trait)
 
