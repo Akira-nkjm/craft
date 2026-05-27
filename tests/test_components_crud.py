@@ -12,6 +12,26 @@ def _client() -> TestClient:
 # ─── GET ─────────────────────────────────────────────────────────────
 
 
+def test_get_singleton_component_instances():
+    """Singleton component の GET /components/{sys}/{comp} が正しい応答形式を返す。
+
+    PR #34 / issue #11 で cardinality="single" の場合に instances がリストではなく
+    dict になるよう変更されたことを確認する。
+    """
+    with _client() as c:
+        r = c.get("/components/cdh/obc")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["system"] == "cdh"
+    assert body["component"] == "obc"
+    assert body["cardinality"] == "single"
+    assert body["plural"] == "obcs"
+    # singleton は instances が dict（multi の場合はインスタンス名キーの dict）
+    assert isinstance(body["instances"], dict)
+    assert "spec" in body["instances"]
+    assert "design" in body["instances"]
+
+
 def test_get_instance_returns_etag(power_data_backup):
     with _client() as c:
         r = c.get("/components/power/battery/main")
