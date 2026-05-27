@@ -5,7 +5,6 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from core.concurrency import ETagMode, resolve_expected_etag
 from core.errors import ETagMismatch, PreconditionRequired
 from core.instances import (
     InstanceNotFound,
@@ -19,15 +18,6 @@ from core.instances import (
     set_shared_spec,
 )
 from core.io.toml_io import read_toml
-from core.operations import (
-    create_component_op,
-    delete_component_op,
-    delete_config_entry_op,
-    patch_component_op,
-    patch_config_entry_op,
-    set_config_entry_op,
-    set_singleton_config_op,
-)
 from core.paths import MERGED_TOML, system_data_path
 from core.persistence.history import (
     GitError,
@@ -37,6 +27,16 @@ from core.persistence.history import (
 )
 from core.pipeline.merge import merge
 from core.serialization import to_jsonable
+from core.surface_ops.concurrency import ETagMode, resolve_expected_etag
+from core.surface_ops.operations import (
+    create_component_op,
+    delete_component_op,
+    delete_config_entry_op,
+    patch_component_op,
+    patch_config_entry_op,
+    set_config_entry_op,
+    set_singleton_config_op,
+)
 from mcp_server.error_mapping import error_or_none
 from schema import default_registry
 

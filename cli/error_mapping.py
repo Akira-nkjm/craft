@@ -2,7 +2,7 @@
 
 import typer
 
-from core.operations import OperationResult
+from core.surface_ops.operations import OperationResult
 
 
 def exit_if_error(result: OperationResult) -> None:

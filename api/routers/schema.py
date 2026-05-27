@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import APIRouter
 
 from api.errors import NotFoundError
-from core.introspection import list_components_summary
+from core.surface_ops.introspection import list_components_summary
 from schema import default_registry
 
 router = APIRouter(prefix="/schema", tags=["schema"])

@@ -10,7 +10,7 @@ from api.errors import (
     ValidationFailedError,
 )
 from core.errors import ETagMismatch, PreconditionRequired
-from core.operations import OperationResult
+from core.surface_ops.operations import OperationResult
 
 
 def raise_for_error(result: OperationResult) -> None:

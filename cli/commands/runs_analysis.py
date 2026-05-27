@@ -75,7 +75,7 @@ def runs_artifact(run_id: str, name: str) -> None:
 def analysis_list() -> None:
     """登録済み @analysis 関数を一覧。"""
     _bootstrap()
-    from core.introspection import list_analyses_summary
+    from core.surface_ops.introspection import list_analyses_summary
 
     items = [
         {
