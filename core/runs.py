@@ -17,7 +17,6 @@ short hash: `sha256(input + registry_sha)[:6]`
 
 import contextlib
 import hashlib
-import importlib
 import json
 import os
 import shutil
@@ -28,12 +27,7 @@ from pathlib import Path
 from typing import Any
 
 from core.atomic_write import atomic_write_bytes_or_text, atomic_write_json
-
-merge_mod = importlib.import_module("core.merge")
-
-
-def _runs_dir() -> Path:
-    return merge_mod.GENERATED_DIR / "runs"
+from core.paths import runs_dir as _runs_dir
 
 
 def _latest_marker() -> Path:

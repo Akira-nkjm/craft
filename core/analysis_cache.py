@@ -1,20 +1,19 @@
 """Ad-hoc analysis result cache."""
 
 import hashlib
-import importlib
 import inspect
 import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from core.paths import analysis_cache_dir
 from core.toml_io import read_toml, write_toml_atomic
-
-merge_mod = importlib.import_module("core.merge")
 
 
 def cache_dir() -> Path:
-    return merge_mod.GENERATED_DIR / "runs" / "analyses"
+    """Backward-compatible alias for `core.paths.analysis_cache_dir`."""
+    return analysis_cache_dir()
 
 
 def code_version_for_func(func: Any) -> str:

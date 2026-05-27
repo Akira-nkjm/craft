@@ -1,7 +1,6 @@
 """Shared verification execution logic."""
 
 import hashlib
-import importlib
 import tempfile
 import time
 from datetime import UTC, datetime
@@ -10,6 +9,8 @@ from typing import Any
 
 import veriq as vq
 
+from core.merge import merge
+from core.paths import MERGED_TOML
 from core.runs import (
     create_run_dir,
     new_run_id,
@@ -19,18 +20,16 @@ from core.runs import (
 from core.serialization import to_jsonable
 from core.veriq_project import build_project
 
-merge_mod = importlib.import_module("core.merge")
-
 
 def run_verify_core() -> dict[str, Any]:
     project = build_project()
     started = time.monotonic()
 
-    merge_result, _ = merge_mod.merge()
-    input_bytes = merge_mod.MERGED_TOML.read_bytes()
+    merge_result, _ = merge()
+    input_bytes = MERGED_TOML.read_bytes()
     input_sha = hashlib.sha256(input_bytes).hexdigest()
 
-    model_data = vq.load_model_data_from_toml(project, merge_mod.MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
 
     run_id = new_run_id(input_sha=input_sha)

@@ -1,18 +1,15 @@
 """File-backed background jobs."""
 
 import asyncio
-import importlib
 import json
 import os
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from core.atomic_write import atomic_write_json
+from core.paths import jobs_dir
 from core.verify import run_verify_core
-
-merge_mod = importlib.import_module("core.merge")
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,10 +21,6 @@ class Job:
     finished_at: str | None
     result: dict[str, Any] | None
     error: str | None
-
-
-def jobs_dir() -> Path:
-    return merge_mod.GENERATED_DIR / "runs" / "jobs"
 
 
 def submit_verify_job() -> Job:
