@@ -83,6 +83,3 @@ field in the payload. They now forward it to the underlying write operation.
   instead of the unwrapped model fields. Since all Config models use `extra="forbid"`,
   this caused a `validation_error` on every call. Now extracts `payload["data"]` before
   validation, matching the pattern used by `handle_set_config`. (issue #53)
-
-- `mcp_server/handlers.py`: corrected Python 2 `except TypeError, ValueError:`
-  syntax to `except (TypeError, ValueError):` in `handle_history`.
