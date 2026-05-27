@@ -301,7 +301,11 @@ def set_shared_spec(
 
 
 def list_component_view(system: str, component: str) -> dict[str, Any]:
-    """API / MCP 向け一覧 view。cardinality を問わず list_instances に委譲。"""
+    """API / MCP 向け一覧 view。
+
+    現時点では list_instances に完全委譲。将来的にページネーション・フィールド
+    フィルタリング・view 変換などの view ロジックをここに集約する想定の拡張点。
+    """
     return list_instances(system, component)
 
 
