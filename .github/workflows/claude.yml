@@ -37,12 +37,46 @@ jobs:
       - name: Install just
         uses: taiki-e/install-action@just
 
+      - name: Resolve base branch from issue body (zipper chain)
+        id: base
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          set -e
+          # Parse "Base: #N" or "Base: <branch>" from issue body
+          BASE_LINE=$(printf '%s\n' "$ISSUE_BODY" | grep -oE '^Base: .*$' | head -1 || true)
+          BASE_BRANCH=""
+          if [ -n "$BASE_LINE" ]; then
+            BASE_VAL=$(printf '%s' "$BASE_LINE" | sed -E 's/^Base: //')
+            if [[ "$BASE_VAL" =~ ^#([0-9]+)$ ]]; then
+              BASE_ISSUE="${BASH_REMATCH[1]}"
+              # Find the open PR's head branch for that issue
+              BASE_BRANCH=$(gh pr list --state open --search "linked:issue $BASE_ISSUE" --json headRefName --jq '.[0].headRefName' 2>/dev/null || true)
+              if [ -z "$BASE_BRANCH" ]; then
+                # fall back to "Closes #N" search on open PR bodies
+                BASE_BRANCH=$(gh pr list --state open --json number,body,headRefName \
+                  --jq ".[] | select(.body | contains(\"Closes #${BASE_ISSUE}\")) | .headRefName" | head -1)
+              fi
+            else
+              # literal branch name
+              BASE_BRANCH="$BASE_VAL"
+            fi
+          fi
+          if [ -z "$BASE_BRANCH" ]; then
+            BASE_BRANCH="main"
+          fi
+          echo "name=$BASE_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "::notice::Resolved base branch: $BASE_BRANCH"
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           label_trigger: claude-implement
+          base_branch: ${{ steps.base.outputs.name || 'main' }}
           # Pure tag mode. Lint/test gating happens in the safety net step
           # below, NOT inside Claude (passing custom claude_args has caused
           # multiple regressions: tools getting silently replaced, Claude
