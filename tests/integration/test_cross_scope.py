@@ -9,7 +9,7 @@ import veriq as vq
 from fastapi.testclient import TestClient
 
 from craft.api.main import app
-from craft.core.discovery import discover_systems
+from craft.core.discovery import discover_systems, get_scope
 from craft.core.pipeline.merge import MERGED_TOML, merge
 from craft.schema import default_registry
 
@@ -39,14 +39,12 @@ def test_required_orbit_energy_analysis_registered():
 
 def test_cross_scope_evaluate(clean_generated_dir):
     _ensure_discovered()
-    from systems.mission.scope import mission
-    from systems.orbital.scope import orbital
-    from systems.power.scope import power
 
     project = vq.Project("Craft")
-    project.add_scope(power)
-    project.add_scope(orbital)
-    project.add_scope(mission)
+    for name in ("power", "orbital", "mission"):
+        scope = get_scope(name)
+        assert scope is not None
+        project.add_scope(scope)
 
     merge()
     model_data = vq.load_model_data_from_toml(project, MERGED_TOML)

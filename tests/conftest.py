@@ -10,6 +10,7 @@ framework tests (`tests/craft/`, `tests/integration/`) は `tests/fixtures/syste
 import shutil
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -31,6 +32,8 @@ def isolated_systems_root(request, tmp_path, monkeypatch):
     shutil.copytree(FIXTURES_SYSTEMS_DIR, fake_root / "systems")
 
     import craft.core.paths
+    from craft.core.discovery import discover_systems
+    from craft.schema.registry import default_registry
 
     # core.pipeline.merge は __init__.py の `from .merge import merge` で
     # 関数 `merge` に shadow されるため sys.modules 経由で取り直す。
@@ -42,7 +45,21 @@ def isolated_systems_root(request, tmp_path, monkeypatch):
     # git history は systems/*/data.toml の現在内容ではなく commit に依存するため、
     # 実 repo に対して動かす方が正しい。
 
-    yield fake_root
+    snapshot: dict[str, Any] = {
+        "components": dict(default_registry._components),
+        "configs": dict(default_registry._configs),
+        "analyses": dict(default_registry._analyses),
+    }
+    default_registry.clear()
+    discover_systems(root=fake_root / "systems")
+
+    try:
+        yield fake_root
+    finally:
+        default_registry.clear()
+        default_registry._components.update(snapshot["components"])
+        default_registry._configs.update(snapshot["configs"])
+        default_registry._analyses.update(snapshot["analyses"])
 
 
 @pytest.fixture

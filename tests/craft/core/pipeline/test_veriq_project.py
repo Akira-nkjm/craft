@@ -5,28 +5,6 @@ from unittest.mock import MagicMock, patch
 from craft.core.pipeline.veriq_project import build_project
 
 
-def _make_fake_importlib(system_to_scope: dict) -> MagicMock:
-    """Return a mock importlib whose import_module returns scope mocks by system name."""
-    mock_importlib = MagicMock()
-
-    def _fake_import(name: str):
-        # name is "systems.<sys>.scope"
-        parts = name.split(".")
-        if len(parts) == 3 and parts[0] == "systems" and parts[2] == "scope":
-            sys_name = parts[1]
-            mod = MagicMock()
-            if sys_name in system_to_scope:
-                setattr(mod, sys_name, system_to_scope[sys_name])
-            else:
-                # no attribute → build_project should skip it
-                del mod.__dict__[sys_name]  # ensure getattr returns the MagicMock auto-attr
-            return mod
-        raise ImportError(f"Unexpected import: {name!r}")
-
-    mock_importlib.import_module.side_effect = _fake_import
-    return mock_importlib
-
-
 def test_build_project_adds_scope_for_each_system():
     registry = MagicMock()
     registry.systems.return_value = {"alpha", "beta"}
@@ -35,23 +13,10 @@ def test_build_project_adds_scope_for_each_system():
     mock_beta_scope = MagicMock()
     mock_project = MagicMock()
 
-    mock_importlib = MagicMock()
-
-    def _fake_import(name: str):
-        if name == "systems.alpha.scope":
-            mod = MagicMock()
-            mod.alpha = mock_alpha_scope
-            return mod
-        if name == "systems.beta.scope":
-            mod = MagicMock()
-            mod.beta = mock_beta_scope
-            return mod
-        raise ImportError(f"No module named {name!r}")
-
-    mock_importlib.import_module.side_effect = _fake_import
+    scopes = {"alpha": mock_alpha_scope, "beta": mock_beta_scope}
 
     with (
-        patch("craft.core.pipeline.veriq_project.importlib", mock_importlib),
+        patch("craft.core.pipeline.veriq_project.get_scope", side_effect=scopes.get),
         patch("craft.core.pipeline.veriq_project.vq.Project", return_value=mock_project),
     ):
         result = build_project(registry)
@@ -66,20 +31,10 @@ def test_build_project_adds_scope_for_each_system():
 def test_build_project_skips_system_without_scope_attribute():
     registry = MagicMock()
     registry.systems.return_value = {"noscope"}
-
-    mock_importlib = MagicMock()
-
-    def _fake_import(name: str):
-        if name == "systems.noscope.scope":
-            mod = MagicMock(spec=[])  # no 'noscope' attribute
-            return mod
-        raise ImportError(f"No module named {name!r}")
-
-    mock_importlib.import_module.side_effect = _fake_import
     mock_project = MagicMock()
 
     with (
-        patch("craft.core.pipeline.veriq_project.importlib", mock_importlib),
+        patch("craft.core.pipeline.veriq_project.get_scope", return_value=None),
         patch("craft.core.pipeline.veriq_project.vq.Project", return_value=mock_project),
     ):
         build_project(registry)
@@ -92,19 +47,13 @@ def test_build_project_iterates_systems_in_sorted_order():
     registry.systems.return_value = {"zeta", "alpha", "mu"}
 
     call_order: list[str] = []
-    mock_importlib = MagicMock()
 
-    def _fake_import(name: str):
-        sys_name = name.split(".")[1]
+    def _fake_get_scope(sys_name: str):
         call_order.append(sys_name)
-        mod = MagicMock()
-        setattr(mod, sys_name, MagicMock())
-        return mod
-
-    mock_importlib.import_module.side_effect = _fake_import
+        return MagicMock()
 
     with (
-        patch("craft.core.pipeline.veriq_project.importlib", mock_importlib),
+        patch("craft.core.pipeline.veriq_project.get_scope", side_effect=_fake_get_scope),
         patch("craft.core.pipeline.veriq_project.vq.Project", return_value=MagicMock()),
     ):
         build_project(registry)

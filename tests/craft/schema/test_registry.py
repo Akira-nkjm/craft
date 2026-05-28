@@ -1,6 +1,5 @@
 """Registry auto-registration の確認。"""
 
-import systems.power.scope  # noqa: F401 — トリガ
 from craft.schema import default_registry
 
 

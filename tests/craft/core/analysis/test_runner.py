@@ -2,14 +2,7 @@
 
 import pytest
 
-from craft.core.discovery import discover_systems
-
-# Populate the registry (analyses, components, configs) before any test runs.
-# API/MCP tests handle this via TestClient lifespan or build_server(); direct
-# runner tests must do it explicitly.
-discover_systems()
-
-from craft.core.analysis.runner import (  # noqa: E402
+from craft.core.analysis.runner import (
     AnalysisArgumentError,
     AnalysisNotFound,
     AnalysisRunResult,

@@ -1,8 +1,5 @@
 """_Trait protocol のテスト。"""
 
-import systems.aocs.scope  # noqa: F401 — trigger aocs system registration
-import systems.power.scope  # noqa: F401 — trigger power system registration
-import systems.thermal.scope  # noqa: F401 — trigger thermal system registration
 from craft.schema import default_registry
 from craft.schema.dsl.traits import (
     MultiInstance,

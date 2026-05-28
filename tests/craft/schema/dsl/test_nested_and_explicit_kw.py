@@ -12,27 +12,29 @@ A4: `Component.__init_subclass__` の `system="..."` キーワード明示が
 import pytest
 from pydantic import ValidationError
 
-import systems.cdh.scope  # noqa: F401 — discovery
+from craft.schema import default_registry
 
 # ─── A2: nested model ───────────────────────────────────────────────
 
 
 def test_obc_bus_interface_is_nested_pydantic_model():
-    from systems.cdh.components import OBC, BusInterface
+    obc_cls = default_registry.component("cdh", "obc").cls
+    bus_interface_cls = obc_cls.Spec.model_fields["bus_interface"].annotation
 
-    bus_field = OBC.Spec.model_fields["bus_interface"]
+    bus_field = obc_cls.Spec.model_fields["bus_interface"]
     # annotation が BusInterface サブクラス（または同型）
-    assert bus_field.annotation is BusInterface
+    assert bus_field.annotation is bus_interface_cls
 
 
 def test_obc_bus_interface_loads_from_toml():
     """data.toml の `[obc.spec.bus_interface]` がネスト model に validate される。"""
     from craft.core.io.toml_io import read_toml
     from craft.core.paths import system_data_path
-    from systems.cdh.components import OBC
+
+    obc_cls = default_registry.component("cdh", "obc").cls
 
     data = read_toml(system_data_path("cdh"))
-    spec = OBC.Spec.model_validate(data["obc"]["spec"])
+    spec = obc_cls.Spec.model_validate(data["obc"]["spec"])
     assert spec.bus_interface.voltage_v == 28.0
     assert spec.bus_interface.rated_current_a == 2.5
     assert spec.bus_interface.protocol == "CAN"
@@ -40,10 +42,10 @@ def test_obc_bus_interface_loads_from_toml():
 
 def test_obc_bus_interface_validation_error_on_missing():
     """ネスト model 内の required field が無いと ValidationError。"""
-    from systems.cdh.components import OBC
+    obc_cls = default_registry.component("cdh", "obc").cls
 
     with pytest.raises(ValidationError):
-        OBC.Spec.model_validate(
+        obc_cls.Spec.model_validate(
             {
                 "clock_mhz": 100,
                 "ram_mb": 512,

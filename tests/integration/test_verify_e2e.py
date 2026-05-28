@@ -2,17 +2,16 @@
 
 import veriq as vq
 
+from craft.core.discovery import get_scope
 from craft.core.pipeline.merge import MERGED_TOML, merge
-from systems.mission.scope import mission
-from systems.orbital.scope import orbital
-from systems.power.scope import power
 
 
 def test_evaluate_project_runs_and_reports_verifications(clean_generated_dir):
     project = vq.Project("Craft")
-    project.add_scope(power)
-    project.add_scope(orbital)
-    project.add_scope(mission)
+    for name in ("power", "orbital", "mission"):
+        scope = get_scope(name)
+        assert scope is not None
+        project.add_scope(scope)
     merge()
     model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
     result = vq.evaluate_project(project, model_data)

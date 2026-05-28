@@ -1,6 +1,5 @@
 """scaffold engine のテスト。"""
 
-import systems.power.scope  # noqa: F401
 from craft.core.io.toml_io import read_toml, write_toml_atomic
 from craft.core.pipeline.scaffold import scaffold_system
 
@@ -42,7 +41,6 @@ def test_scaffold_key_source_adds_missing_mode(mission_data_backup):
     """power_modes に key_source の不足モードが自動補完される。"""
     import tomlkit
 
-    import systems.mission.scope  # noqa: F401
     from craft.core.io.toml_io import write_toml_atomic
 
     # mission に新モードを追加
@@ -61,8 +59,6 @@ def test_scaffold_key_source_adds_missing_mode(mission_data_backup):
 
 def test_scaffold_key_source_preserves_existing_modes(power_data_backup):
     """既存の power_modes エントリは scaffold で上書きされない。"""
-    import systems.mission.scope  # noqa: F401
-
     _result, after = scaffold_system("power")
     assert after["pdms"]["main"]["design"]["power_modes"]["nominal"] is True
 
