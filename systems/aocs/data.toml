@@ -1,24 +1,268 @@
-# === Sun Senser ===
+# AOCS system instance data
+#
+# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
+#   - SEIRIOS_コンポ管理シート / 子衛星1
+#   - 電源モード検討 / 子衛星電力消費
 
-[sunsenser.spec]
-mass_kg = 0.0 # 質量 [kg]
-fov_deg = 0.0 # 視野角
 
-[sunsenser.design]
-quantity = 1 # 搭載個数
 
-[sunsenser.design.placement] # 搭載位置・CAD パラメータ
-face = "PX" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
-w = 0.0 # Offset from face surface [mm]
-dx = 1.0 # Bounding box x dimension [mm]
-dy = 1.0 # Bounding box y dimension [mm]
-dz = 1.0 # Bounding box z dimension [mm]
-rz = 0.0 # Rotation around face normal [degrees]
-side = "IN" # Mount on inner or outer face
-cad_file = "" # CAD document name (empty = generate box)
-cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
-cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
-cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
-update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+# === Sun Sensor (nanoSSOC-D60 × 4) ===
+# 子衛星電力消費 行17 / コンポ管理 行: サンセンサ/SS
+# Model: nanoSSOC-D60 (SolarMems), 43 × 14 × 5.9 mm, 6.5g, 0.076W/個
+
+[sun_sensers.spec]
+mass_kg = 0.0065
+power_per_unit_w = 0.076
+fov_deg = 60.0 # nanoSSOC-D60 conical FOV ±60°
+
+[sun_sensers.main.design]
+quantity = 4 # PX/MX/PZ/MZ 4 面に分散
+
+[sun_sensers.main.design.placement]
+face = "PX"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 43.0
+dy = 14.0
+dz = 5.9
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[sun_sensers.main.design.power_modes]
+safe = false
+sun_acquisition = true
+coarse_3axis = true
+fine_3axis = true
+propulsion = true
+mated_check = false
+mated_calibration = false
+mated_actuator = true
+coarse_ff = true
+fine_ff = true
+
+
+
+# === Reaction Wheel (RW-0.003 × 3) ===
+# 子衛星電力消費 行15 / コンポ管理: (ユニット内部)RW
+# Model: RW-0.003, 33.5 × 33.5 × 17 mm, 0.44W/個
+
+[reaction_wheels.spec]
+mass_kg = 0.130 # 推定（コンポシートはユニット合算 1200g）
+temp_min_c = -20.0
+temp_max_c = 60.0
+power_per_unit_w = 0.44
+max_torque_nms = 0.003 # 型番から（3 mNm）
+max_momentum_nms = 0.020 # 3 mNm class typical
+
+[reaction_wheels.main.design]
+quantity = 3 # 3 軸制御
+
+[reaction_wheels.main.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 33.5
+dy = 33.5
+dz = 17.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[reaction_wheels.main.design.power_modes]
+safe = false
+sun_acquisition = false
+coarse_3axis = true
+fine_3axis = true
+propulsion = true
+mated_check = false
+mated_calibration = false
+mated_actuator = true
+coarse_ff = true
+fine_ff = true
+
+
+
+# === Magnetic Torquer (EMA04 × 3) ===
+# 子衛星電力消費 行16 / コンポ管理: (ユニット内部)MTQ
+# Model: EMA04, 0.38W/個
+
+[magnetic_torquers.spec]
+mass_kg = 0.045 # EMA04 typical
+power_per_unit_w = 0.38
+max_dipole_moment_am2 = 4.0 # EMA04 ~ 4 A·m²
+
+[magnetic_torquers.main.design]
+quantity = 3
+
+[magnetic_torquers.main.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 80.0
+dy = 10.0
+dz = 10.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[magnetic_torquers.main.design.power_modes]
+safe = false
+sun_acquisition = true
+coarse_3axis = true
+fine_3axis = true
+propulsion = true
+mated_check = false
+mated_calibration = false
+mated_actuator = true
+coarse_ff = true
+fine_ff = true
+
+
+
+# === Star Tracker (Sagitta × 1) ===
+# 子衛星電力消費 行14 / コンポ管理: (ユニット内部)STT
+# Model: Sagitta (Arcsec), 95 × 50 × 44 mm, 1.5W
+
+[star_trackers.spec]
+mass_kg = 0.270 # Sagitta data sheet 270g
+temp_min_c = -30.0
+temp_max_c = 50.0
+power_per_unit_w = 1.5
+accuracy_arcsec = 2.0 # Sagitta cross-axis 3σ
+fov_deg = 25.4
+update_rate_hz = 5.0
+
+[star_trackers.main.design]
+quantity = 1
+
+[star_trackers.main.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 95.0
+dy = 50.0
+dz = 44.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[star_trackers.main.design.power_modes]
+safe = false
+sun_acquisition = false
+coarse_3axis = false
+fine_3axis = true
+propulsion = true
+mated_check = false
+mated_calibration = true
+mated_actuator = true
+coarse_ff = true
+fine_ff = true
+
+
+
+# === Gyroscope — 精ジャイロ (STIM377H × 1) ===
+# 子衛星電力消費 行13 / コンポ管理: (ユニット内部)精ジャイロ
+# Model: STIM377H (Sensonor), 44.8 × 38.6 × 21.5 mm, 1.5W
+
+[gyroscopes.fine.spec]
+mass_kg = 0.055 # STIM377H 55g
+temp_min_c = -40.0
+temp_max_c = 80.0
+power_per_unit_w = 1.5
+bias_stability_deg_per_h = 0.3
+grade = "fine"
+
+[gyroscopes.fine.design]
+quantity = 1
+
+[gyroscopes.fine.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 44.8
+dy = 38.6
+dz = 21.5
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[gyroscopes.fine.design.power_modes]
+safe = false
+sun_acquisition = false
+coarse_3axis = true
+fine_3axis = true
+propulsion = true
+mated_check = false
+mated_calibration = true
+mated_actuator = true
+coarse_ff = true
+fine_ff = true
+
+
+
+# === Magnetometer (RM3100 × 1) ===
+# 子衛星電力消費 行18 / コンポ管理: 外部磁気センサ
+# Model: RM3100, 18g, 0.03W
+
+[magnetometers.spec]
+mass_kg = 0.018
+power_per_unit_w = 0.03
+range_ut = 800.0 # RM3100 typical
+noise_nt = 13.0 # RM3100 noise floor
+
+[magnetometers.main.design]
+quantity = 1
+
+[magnetometers.main.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 25.0
+dy = 25.0
+dz = 5.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[magnetometers.main.design.power_modes]
+safe = false
+sun_acquisition = true
+coarse_3axis = true
+fine_3axis = true
+propulsion = true
+mated_check = false
+mated_calibration = false
+mated_actuator = true
+coarse_ff = true
+fine_ff = true

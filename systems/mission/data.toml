@@ -1,54 +1,103 @@
 # Mission system — Config のみ
-# 簡略形式: `<sub>.model.` プレフィックス省略
+#
+# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
+#   - 電源モード検討 / サマリ
+#   - SEIRIOS_コンポ管理シート / 子衛星1
+#   - SEIRIOS_ブロック図
 
 
 
 # === Mission Profile ===
 
 [missionprofile]
-duration_years = 5.0 # ミッション期間 [year]
-target_altitude_km = 600.0 # 目標高度 [km]
-primary_payload = "imager" # 主ペイロード種別
-contact_frequency_per_day = 4 # 1 日あたりの地上局可視回数
-launch_window_start = "2027-04-01T00:00:00Z" # 打ち上げ窓開始 (ISO8601)
+duration_years = 1.0 # SEIRIOS フルサクセス期間（TBD）
+target_altitude_km = 600.0 # 想定 LEO 高度（蝕計算と整合）
+primary_payload = "formation_flying" # 主ペイロード: 編隊飛行制御
+contact_frequency_per_day = 4 # 1 日あたりの地上局可視回数（S 帯）
+launch_window_start = "2027-01-01T00:00:00Z" # 打ち上げ窓開始 (TBD)
 
 
 
 # === Orbital Parameters ===
 
 [orbitalparameters]
-semi_major_axis_km = 6978.0 # [km]
+semi_major_axis_km = 6978.137 # Re + 600 km
 eccentricity = 0.001
-inclination_deg = 97.6 # [deg]
-raan_deg = 45.0 # 昇交点赤経 [deg]
-arg_periapsis_deg = 0.0 # 近点引数 [deg]
-mean_anomaly_deg = 0.0 # 平均近点角 [deg]
-epoch_utc = "2027-04-01T00:00:00Z" # 元期 (ISO8601 UTC)
+inclination_deg = 51.6 # ISS 軌道想定（編隊飛行）
+raan_deg = 45.0
+arg_periapsis_deg = 0.0
+mean_anomaly_deg = 0.0
+epoch_utc = "2027-01-01T00:00:00Z"
 
 
 
 # === Operation Mode Config ===
+#
+# Source: SEIRIOS 子衛星 電源モード検討 / 子衛星電力消費 シート
+#   各モードの消費電力 [W] とマージン込み [W] は description に記載。
+
+# --- 子衛星単独運用 ---
 
 [operation_mode_configs.safe]
-description = "異常検知時の安全モード。最低限の機能のみ動作。" # モードの説明
-max_duration_s = 0.0 # 最大連続継続時間 [s]、0 = 制限なし [s]
+description = "セーフモード（姿勢制御無し）。子衛星単独 4.9W、margin 5.3W、発電 9.5W。蝕中はヒーターON で 6.9W/7.4W、発電 7.4W"
+max_duration_s = 0.0
 is_initial_mode = true
-allowed_transitions = ["nominal", "safe_hold"] # 遷移可能なモード名リスト（空 = すべて許可）
+allowed_transitions = ["sun_acquisition", "coarse_3axis"]
 
-[operation_mode_configs.nominal]
-description = "通常運用モード。全系統が定格動作。" # モードの説明
-max_duration_s = 0.0 # 最大連続継続時間 [s]、0 = 制限なし [s]
+[operation_mode_configs.sun_acquisition]
+description = "太陽捕捉モード。SAP を太陽方向に向ける。消費 7.0W、Tx ON 時 14.0W"
+max_duration_s = 0.0
 is_initial_mode = false
-allowed_transitions = ["safe", "science", "safe_hold"] # 遷移可能なモード名リスト（空 = すべて許可）
+allowed_transitions = ["safe", "coarse_3axis", "fine_3axis"]
 
-[operation_mode_configs.science]
-description = "観測・データ取得モード。ミッション機器を起動。" # モードの説明
-max_duration_s = 3600.0 # 最大連続継続時間 [s]、0 = 制限なし [s]
+[operation_mode_configs.coarse_3axis]
+description = "粗三軸モード（RW + 粗ジャイロ）。消費 9.4W、Tx ON 時 16.4W"
+max_duration_s = 0.0
 is_initial_mode = false
-allowed_transitions = ["nominal", "safe"] # 遷移可能なモード名リスト（空 = すべて許可）
+allowed_transitions = ["safe", "sun_acquisition", "fine_3axis", "propulsion"]
 
-[operation_mode_configs.safe_hold]
-description = "自律セーフホールドモード。姿勢保持のみ継続。" # モードの説明
-max_duration_s = 86400.0 # 最大連続継続時間 [s]、0 = 制限なし [s]
+[operation_mode_configs.fine_3axis]
+description = "精三軸モード（STT + RW + 精ジャイロ）。消費 10.9W、Tx ON 時 17.9W"
+max_duration_s = 0.0
 is_initial_mode = false
-allowed_transitions = ["safe"] # 遷移可能なモード名リスト（空 = すべて許可）
+allowed_transitions = ["safe", "coarse_3axis", "propulsion", "coarse_ff", "fine_ff"]
+
+[operation_mode_configs.propulsion]
+description = "推進系運用モード（FF 制御推進機 ON）。消費 32.2W、Tx ON 時 39.2W。インパルス的動作"
+max_duration_s = 600.0
+is_initial_mode = false
+allowed_transitions = ["fine_3axis", "coarse_ff", "fine_ff"]
+
+# --- 合体時 (mated) ---
+
+[operation_mode_configs.mated_check]
+description = "合体時、子衛星の動作確認。消費 4.9W"
+max_duration_s = 0.0
+is_initial_mode = false
+allowed_transitions = ["mated_calibration", "mated_actuator", "safe"]
+
+[operation_mode_configs.mated_calibration]
+description = "合体時キャリブレーション。消費 9.9W"
+max_duration_s = 3600.0
+is_initial_mode = false
+allowed_transitions = ["mated_check", "mated_actuator"]
+
+[operation_mode_configs.mated_actuator]
+description = "合体時アクチュエータ動作試験。消費 32.7W"
+max_duration_s = 3600.0
+is_initial_mode = false
+allowed_transitions = ["mated_check", "mated_calibration"]
+
+# --- FF 運用 (Formation Flying) ---
+
+[operation_mode_configs.coarse_ff]
+description = "粗 FF（CDGNSS 主体）。消費 12.6W、Tx ON 時 19.6W、推進系 ON 時 32.6W"
+max_duration_s = 0.0
+is_initial_mode = false
+allowed_transitions = ["fine_3axis", "fine_ff", "propulsion"]
+
+[operation_mode_configs.fine_ff]
+description = "精 FF（光学航法 + レーザー距離計）。消費 13.6W、推進系 ON 時 33.6W。発電 16.1W、蝕中は margin -1.2%"
+max_duration_s = 0.0
+is_initial_mode = false
+allowed_transitions = ["coarse_ff", "propulsion"]

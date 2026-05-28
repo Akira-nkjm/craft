@@ -1,0 +1,490 @@
+# Structure system instance data
+#
+# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
+#   - SEIRIOS_コンポ管理シート / 子衛星1 Structure / Power（HRM）セクション
+
+
+
+# === Frames (4 面の構体フレーム) ===
+# コンポ管理: Frame_MY 750g, Frame_PY/PZ/MZ 各 550g
+
+[frames.my.spec]
+mass_kg = 0.750
+material = "Al7075"
+yield_strength_mpa = 503.0
+
+[frames.my.design]
+quantity = 1
+
+[frames.my.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 200.0
+dy = 200.0
+dz = 200.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+[frames.py.spec]
+mass_kg = 0.550
+material = "Al7075"
+yield_strength_mpa = 503.0
+
+[frames.py.design]
+quantity = 1
+
+[frames.py.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 200.0
+dy = 200.0
+dz = 200.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+[frames.pz.spec]
+mass_kg = 0.550
+material = "Al7075"
+yield_strength_mpa = 503.0
+
+[frames.pz.design]
+quantity = 1
+
+[frames.pz.design.placement]
+face = "PZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 200.0
+dy = 200.0
+dz = 200.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+[frames.mz.spec]
+mass_kg = 0.550
+material = "Al7075"
+yield_strength_mpa = 503.0
+
+[frames.mz.design]
+quantity = 1
+
+[frames.mz.design.placement]
+face = "MZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 200.0
+dy = 200.0
+dz = 200.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Structural Panels (外板 5 枚) ===
+# コンポ管理: Panel_PX/MX 80g, PZ/MZ 40g, PY 200g
+
+[structural_panels.px.spec]
+mass_kg = 0.080
+material = "Al honeycomb"
+thickness_mm = 5.0
+
+[structural_panels.px.design]
+quantity = 1
+
+[structural_panels.px.design.placement]
+face = "PX"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 100.0
+dy = 200.0
+dz = 5.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+[structural_panels.mx.spec]
+mass_kg = 0.080
+material = "Al honeycomb"
+thickness_mm = 5.0
+
+[structural_panels.mx.design]
+quantity = 1
+
+[structural_panels.mx.design.placement]
+face = "MX"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 100.0
+dy = 200.0
+dz = 5.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+[structural_panels.pz.spec]
+mass_kg = 0.040
+material = "Al honeycomb"
+thickness_mm = 5.0
+
+[structural_panels.pz.design]
+quantity = 1
+
+[structural_panels.pz.design.placement]
+face = "PZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 100.0
+dy = 100.0
+dz = 5.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+[structural_panels.mz.spec]
+mass_kg = 0.040
+material = "Al honeycomb"
+thickness_mm = 5.0
+
+[structural_panels.mz.design]
+quantity = 1
+
+[structural_panels.mz.design.placement]
+face = "MZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 100.0
+dy = 100.0
+dz = 5.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+[structural_panels.py.spec]
+mass_kg = 0.200 # SAP マウント側、大型パネル
+material = "Al honeycomb"
+thickness_mm = 8.0
+
+[structural_panels.py.design]
+quantity = 1
+
+[structural_panels.py.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 200.0
+dy = 200.0
+dz = 8.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Brackets (placeholder — 個別未記載のため暫定) ===
+
+[brackets.spec]
+mass_kg = 0.050
+material = "Al7075"
+
+[brackets.generic.design]
+quantity = 1
+
+[brackets.generic.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 50.0
+dy = 50.0
+dz = 10.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Hinges (パネル展開ヒンジ × 4) ===
+# コンポ管理: パネル展開機構 ヒンジ 20g × 4
+
+[hinges.spec]
+mass_kg = 0.020
+deploy_angle_deg = 180.0
+
+[hinges.sap_deploy.design]
+quantity = 4
+
+[hinges.sap_deploy.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 30.0
+dy = 30.0
+dz = 30.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Hold/Release Mechanism (HRM × 2) ===
+# コンポ管理: パネル展開機構 HRM 30g × 2
+# 子機電力消費 行4: 5.0W/個, 分離後 1 回のみ → 通常運用は全 OFF
+
+[hold_release_mechanisms.spec]
+mass_kg = 0.030
+power_per_unit_w = 5.0
+release_mechanism = "burn_wire"
+
+[hold_release_mechanisms.sap_hrm.design]
+quantity = 2
+
+[hold_release_mechanisms.sap_hrm.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 40.0
+dy = 40.0
+dz = 40.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[hold_release_mechanisms.sap_hrm.design.power_modes]
+# 通常運用中は OFF（分離後 1 回のみ駆動）
+safe = false
+sun_acquisition = false
+coarse_3axis = false
+fine_3axis = false
+propulsion = false
+mated_check = false
+mated_calibration = false
+mated_actuator = false
+coarse_ff = false
+fine_ff = false
+
+
+
+# === Separation Brackets (子衛星側 × 6) ===
+# コンポ管理: 子機分離ブラケット(子衛星側) 13g × 6
+
+[separation_brackets.spec]
+mass_kg = 0.013
+side = "child"
+
+[separation_brackets.child.design]
+quantity = 6
+
+[separation_brackets.child.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 30.0
+dy = 30.0
+dz = 15.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Separation Connector (Upper × 1) ===
+# コンポ管理: 分離コネクタ（子衛星側: Upper）12g
+
+[separation_connectors.spec]
+mass_kg = 0.012
+connector_type = "electrical"
+contact_count = 50
+
+[separation_connectors.upper.design]
+quantity = 1
+
+[separation_connectors.upper.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 30.0
+dy = 30.0
+dz = 15.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Baffles (Mission 50g, STT 20g) ===
+
+[baffles.mission.spec]
+mass_kg = 0.050
+instrument = "mission_payload"
+
+[baffles.mission.design]
+quantity = 1
+
+[baffles.mission.design.placement]
+face = "PX"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 60.0
+dy = 60.0
+dz = 60.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+[baffles.stt.spec]
+mass_kg = 0.020
+instrument = "star_tracker"
+
+[baffles.stt.design]
+quantity = 1
+
+[baffles.stt.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 50.0
+dy = 50.0
+dz = 50.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Counter Mass (全体 1% 想定, 100g) ===
+
+[counter_masses.spec]
+mass_kg = 0.100
+
+[counter_masses.main.design]
+quantity = 1
+
+[counter_masses.main.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 40.0
+dy = 40.0
+dz = 40.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Fasteners (ボルト類 80g) ===
+
+[fasteners.spec]
+mass_kg = 0.080
+material = "A286"
+
+[fasteners.main.design]
+quantity = 1
+
+
+
+# === Harness (計装類 120g) ===
+
+[harnesses.spec]
+mass_kg = 0.120
+
+[harnesses.main.design]
+quantity = 1

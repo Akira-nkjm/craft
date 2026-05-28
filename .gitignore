@@ -85,3 +85,5 @@ dmypy.json
 # Subagent worktrees (Claude isolation)
 .claude/worktrees/
 
+
+.sat-eval/

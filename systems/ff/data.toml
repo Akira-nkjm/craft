@@ -1,0 +1,200 @@
+# Formation Flying system instance data
+#
+# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
+#   - SEIRIOS_コンポ管理シート / 子衛星1 FF / FF/AOCS セクション
+#   - 電源モード検討 / 子衛星電力消費 行 19, 20, 22
+
+
+
+# === GNSS Receiver (OEM7600, 31g, 1.32W) ===
+# コンポ管理: (ユニット内部)GNSS-R, model=OEM7600 (Novatel), 35 × 55 × 13 mm
+
+[gnss_receivers.oem7600.spec]
+mass_kg = 0.031
+temp_min_c = -40.0
+temp_max_c = 75.0
+power_per_unit_w = 1.32
+constellation = "GPS+Galileo+QZSS"
+channel_count = 555 # OEM7600 typical (multi-constellation)
+update_rate_hz = 20.0
+
+[gnss_receivers.oem7600.design]
+quantity = 1
+
+[gnss_receivers.oem7600.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 35.0
+dy = 55.0
+dz = 13.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[gnss_receivers.oem7600.design.power_modes]
+safe = false
+sun_acquisition = false
+coarse_3axis = false
+fine_3axis = false
+propulsion = true
+mated_check = false
+mated_calibration = true
+mated_actuator = true
+coarse_ff = true
+fine_ff = true
+
+
+
+# === GNSS Antenna (tw1889, 37g) ===
+# コンポ管理: GNSSアンテナ, model=tw1889 (Tallysman), φ48 × 13.1 mm
+
+[gnss_antennas.tw1889.spec]
+mass_kg = 0.037
+band = "L1+L2+L5"
+gain_dbi = 4.0
+
+[gnss_antennas.tw1889.design]
+quantity = 1
+
+[gnss_antennas.tw1889.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 48.0
+dy = 48.0
+dz = 13.1
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Optical LED (光学航法用, 10g/個 × 5) ===
+# コンポ管理: 光学航法用LED 5個
+# 電力消費 行20: 0.2W @ 15V, 精FF モードのみ ON
+
+[optical_leds.main.spec]
+mass_kg = 0.010
+power_per_unit_w = 0.20
+wavelength_nm = 850.0
+optical_power_w = 0.15 # ~75% wall-plug efficiency
+beam_angle_deg = 30.0
+
+[optical_leds.main.design]
+quantity = 5 # 子衛星上に 5 個配置
+
+[optical_leds.main.design.placement]
+face = "PX"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 10.0
+dy = 10.0
+dz = 10.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[optical_leds.main.design.power_modes]
+safe = false
+sun_acquisition = false
+coarse_3axis = false
+fine_3axis = false
+propulsion = false
+mated_check = false
+mated_calibration = false
+mated_actuator = false
+coarse_ff = false
+fine_ff = true
+
+
+
+# === Optical Mirror (レーザー距離計用反射ミラー × 5) ===
+# コンポ管理: レーザー距離計用反射ミラー 5個, 10g each
+# Passive component → 消費電力なし
+
+[optical_mirrors.main.spec]
+mass_kg = 0.010
+reflectivity = 0.95
+diameter_mm = 20.0
+mirror_type = "corner_cube"
+
+[optical_mirrors.main.design]
+quantity = 5
+
+[optical_mirrors.main.design.placement]
+face = "PX"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 20.0
+dy = 20.0
+dz = 10.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === FF OBC (搭載しない可能性あり, 150g) ===
+# コンポ管理: FF OBC (搭載しない可能性あり), MOBCと一体化候補
+# 電力消費 行22: 0W (MOBC 統合のため発電ゼロに) → 念のためモード all-false
+
+[ff_controllers.ff_obc.spec]
+mass_kg = 0.150
+temp_min_c = -40.0
+temp_max_c = 85.0
+power_per_unit_w = 0.0 # MOBC 一体化案で発電 0
+clock_mhz = 200
+ram_mb = 256
+storage_gb = 8.0
+
+[ff_controllers.ff_obc.design]
+quantity = 1
+
+[ff_controllers.ff_obc.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 80.0
+dy = 80.0
+dz = 10.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[ff_controllers.ff_obc.design.power_modes]
+safe = false
+sun_acquisition = false
+coarse_3axis = false
+fine_3axis = false
+propulsion = false
+mated_check = false
+mated_calibration = false
+mated_actuator = false
+coarse_ff = true
+fine_ff = true

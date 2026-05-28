@@ -1,0 +1,97 @@
+# Propulsion system instance data
+#
+# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
+#   - SEIRIOS_コンポ管理シート / 子衛星1 FF セクション
+#   - 電源モード検討 / 子衛星電力消費 行 21
+#
+# 設計: タンク (PropellantTank) と推進剤 (Propellant) を別 Component として扱う。
+#       タンクは構造体扱い、推進剤は消費物として独立した質量集計対象になる。
+
+
+
+# === Thruster: PERSEUS (Pale Blue, 水推進) ===
+# コンポ管理: FF制御推進機, model=PERSEUS, 2500g
+# 電源モード検討 行21: 20.0W @ 12V, propulsion / mated_actuator / *+推進系運用 で ON
+
+[thrusters.perseus.spec]
+mass_kg = 2.5
+temp_min_c = -20.0
+temp_max_c = 50.0
+power_per_unit_w = 20.0
+propellant_type = "water"
+thrust_mn = 4.0 # PERSEUS typical thrust class
+specific_impulse_s = 70.0 # 水蒸気推進 typical Isp
+min_impulse_bit_ns = 0.01 # 1e-2 N·s typical
+
+[thrusters.perseus.design]
+quantity = 1
+
+[thrusters.perseus.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 100.0
+dy = 100.0
+dz = 100.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[thrusters.perseus.design.power_modes]
+safe = false
+sun_acquisition = false
+coarse_3axis = false
+fine_3axis = false
+propulsion = true
+mated_check = false
+mated_calibration = false
+mated_actuator = true
+coarse_ff = false # +推進系運用 サブモードで個別 ON とすべきだが簡略化
+fine_ff = false
+
+
+
+# === Propellant Tank (空タンク) ===
+
+[propellant_tanks.main.spec]
+mass_kg = 0.150 # タンク自体（中身を除く）
+propellant_type = "water"
+volume_l = 1.0
+max_pressure_bar = 3.0 # 水推進低圧
+
+[propellant_tanks.main.design]
+quantity = 1
+
+[propellant_tanks.main.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 100.0
+dy = 100.0
+dz = 100.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Propellant (推進剤: 水 1.0 kg) ===
+# コンポ管理シート FF制御推進剤 = 1000g（子機初期充填）
+
+[propellants.water.spec]
+mass_kg = 1.0
+propellant_type = "water"
+density_kg_per_l = 1.0
+
+[propellants.water.design]
+quantity = 1

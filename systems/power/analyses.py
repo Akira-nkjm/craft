@@ -3,23 +3,31 @@
 veriq 制約: scope に貼られる calculation / verification の引数は全て
 `Annotated[..., vq.Ref(...)]` であること。生のパラメータが必要なら
 `system=None` で ad-hoc 化する。
+
+横断集計は `craft.analyses` のヘルパ（`power_per_mode` 等）を body 内で呼ぶ。
 """
 
 from typing import Annotated
 
 import veriq as vq
 
+from craft.analyses import auto_inject_refs, power_per_mode
 from craft.schema import analysis
 
 
-@analysis(desc="全 PDM の想定消費電力合計（W）")
+@analysis(desc="全 PDM の想定消費電力合計（W） — 最大消費モードを採用")
 def total_pdm_power_w(
     pdms: Annotated[vq.Table, vq.Ref("$.pdms")],
 ) -> float:
-    """nominal mode で on の PDM の消費電力合計。"""
-    return sum(
-        p.spec.power_per_unit_w for p in pdms.values() if p.design.power_modes.get("nominal", False)
-    )
+    """全 PDM の消費電力を、ON となるモードのうち最大消費電力で評価する。
+
+    SEIRIOS のように多モード（safe/sun_acquisition/.../fine_ff）を持つ場合、
+    特定モード名（旧 'nominal'）依存ではなく、PDM ごとに「ON となる任意モード」
+    で消費電力を計上する。複数モード対応を意識した実装。
+    """
+    if not pdms:
+        return 0.0
+    return sum(p.spec.power_per_unit_w for p in pdms.values() if any(p.design.power_modes.values()))
 
 
 @analysis(
@@ -69,6 +77,16 @@ def required_orbit_energy_wh(
 ) -> float:
     """eclipse 中の必要エネルギー（W * 時間）。"""
     return pdm_power * eclipse_s / 3600.0
+
+
+@analysis(desc="モード別 全バス消費電力 [W] — 全 PowerConsuming コンポを集計")
+@auto_inject_refs(
+    trait="PowerConsuming",
+    extra_refs=[("mission", "operation_mode_configs")],
+)
+def bus_power_per_mode_w(mode_configs, *tables) -> dict[str, float]:
+    """各運用モードにおける全 PowerConsuming コンポの消費電力合計 [W]。"""
+    return power_per_mode(mode_configs, *tables)
 
 
 # ─── (ad-hoc 例) — veriq 非登録、API/CLI 専用 ─────────────────────────

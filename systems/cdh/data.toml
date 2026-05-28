@@ -1,56 +1,66 @@
 # C&DH system (Singleton: OBC)
-# 簡略形式: `<sub>.model.` プレフィックス省略
+#
+# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
+#   - SEIRIOS_コンポ管理シート / 子衛星1 行: MOBC
+#   - 電源モード検討 / 子衛星電力消費 行7
 
 
 
-# === OBC ===
+# === OBC (MOBC) ===
+# Model: 中須賀研系 MOBC, 150g, 2.18W @ 12V, 全モード ON
 
 [obc.spec]
-mass_kg = 0.0 # 質量 [kg]
-temp_min_c = -40.0 # 動作温度下限 [degC]
-temp_max_c = 85.0 # 動作温度上限 [degC]
-power_per_unit_w = 3.5 # 単位あたりの想定消費電力 [W]
-clock_mhz = 100 # [MHz]
-ram_mb = 512 # [MB]
-storage_gb = 32.0 # [GB]
-architecture = "ARM Cortex-R5" # CPU アーキ (ARM/RISC-V 等)
+mass_kg = 0.150
+temp_min_c = -40.0
+temp_max_c = 85.0
+power_per_unit_w = 2.18
+clock_mhz = 200
+ram_mb = 512
+storage_gb = 16.0
+architecture = "ARM Cortex-A"
 
-[obc.spec.bus_interface] # バス I/F (ネスト model)
-voltage_v = 28.0
-rated_current_a = 2.5
+[obc.spec.bus_interface]
+voltage_v = 12.0
+rated_current_a = 0.2
 protocol = "CAN"
 
 [obc.design]
-quantity = 1 # 搭載個数
-firmware_version = "v1.2.0"
+quantity = 1
+firmware_version = "TBD"
 boot_partition_count = 2
 
-[obc.design.placement] # 搭載位置・CAD パラメータ
-face = "PX" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
-w = 0.0 # Offset from face surface [mm]
-dx = 1.0 # Bounding box x dimension [mm]
-dy = 1.0 # Bounding box y dimension [mm]
-dz = 1.0 # Bounding box z dimension [mm]
-rz = 0.0 # Rotation around face normal [degrees]
-side = "IN" # Mount on inner or outer face
-cad_file = "" # CAD document name (empty = generate box)
-cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
-cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
-cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
-update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+[obc.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 90.0
+dy = 90.0
+dz = 15.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
 
-[obc.design.power_modes] # OperationMode 別の on/off
+[obc.design.power_modes]
 safe = true
-nominal = true
-science = true
-safe_hold = true
+sun_acquisition = true
+coarse_3axis = true
+fine_3axis = true
+propulsion = true
+mated_check = true
+mated_calibration = true
+mated_actuator = true
+coarse_ff = true
+fine_ff = true
 
 [obc.requirements]
-mtbf_hours = 50000.0 # [h]
-radiation_tolerance_krad = 30.0 # [krad]
+mtbf_hours = 50000.0
+radiation_tolerance_krad = 30.0
 
 [obc.meta]
-vendor = "Aitech"
-heritage = "S950-XR"
+vendor = "TBD"
+heritage = "中須賀研 ISSL6U 系 MOBC"

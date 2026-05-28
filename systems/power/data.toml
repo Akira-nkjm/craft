@@ -1,135 +1,172 @@
 # Power system instance data
 #
-# 簡略形式: `<sub>.model.` プレフィックスは省略（merge 時に自動付与）
-# shared_spec=True (MultiInstance): `[<plural>.spec]` に共有 spec、
-# instance ごとには design / requirements / meta のみ
+# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
+#   - SEIRIOS_コンポ管理シート / 子衛星1
+#   - 電源モード検討 / 子衛星電力消費・子衛星発電量計算・発電計算用パラメーター
 
 
 
-# === Batteries ===
+# === Batteries (ASXB23004 × 1) ===
+# コンポ管理 行: バッテリー/BAT, ASXB23004 (Astrex), 96.6 × 84 × 53 mm, 664g
+# 8 直 3 並（中須賀研系の標準構成、GEO-X と同等）想定
 
 [batteries.spec]
-mass_kg = 0.0 # 質量 [kg]
-temp_min_c = -20.0 # 動作温度下限 [degC]
-temp_max_c = 60.0 # 動作温度上限 [degC]
-capacity_wh = 100.0 # Battery capacity [Wh]
-nominal_voltage_v = 3.7 # [V]
-manufacturer = "Panasonic" # Manufacturer
+mass_kg = 0.664
+temp_min_c = -10.0
+temp_max_c = 45.0 # Li-ion 充電上限
+capacity_wh = 80.0 # Astrex ASXB23004 概算（TBD: データシート要確認）
+nominal_voltage_v = 28.0 # 8直 × 3.5V cell
+manufacturer = "Astrex"
 
 [batteries.main.design]
-quantity = 1 # 搭載個数
-depth_of_discharge = 0.7 # 設計時 DoD
+quantity = 1
+depth_of_discharge = 0.3 # 蝕時間 ~21 min @ 14W ≈ 5Wh 放電、80Wh 容量で DoD ~6% → 安全側
 
-[batteries.main.design.placement] # 搭載位置・CAD パラメータ
-face = "PX" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
-w = 0.0 # Offset from face surface [mm]
-dx = 0.0 # Bounding box x dimension [mm]
-dy = 0.0 # Bounding box y dimension [mm]
-dz = 0.0 # Bounding box z dimension [mm]
-rz = 0.0 # Rotation around face normal [degrees]
-side = "IN" # Mount on inner or outer face
-cad_file = "" # CAD document name (empty = generate box)
-cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
-cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
-cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
-update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+[batteries.main.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 96.6
+dy = 84.0
+dz = 53.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
 
 [batteries.main.requirements]
-depth_of_discharge_max = 0.8 # 要求 DoD 上限
+depth_of_discharge_max = 0.5
 
 [batteries.main.meta]
-notes = "選定理由: 過去ミッション実績"
-
-
-[batteries.aux.design]
-quantity = 1 # 搭載個数
-depth_of_discharge = 0.6 # 設計時 DoD
-
-[batteries.aux.design.placement] # 搭載位置・CAD パラメータ
-face = "PX" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
-w = 0.0 # Offset from face surface [mm]
-dx = 0.0 # Bounding box x dimension [mm]
-dy = 0.0 # Bounding box y dimension [mm]
-dz = 0.0 # Bounding box z dimension [mm]
-rz = 0.0 # Rotation around face normal [degrees]
-side = "IN" # Mount on inner or outer face
-cad_file = "" # CAD document name (empty = generate box)
-cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
-cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
-cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
-update_bbox = 0 # Set to 1 to auto-update bbox from CAD
-
-[batteries.aux.requirements]
-depth_of_discharge_max = 0.8 # 要求 DoD 上限
+notes = "Astrex ASXB23004。子衛星 1 個構成。容量は要データシート確認"
 
 
 
-# === Solar Panel ===
+# === Solar Panel (60 cells, MZ ボディマウント + PY 展開パネル) ===
+# コンポ管理 行: 太陽電池 60枚 + 展開パネル 1
+# Cell: SHARP 三接合, 37.8 × 76.4 mm, 0.00274 m²/cell, 28% efficiency
+# 発生電力: 太陽指向時全日照 16.1W, 蝕最大 14.5W (子衛星発電量計算 variant 1)
 
 [solar_panels.spec]
-mass_kg = 0.0 # 質量 [kg]
-temp_min_c = -100.0 # 動作温度下限 [degC]
-temp_max_c = 120.0 # 動作温度上限 [degC]
-area_m2 = 0.5 # Panel area [m^2]
-default_power_generation_per_unit_w = 30.0 # 想定発電量 [W]
-efficiency = 0.28 # セル効率
+mass_kg = 0.003 # 1 cell あたり 3g
+temp_min_c = -80.0
+temp_max_c = 100.0
+area_m2 = 0.00274 # 1 cell の面積
+default_power_generation_per_unit_w = 0.27 # 16.1W / 60 cell ≈ 0.27W/cell
+efficiency = 0.28 # SHARP triple-junction
 
-[solar_panels.main_paddle.design]
-quantity = 1 # 搭載個数
-cell_count = 32
+[solar_panels.body_mz.design]
+# MZ 面 BODY マウント 12 枚
+quantity = 12
+cell_count = 12
+string_count = 2
+
+[solar_panels.body_mz.design.placement]
+face = "MZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 100.0
+dy = 100.0
+dz = 1.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+[solar_panels.deploy_py_front.design]
+# PY 展開パネル表 24 枚 (variant 1: 6 直 4 並)
+quantity = 24
+cell_count = 24
 string_count = 4
 
-[solar_panels.main_paddle.design.placement] # 搭載位置・CAD パラメータ
-face = "PX" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
-w = 0.0 # Offset from face surface [mm]
-dx = 0.0 # Bounding box x dimension [mm]
-dy = 0.0 # Bounding box y dimension [mm]
-dz = 0.0 # Bounding box z dimension [mm]
-rz = 0.0 # Rotation around face normal [degrees]
-side = "IN" # Mount on inner or outer face
-cad_file = "" # CAD document name (empty = generate box)
-cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
-cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
-cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
-update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+[solar_panels.deploy_py_front.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 510.0
+dy = 100.0
+dz = 2.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+[solar_panels.deploy_py_back.design]
+# PY 展開パネル裏 24 枚
+quantity = 24
+cell_count = 24
+string_count = 4
+
+[solar_panels.deploy_py_back.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 510.0
+dy = 100.0
+dz = 2.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
 
 
 
-# === PDM ===
+# === PDM (PCDU × 1) ===
+# コンポ管理 行: PCDU, 90 × 87 × 30 mm, 265g
+# 子衛星電力消費 行3: PCDU = 1.00 W @ 7V, 全モード ON
+# 衛星内部電力変換効率 e2 = 80% (発電計算用パラメーター)
 
 [pdms.spec]
-mass_kg = 0.0 # 質量 [kg]
-power_per_unit_w = 8.0 # 単位あたりの想定消費電力 [W]
-rated_current_a = 5.0 # [A]
+mass_kg = 0.265
+power_per_unit_w = 1.0
+rated_current_a = 5.0
 
 [pdms.main.design]
-quantity = 1 # 搭載個数
-efficiency = 0.95
+quantity = 1
+efficiency = 0.80
 
-[pdms.main.design.placement] # 搭載位置・CAD パラメータ
-face = "PX" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
-w = 0.0 # Offset from face surface [mm]
-dx = 0.0 # Bounding box x dimension [mm]
-dy = 0.0 # Bounding box y dimension [mm]
-dz = 0.0 # Bounding box z dimension [mm]
-rz = 0.0 # Rotation around face normal [degrees]
-side = "IN" # Mount on inner or outer face
-cad_file = "" # CAD document name (empty = generate box)
-cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
-cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
-cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
-update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+[pdms.main.design.placement]
+face = "MY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 90.0
+dy = 87.0
+dz = 30.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
 
-[pdms.main.design.power_modes] # OperationMode 別の on/off
+[pdms.main.design.power_modes]
 safe = true
-nominal = true
-science = true
-safe_hold = false
+sun_acquisition = true
+coarse_3axis = true
+fine_3axis = true
+propulsion = true
+mated_check = true
+mated_calibration = true
+mated_actuator = true
+coarse_ff = true
+fine_ff = true

@@ -1,10 +1,13 @@
 # orbital system data
+#
+# Source: SEIRIOS 子衛星 電源モード検討 / 発電計算用パラメーター シート
+#   shared drive: SEIRIOS / 1JZYh6Di-uHLEoDU2Q9rHu7K1VFMP4upW_TlERT3p0yQ
 
 
 
 # === Orbital Params ===
 
 [orbitalparams]
-altitude_km = 500.0 # 軌道高度 [km]
-period_min = 95.0 # 軌道周期 [min]
-eclipse_duration_s = 2100.0 # 食時間 [s]
+altitude_km = 600.0 # 軌道高度 [km] — SEIRIOS LEO（蝕割合 21.5%）
+period_min = 96.7 # 軌道周期 [min] (a = Re + 600 km, 円軌道)
+eclipse_duration_s = 1247.3 # 食時間 [s] (T × 21.5%)

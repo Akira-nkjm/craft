@@ -1,0 +1,291 @@
+# Comm system instance data
+#
+# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
+#   - SEIRIOS_コンポ管理シート / 子衛星1 Comm セクション
+#   - 電源モード検討 / 子衛星電力消費 行 8-11
+#
+# Transceiver は 4 種混在のため per-instance spec を使う
+
+
+
+# === Transceiver: 対親衛星 Bluetooth (24g, 0.4W) ===
+# 電力消費 行8: 0.40W @ 5V, FF モードのみ ON
+
+[transceivers.bt_intersat.spec]
+mass_kg = 0.024
+temp_min_c = -20.0
+temp_max_c = 60.0
+power_per_unit_w = 0.40
+band = "bluetooth"
+direction = "tx_rx"
+frequency_mhz = 2400.0
+tx_power_w = 0.1
+data_rate_kbps = 1000.0
+modulation = "GFSK"
+
+[transceivers.bt_intersat.design]
+quantity = 1
+
+[transceivers.bt_intersat.design.placement]
+face = "PY"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 76.0
+dy = 31.0
+dz = 16.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[transceivers.bt_intersat.design.power_modes]
+safe = false
+sun_acquisition = false
+coarse_3axis = false
+fine_3axis = false
+propulsion = false
+mated_check = false
+mated_calibration = false
+mated_actuator = false
+coarse_ff = true
+fine_ff = true
+
+
+
+# === Transceiver: 対地上局 S 帯 TX (ADD1445AZ, 140g, 7W) ===
+# 電力消費 行9: 7.0W @ 12V (軌道平均 1.6W = duty ~23%)
+
+[transceivers.s_band_tx.spec]
+mass_kg = 0.140
+temp_min_c = -20.0
+temp_max_c = 60.0
+power_per_unit_w = 7.0
+band = "s_band"
+direction = "tx"
+frequency_mhz = 2200.0 # S 帯下りリンク
+tx_power_w = 2.0
+data_rate_kbps = 1000.0
+modulation = "QPSK"
+
+[transceivers.s_band_tx.design]
+quantity = 1
+
+[transceivers.s_band_tx.design.placement]
+face = "MZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 80.0
+dy = 80.0
+dz = 15.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+# Tx 動作は地上局可視時のみ → 簡略 10 モードでは false 固定
+# 実運用では Tx-ON pass mode をフェーズ管理で別途扱う
+[transceivers.s_band_tx.design.power_modes]
+safe = false
+sun_acquisition = false
+coarse_3axis = false
+fine_3axis = false
+propulsion = false
+mated_check = false
+mated_calibration = false
+mated_actuator = false
+coarse_ff = false
+fine_ff = false
+
+
+
+# === Transceiver: 対地上局 S 帯 RX (ADD1443AZ, 140g, 1W) ===
+# 電力消費 行10: 1.0W @ 12V, 全モード ON
+
+[transceivers.s_band_rx.spec]
+mass_kg = 0.140
+temp_min_c = -20.0
+temp_max_c = 60.0
+power_per_unit_w = 1.0
+band = "s_band"
+direction = "rx"
+frequency_mhz = 2100.0 # S 帯上りリンク
+tx_power_w = 0.0
+data_rate_kbps = 32.0
+modulation = "BPSK"
+
+[transceivers.s_band_rx.design]
+quantity = 1
+
+[transceivers.s_band_rx.design.placement]
+face = "MZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 80.0
+dy = 80.0
+dz = 16.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[transceivers.s_band_rx.design.power_modes]
+safe = true
+sun_acquisition = true
+coarse_3axis = true
+fine_3axis = true
+propulsion = true
+mated_check = true
+mated_calibration = true
+mated_actuator = true
+coarse_ff = true
+fine_ff = true
+
+
+
+# === Transceiver: 対地上局 LoRa (SF-ONE, 50g, 0.44W) ===
+# 電力消費 行11: 0.44W @ 5.18V, 異常時/初期運用で ON
+
+[transceivers.lora.spec]
+mass_kg = 0.050
+temp_min_c = -20.0
+temp_max_c = 60.0
+power_per_unit_w = 0.44
+band = "lora"
+direction = "tx_rx"
+frequency_mhz = 920.0
+tx_power_w = 0.1
+data_rate_kbps = 5.0
+modulation = "LoRa CSS"
+
+[transceivers.lora.design]
+quantity = 1
+
+[transceivers.lora.design.placement]
+face = "MZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 50.0
+dy = 50.0
+dz = 5.9
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[transceivers.lora.design.power_modes]
+safe = true
+sun_acquisition = true
+coarse_3axis = false
+fine_3axis = false
+propulsion = false
+mated_check = true
+mated_calibration = true
+mated_actuator = true
+coarse_ff = false
+fine_ff = false
+
+
+
+# === Antenna: S 帯 受信 (NSPO-SRXANT × 2, 14g each) ===
+
+[antennas.s_band_rx.spec]
+mass_kg = 0.014
+band = "s_band"
+gain_dbi = 6.0
+polarization = "RHCP"
+direction = "rx"
+
+[antennas.s_band_rx.design]
+quantity = 2
+
+[antennas.s_band_rx.design.placement]
+face = "MZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 45.0
+dy = 45.0
+dz = 2.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Antenna: S 帯 送信 (NSPO-STXANT × 2, 14g each) ===
+
+[antennas.s_band_tx.spec]
+mass_kg = 0.014
+band = "s_band"
+gain_dbi = 6.0
+polarization = "RHCP"
+direction = "tx"
+
+[antennas.s_band_tx.design]
+quantity = 2
+
+[antennas.s_band_tx.design.placement]
+face = "MZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 45.0
+dy = 45.0
+dz = 2.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+
+
+# === Antenna: LoRa (80 × 44 × 80 mm) ===
+
+[antennas.lora.spec]
+mass_kg = 0.020
+band = "lora"
+gain_dbi = 3.0
+polarization = "Linear"
+direction = "tx_rx"
+
+[antennas.lora.design]
+quantity = 1
+
+[antennas.lora.design.placement]
+face = "MZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 80.0
+dy = 44.0
+dz = 80.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
