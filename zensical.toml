@@ -12,6 +12,7 @@ nav = [
     { "コア概念" = "concepts.md" },
     { "チュートリアル" = "tutorial.md" },
     { "Analysis の書き方" = "guide/analysis.md" },
+    { "衛星解析カタログ" = "guide/satellite-analyses-catalog.md" },
   ]},
   { "リファレンス" = [
     { "CLI" = [
