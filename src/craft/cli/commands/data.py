@@ -1,13 +1,29 @@
-"""merge / scaffold / verify コマンド。"""
+"""merge / scaffold / verify / validate コマンド。"""
+
+from dataclasses import asdict
+from pathlib import Path
+from typing import Any
 
 import typer
 
-from craft.cli._io import _print_json
+from craft.cli._io import _load_payload, _print_json
 from craft.core.discovery import discover_systems
+
+validate_app = typer.Typer(no_args_is_help=True, help="Pydantic schema validation only")
 
 
 def _bootstrap() -> None:
     discover_systems()
+
+
+def _load_validation_payload(
+    data: Path | None,
+    json_str: str | None,
+    stdin: bool,
+) -> dict[str, Any]:
+    if stdin and (data is not None or json_str is not None):
+        raise typer.BadParameter("--stdin は --data / --json と同時に指定できません")
+    return _load_payload(data, json_str)
 
 
 def merge_cmd(
@@ -109,4 +125,52 @@ def verify_cmd(
         f"success={result['success']}, errors={len(result['errors'])}, run_id={result['run_id']}"
     )
     if any_failed and fail_on_verify:
+        raise typer.Exit(code=1)
+
+
+@validate_app.command("component")
+def validate_component_cmd(
+    system: str,
+    component: str,
+    data: Path | None = typer.Option(None, "--data", help="TOML or JSON payload file"),
+    json_str: str | None = typer.Option(None, "--json", help="JSON payload (inline)"),
+    stdin: bool = typer.Option(False, "--stdin", help="Read JSON payload from stdin"),
+) -> None:
+    """Component payload を副作用なしで Pydantic 検証する。"""
+    _bootstrap()
+    from craft.core.instances import InstanceNotFound
+    from craft.core.surface_ops.validation import validate_component_payload
+
+    payload = _load_validation_payload(data, json_str, stdin)
+    try:
+        result = validate_component_payload(system, component, payload)
+    except InstanceNotFound as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from e
+    _print_json(asdict(result))
+    if not result.ok:
+        raise typer.Exit(code=1)
+
+
+@validate_app.command("config")
+def validate_config_cmd(
+    system: str,
+    name: str,
+    data: Path | None = typer.Option(None, "--data", help="TOML or JSON payload file"),
+    json_str: str | None = typer.Option(None, "--json", help="JSON payload (inline)"),
+    stdin: bool = typer.Option(False, "--stdin", help="Read JSON payload from stdin"),
+) -> None:
+    """Config payload を副作用なしで Pydantic 検証する。"""
+    _bootstrap()
+    from craft.core.instances import InstanceNotFound
+    from craft.core.surface_ops.validation import validate_config_payload
+
+    payload = _load_validation_payload(data, json_str, stdin)
+    try:
+        result = validate_config_payload(system, name, payload)
+    except InstanceNotFound as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1) from e
+    _print_json(asdict(result))
+    if not result.ok:
         raise typer.Exit(code=1)
