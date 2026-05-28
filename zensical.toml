@@ -13,6 +13,21 @@ nav = [
     { "チュートリアル" = "tutorial.md" },
     { "Analysis の書き方" = "guide/analysis.md" },
     { "衛星解析カタログ" = "guide/satellite-analyses-catalog.md" },
+    { "解析リファレンス" = [
+      { "概要" = "guide/analyses/index.md" },
+      { "orbital（軌道）" = "guide/analyses/orbital.md" },
+      { "power（電源）" = "guide/analyses/power.md" },
+      { "aocs（姿勢制御）" = "guide/analyses/aocs.md" },
+      { "thermal（熱）" = "guide/analyses/thermal.md" },
+      { "comm（通信）" = "guide/analyses/comm.md" },
+      { "structure（構造）" = "guide/analyses/structure.md" },
+      { "propulsion（推進）" = "guide/analyses/propulsion.md" },
+      { "cdh（C&DH）" = "guide/analyses/cdh.md" },
+      { "mission（運用）" = "guide/analyses/mission.md" },
+      { "environment（宇宙環境）" = "guide/analyses/environment.md" },
+      { "reliability（信頼性）" = "guide/analyses/reliability.md" },
+      { "launch_env（打ち上げ）" = "guide/analyses/launch_env.md" },
+    ]},
   ]},
   { "リファレンス" = [
     { "CLI" = [
@@ -62,6 +77,8 @@ toggle.name = "Switch to light mode"
 [project.markdown_extensions.def_list]
 [project.markdown_extensions.toc]
 permalink = true
+[project.markdown_extensions.pymdownx.arithmatex]
+generic = true
 [project.markdown_extensions.pymdownx.highlight]
 anchor_linenums = true
 line_spans = "__span"
