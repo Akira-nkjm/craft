@@ -114,6 +114,11 @@ codegraph-sync:
 codegraph-status:
     npx -y @colbymchenry/codegraph status
 
+# FastAPI を起動する（Swagger UI: http://127.0.0.1:8000/docs）
+# PORT=N で port 上書き可
+api:
+    uv run uvicorn craft.api.main:app --reload --port {{ env_var_or_default("PORT", "8000") }}
+
 # craft-mcp を起動する（CodeGraph と連携してコード理解を提供）
 craft-mcp:
     uv run craft-mcp
