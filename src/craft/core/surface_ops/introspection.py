@@ -30,6 +30,11 @@ class AnalysisSummary:
     desc: str | None
 
 
+def list_systems_summary() -> list[str]:
+    """登録済み system 名のソート済み一覧。"""
+    return sorted(default_registry.systems())
+
+
 def list_components_summary(system: str | None = None) -> list[ComponentSummary]:
     return [
         ComponentSummary(

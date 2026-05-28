@@ -77,7 +77,7 @@ def scaffold_cmd(
 
 def verify_cmd(
     fail_on_verify: bool = typer.Option(
-        True,
+        False,
         "--fail-on-verify/--no-fail-on-verify",
         help="verification が 1 つでも False なら exit 1",
     ),

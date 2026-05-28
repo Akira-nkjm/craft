@@ -27,7 +27,7 @@ from craft.cli.commands.data import merge_cmd, scaffold_cmd, verify_cmd
 from craft.cli.commands.instances import create_cmd, delete_cmd, patch_cmd, put_cmd, spec_app
 from craft.cli.commands.maintenance import diff_cmd, gen_stubs_cmd, history_cmd, init_app
 from craft.cli.commands.runs_analysis import analysis_app, runs_app
-from craft.cli.commands.schema import get, schema_app
+from craft.cli.commands.schema import get, schema_app, systems_app
 from craft.core.discovery import discover_systems
 
 # Typer サブアプリ
@@ -37,6 +37,7 @@ app = typer.Typer(
     help="Craft — Concept Registry for Automated spacecraFT design",
 )
 app.add_typer(schema_app, name="schema")
+app.add_typer(systems_app, name="systems")
 app.command("get")(get)
 app.add_typer(analysis_app, name="analysis")
 app.add_typer(init_app, name="init")

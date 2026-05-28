@@ -27,10 +27,12 @@ def iter_instances(table_or_singleton: Any) -> Iterator[Any]:
     values_attr = getattr(table_or_singleton, "values", None)
     if callable(values_attr):
         try:
-            yield from values_attr()
-            return
+            values: Any = values_attr()
         except TypeError:
-            pass
+            values = None
+        if values is not None:
+            yield from values
+            return
     # Singleton component の場合はそれ自身を 1 個分として返す
     yield table_or_singleton
 

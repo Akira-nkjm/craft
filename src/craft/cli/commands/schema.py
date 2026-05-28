@@ -8,6 +8,16 @@ from craft.cli._io import _print_json
 from craft.core.discovery import discover_systems
 
 schema_app = typer.Typer(no_args_is_help=True, help="Pydantic Schema 配信")
+systems_app = typer.Typer(no_args_is_help=True, help="登録済み system の一覧")
+
+
+@systems_app.command("list")
+def systems_list() -> None:
+    """登録済み system 名を一覧表示。"""
+    discover_systems()
+    from craft.core.surface_ops.introspection import list_systems_summary
+
+    _print_json(list_systems_summary())
 
 
 @schema_app.command("list")

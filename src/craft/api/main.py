@@ -18,6 +18,7 @@ from craft.api.routers import (
     runs,
     scaffold,
     schema,
+    systems,
     verify,
     veriq_passthrough,
 )
@@ -25,6 +26,7 @@ from craft.core.discovery import discover_systems
 
 TAGS_METADATA = [
     {"name": "schema", "description": "Pydantic JSON Schema 配信"},
+    {"name": "systems", "description": "登録済み system 名一覧"},
     {"name": "components", "description": "TOML 上のインスタンス CRUD（ETag / If-Match）"},
     {"name": "configs", "description": "Config CRUD（Singleton / MultiInstance）"},
     {"name": "analyses", "description": "@analysis 関数の自動 API（一覧 / 実行）"},
@@ -55,6 +57,7 @@ app = FastAPI(
 register_exception_handlers(app)
 
 app.include_router(schema.router)
+app.include_router(systems.router)
 app.include_router(components.router)
 app.include_router(configs.router)
 app.include_router(analyses.router)

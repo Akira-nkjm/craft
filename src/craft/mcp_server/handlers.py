@@ -1,6 +1,5 @@
 """MCP tool handlers — registry / TOML / veriq の薄いラッパ。"""
 
-import importlib
 from typing import Any
 
 from pydantic import ValidationError
@@ -44,7 +43,9 @@ from craft.schema import default_registry
 def handle_list_introspection(kind: str) -> Any:
     """list_systems / list_components / list_configs / list_analyses。"""
     if kind == "systems":
-        return sorted(default_registry.systems())
+        from craft.core.surface_ops.introspection import list_systems_summary
+
+        return list_systems_summary()
     if kind == "components":
         return [
             {
@@ -426,10 +427,11 @@ def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
 def _build_project():
     import veriq as vq
 
+    from craft.core.discovery import get_scope
+
     project = vq.Project("Craft")
     for sub in sorted(default_registry.systems()):
-        mod = importlib.import_module(f"systems.{sub}.scope")
-        scope = getattr(mod, sub, None)
+        scope = get_scope(sub)
         if scope is not None:
             project.add_scope(scope)
     return project

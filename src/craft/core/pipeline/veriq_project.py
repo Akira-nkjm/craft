@@ -6,11 +6,11 @@ for running the merge → evaluate_project pipeline. All surface layers
 these patterns.
 """
 
-import importlib
 from typing import Any
 
 import veriq as vq
 
+from craft.core.discovery import get_scope
 from craft.schema import default_registry
 from craft.schema.registry import UnifiedRegistry
 
@@ -19,8 +19,7 @@ def build_project(registry: UnifiedRegistry = default_registry) -> vq.Project:
     """登録済み system の scope を集めて Project を組み立てる。"""
     project = vq.Project("Craft")
     for sub in sorted(registry.systems()):
-        mod = importlib.import_module(f"systems.{sub}.scope")
-        scope = getattr(mod, sub, None)
+        scope = get_scope(sub)
         if scope is None:
             continue
         project.add_scope(scope)

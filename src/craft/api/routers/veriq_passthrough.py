@@ -6,13 +6,13 @@ HTTP で公開する。subprocess は使わない。
 仕様: plan/Craft/01_仕様/API設計.md §veriq Pass-through API
 """
 
-import importlib
 from typing import Any
 
 import veriq as vq
 from fastapi import APIRouter, Query
 
 from craft.api.errors import CraftAPIError, NotFoundError, ValidationFailedError
+from craft.core.discovery import get_scope
 from craft.core.pipeline.merge import MERGED_TOML, MergeConflict, merge
 from craft.schema import default_registry
 
@@ -26,8 +26,7 @@ def _build_project() -> vq.Project:
     """
     project = vq.Project("Craft")
     for sub in sorted(default_registry.systems()):
-        mod = importlib.import_module(f"systems.{sub}.scope")
-        scope = getattr(mod, sub, None)
+        scope = get_scope(sub)
         if scope is None:
             continue
         project.add_scope(scope)
