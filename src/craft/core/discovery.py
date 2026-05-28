@@ -47,15 +47,28 @@ def _import_subsystem(sub_dir: Path) -> None:
     pkg_name = f"systems.{sub_name}"
     try:
         importlib.import_module(pkg_name)
+    except ModuleNotFoundError as e:
+        if e.name != pkg_name:
+            msg = (
+                f"Failed to import system '{sub_name}' package '{pkg_name}': "
+                f"missing module '{e.name}'"
+            )
+            raise ModuleNotFoundError(msg) from e
+    except Exception as e:
+        msg = f"Failed to import system '{sub_name}' package '{pkg_name}'"
+        raise ImportError(msg) from e
+    else:
         for file_stem in _FILE_ORDER:
             mod = f"{pkg_name}.{file_stem}"
             try:
                 importlib.import_module(mod)
-            except ModuleNotFoundError:
-                continue
+            except ModuleNotFoundError as e:
+                if e.name == mod:
+                    continue
+                _raise_module_not_found(sub_name, file_stem, mod, e)
+            except Exception as e:
+                _raise_import_error(sub_name, file_stem, mod, e)
         return
-    except ModuleNotFoundError:
-        pass
 
     # fallback: ファイル直接 import
     for file_stem in _FILE_ORDER:
@@ -67,4 +80,39 @@ def _import_subsystem(sub_dir: Path) -> None:
         if spec is None or spec.loader is None:
             continue
         module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        try:
+            spec.loader.exec_module(module)
+        except ModuleNotFoundError as e:
+            _raise_module_not_found(sub_name, file_stem, mod_name, e, py_path)
+        except Exception as e:
+            _raise_import_error(sub_name, file_stem, mod_name, e, py_path)
+
+
+def _raise_module_not_found(
+    sub_name: str,
+    file_stem: str,
+    mod_name: str,
+    e: ModuleNotFoundError,
+    py_path: Path | None = None,
+) -> None:
+    path_context = f" from '{py_path}'" if py_path is not None else ""
+    msg = (
+        f"Failed to import system '{sub_name}' file '{file_stem}' "
+        f"as '{mod_name}'{path_context}: missing module '{e.name}'"
+    )
+    raise ModuleNotFoundError(msg) from e
+
+
+def _raise_import_error(
+    sub_name: str,
+    file_stem: str,
+    mod_name: str,
+    e: Exception,
+    py_path: Path | None = None,
+) -> None:
+    path_context = f" from '{py_path}'" if py_path is not None else ""
+    msg = (
+        f"Failed to import system '{sub_name}' file '{file_stem}' "
+        f"as '{mod_name}'{path_context}"
+    )
+    raise ImportError(msg) from e
