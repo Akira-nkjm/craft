@@ -1,20 +1,24 @@
 # 衛星解析カタログ（網羅版）
 
-> Craft の `systems/<sys>/analyses/` に実装すべき解析関数の網羅リスト。
-> サブシステム毎に「フェーズ（概念→詳細→検証）×解析カテゴリ」で分類。
-> 出典:
-> - **ut-issl/spacecraft-design-marimo** (refactor/component-first-3axis ブランチ) — 同等の目的を持つ先行実装。`src/analysis/<subsys>/<theme>.py` 構造、Pydantic 非依存の純関数群、`docs/satellite-design/{INITIAL_DESIGN_CALCULATIONS, SATELLITE_CORE_CALCULATIONS}.md` を参考。**最も参考になる単一資料。**
-> - JAXA JERG 設計標準群（JERG-2-000B / 100 / 130 / 200 / 214 / 215 / 400 系）
-> - SMAD (Wertz/Larson)、NASA SSRI Knowledge Base、CubeSat handbook
-> - Drive 内資料: 「電源系紹介ドキュメント」(2026/3/30, GEO-X 大井) ほか
->
-> 凡例:
-> - **[B]** 予算（budget）系 — 合算とマージン確認
-> - **[S]** サイジング — コンポ寸法/容量決定
-> - **[V]** 検証（verify） — 制約充足チェック（`@analysis(verify=True)`）
-> - **[T]** トレード — 設計選択肢の比較
-> - **[E]** 環境応答 — 軌道/熱/放射線 等の外乱に対する応答
-> - **[A]** ad-hoc — `system=None` で一発計算したいもの
+Craft の `systems/<sys>/analyses/` に実装する解析関数を、サブシステム単位で網羅的に列挙したカタログ。各解析には目的を示す**タグ**（後述）を付け、入力／出力を一行で要約する。実装の優先順は最後の「実装優先度」セクションを参照。
+
+## 凡例（解析タグ）
+
+| タグ | 意味 | 典型的な使い方 |
+|------|------|----------------|
+| **[B]** | 予算（budget） | 合算とマージン確認 |
+| **[S]** | サイジング | コンポーネント寸法・容量の決定 |
+| **[V]** | 検証（verify） | 制約充足チェック — `@analysis(verify=True)` で実装 |
+| **[T]** | トレード | 設計選択肢の比較 |
+| **[E]** | 環境応答 | 軌道・熱・放射線 等の外乱に対する応答 |
+| **[A]** | ad-hoc | `system=None` の一発計算（API/CLI 用） |
+
+## 出典
+
+- **[ut-issl/spacecraft-design-marimo](https://github.com/ut-issl/spacecraft-design-marimo/tree/refactor/component-first-3axis)** — Craft と同等の目的を持つ先行実装。`src/analysis/<subsys>/<theme>.py` 構造の純関数群（Pydantic 非依存）と、`docs/satellite-design/{INITIAL_DESIGN_CALCULATIONS,SATELLITE_CORE_CALCULATIONS}.md` を参照。**本カタログで最も参考にした単一資料。**
+- **JAXA JERG 設計標準** — JERG-2-000B（宇宙機設計）/ 100（システム）/ 130（試験）/ 200（電気）/ 214（電源）/ 215（太陽電池パドル）/ 400 系（通信）
+- **SMAD**（Wertz & Larson, *Space Mission Analysis and Design*）/ **NASA SSRI Knowledge Base** / **CubeSat handbook**
+- **Drive 内資料**: 「電源系紹介ドキュメント」(2026/3/30, GEO-X 大井) ほか
 
 ---
 
