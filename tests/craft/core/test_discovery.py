@@ -44,8 +44,9 @@ def test_package_import_raises_for_nested_module_not_found(
     ) as exc_info:
         discovery.discover_systems(root=systems_root)
 
-    assert exc_info.value.__cause__ is not None
-    assert exc_info.value.__cause__.name == "nonexistent_dependency_for_discovery_test"
+    cause = exc_info.value.__cause__
+    assert isinstance(cause, ModuleNotFoundError)
+    assert cause.name == "nonexistent_dependency_for_discovery_test"
 
 
 def test_package_import_ignores_missing_ordered_module(
