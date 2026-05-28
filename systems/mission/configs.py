@@ -2,7 +2,7 @@
 
 from enum import StrEnum
 
-from schema import Config, MultiInstance, fld
+from craft.schema import Config, MultiInstance, fld
 
 
 class OperationMode(StrEnum):

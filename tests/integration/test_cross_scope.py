@@ -8,10 +8,10 @@ import pytest
 import veriq as vq
 from fastapi.testclient import TestClient
 
-from api.main import app
-from core.discovery import discover_systems
-from core.pipeline.merge import MERGED_TOML, merge
-from schema import default_registry
+from craft.api.main import app
+from craft.core.discovery import discover_systems
+from craft.core.pipeline.merge import MERGED_TOML, merge
+from craft.schema import default_registry
 
 
 def _ensure_discovered() -> None:

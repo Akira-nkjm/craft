@@ -1,6 +1,6 @@
 """Thermal system components — SpecOnly trait の例を含む。"""
 
-from schema import (
+from craft.schema import (
     Component,
     MultiInstance,
     Placeable,

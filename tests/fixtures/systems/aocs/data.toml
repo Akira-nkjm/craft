@@ -1,0 +1,24 @@
+# === Sun Senser ===
+
+[sunsenser.spec]
+mass_kg = 0.0 # 質量 [kg]
+fov_deg = 0.0 # 視野角
+
+[sunsenser.design]
+quantity = 1 # 搭載個数
+
+[sunsenser.design.placement] # 搭載位置・CAD パラメータ
+face = "PX" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 1.0 # Bounding box x dimension [mm]
+dy = 1.0 # Bounding box y dimension [mm]
+dz = 1.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD

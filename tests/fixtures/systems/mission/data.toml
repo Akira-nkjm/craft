@@ -1,0 +1,54 @@
+# Mission system — Config のみ
+# 簡略形式: `<sub>.model.` プレフィックス省略
+
+
+
+# === Mission Profile ===
+
+[missionprofile]
+duration_years = 5.0 # ミッション期間 [year]
+target_altitude_km = 600.0 # 目標高度 [km]
+primary_payload = "imager" # 主ペイロード種別
+contact_frequency_per_day = 4 # 1 日あたりの地上局可視回数
+launch_window_start = "2027-04-01T00:00:00Z" # 打ち上げ窓開始 (ISO8601)
+
+
+
+# === Orbital Parameters ===
+
+[orbitalparameters]
+semi_major_axis_km = 6978.0 # [km]
+eccentricity = 0.001
+inclination_deg = 97.6 # [deg]
+raan_deg = 45.0 # 昇交点赤経 [deg]
+arg_periapsis_deg = 0.0 # 近点引数 [deg]
+mean_anomaly_deg = 0.0 # 平均近点角 [deg]
+epoch_utc = "2027-04-01T00:00:00Z" # 元期 (ISO8601 UTC)
+
+
+
+# === Operation Mode Config ===
+
+[operation_mode_configs.safe]
+description = "異常検知時の安全モード。最低限の機能のみ動作。" # モードの説明
+max_duration_s = 0.0 # 最大連続継続時間 [s]、0 = 制限なし [s]
+is_initial_mode = true
+allowed_transitions = ["nominal", "safe_hold"] # 遷移可能なモード名リスト（空 = すべて許可）
+
+[operation_mode_configs.nominal]
+description = "通常運用モード。全系統が定格動作。" # モードの説明
+max_duration_s = 0.0 # 最大連続継続時間 [s]、0 = 制限なし [s]
+is_initial_mode = false
+allowed_transitions = ["safe", "science", "safe_hold"] # 遷移可能なモード名リスト（空 = すべて許可）
+
+[operation_mode_configs.science]
+description = "観測・データ取得モード。ミッション機器を起動。" # モードの説明
+max_duration_s = 3600.0 # 最大連続継続時間 [s]、0 = 制限なし [s]
+is_initial_mode = false
+allowed_transitions = ["nominal", "safe"] # 遷移可能なモード名リスト（空 = すべて許可）
+
+[operation_mode_configs.safe_hold]
+description = "自律セーフホールドモード。姿勢保持のみ継続。" # モードの説明
+max_duration_s = 86400.0 # 最大連続継続時間 [s]、0 = 制限なし [s]
+is_initial_mode = false
+allowed_transitions = ["safe"] # 遷移可能なモード名リスト（空 = すべて許可）

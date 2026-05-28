@@ -13,9 +13,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from cli.main import app
-from core.errors import ETagMismatch, PreconditionRequired
-from mcp_server.handlers import (
+from craft.cli.main import app
+from craft.core.errors import ETagMismatch, PreconditionRequired
+from craft.mcp_server.handlers import (
     handle_delete_instance,
     handle_patch_instance,
     handle_set_config,
@@ -26,17 +26,21 @@ from mcp_server.handlers import (
 
 
 def test_no_api_import_in_core():
-    """core/ must not import from api.*"""
-    core_dir = Path(__file__).resolve().parents[2] / "core"
+    """core/ must not import from craft.api.*"""
+    core_dir = Path(__file__).resolve().parents[2] / "src" / "craft" / "core"
     violations: list[str] = []
     for py_file in sorted(core_dir.rglob("*.py")):
         tree = ast.parse(py_file.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith("api"):
+            if (
+                isinstance(node, ast.ImportFrom)
+                and node.module
+                and node.module.startswith("craft.api")
+            ):
                 violations.append(
                     f"{py_file.relative_to(core_dir.parent)}: from {node.module} import ..."
                 )
-    assert violations == [], "core/ contains api.* imports:\n" + "\n".join(violations)
+    assert violations == [], "core/ contains craft.api.* imports:\n" + "\n".join(violations)
 
 
 # ─── CLI ETag mismatch ───────────────────────────────────────────────
@@ -210,7 +214,7 @@ def test_mcp_delete_required_mode_no_etag(power_data_backup):
 
 
 def test_precondition_required_is_craft_error():
-    from core.errors import CraftError
+    from craft.core.errors import CraftError
 
     exc = PreconditionRequired("test")
     assert isinstance(exc, CraftError)
@@ -218,7 +222,7 @@ def test_precondition_required_is_craft_error():
 
 
 def test_etag_mismatch_is_craft_error():
-    from core.errors import CraftError
+    from craft.core.errors import CraftError
 
     exc = ETagMismatch("mismatch")
     assert isinstance(exc, CraftError)
@@ -249,7 +253,7 @@ def test_set_config_no_etag_succeeds(mission_data_backup):
 
 def test_set_config_correct_etag_succeeds(mission_data_backup):
     """handle_set_config with matching etag succeeds."""
-    from core.instances import get_singleton_config
+    from craft.core.instances import get_singleton_config
 
     _, etag = get_singleton_config("mission", "missionprofile")
     result = handle_set_config(
@@ -296,7 +300,7 @@ def test_set_config_instance_no_etag_succeeds(mission_data_backup):
 
 def test_set_config_instance_correct_etag_succeeds(mission_data_backup):
     """handle_set_config_instance with matching etag succeeds."""
-    from core.instances import get_config_instance
+    from craft.core.instances import get_config_instance
 
     _, etag = get_config_instance("mission", "operationmodeconfig", "safe")
     result = handle_set_config_instance(

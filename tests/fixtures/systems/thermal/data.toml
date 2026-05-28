@@ -1,0 +1,100 @@
+# Thermal system
+# 簡略形式: `<sub>.model.` プレフィックス省略
+
+
+
+# === Heater (MultiInstance, PowerConsuming) ===
+
+[heaters.battery_pack.spec]
+rated_power_w = 5.0
+target_temperature_c = -10.0
+power_per_unit_w = 5.0
+
+[heaters.battery_pack.design]
+quantity = 1 # 搭載個数
+hysteresis_c = 2.0 # ヒステリシス幅 [degC]
+
+[heaters.battery_pack.design.placement] # 搭載位置・CAD パラメータ
+face = "PX" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 1.0 # Bounding box x dimension [mm]
+dy = 1.0 # Bounding box y dimension [mm]
+dz = 1.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+[heaters.battery_pack.design.power_modes] # OperationMode 別の on/off
+safe = true
+nominal = true
+science = false
+safe_hold = false
+
+
+[heaters.obc_radiator.spec]
+rated_power_w = 3.0
+target_temperature_c = 5.0
+power_per_unit_w = 3.0
+
+[heaters.obc_radiator.design]
+quantity = 1 # 搭載個数
+hysteresis_c = 1.5 # ヒステリシス幅 [degC]
+
+[heaters.obc_radiator.design.placement] # 搭載位置・CAD パラメータ
+face = "PX" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 1.0 # Bounding box x dimension [mm]
+dy = 1.0 # Bounding box y dimension [mm]
+dz = 1.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+[heaters.obc_radiator.design.power_modes] # OperationMode 別の on/off
+safe = true
+nominal = true
+science = true
+safe_hold = false
+
+
+
+# === PanelSurface (MultiInstance, SpecOnly — Design なし) ===
+
+[heaters.spec]
+mass_kg = 0.0 # 質量 [kg]
+power_per_unit_w = 0.0 # 単位あたりの想定消費電力 [W]
+rated_power_w = 0.0 # 定格電力 [W]
+target_temperature_c = 0.0 # 目標温度 [degC]
+
+
+
+# === Panel Surface ===
+
+[panel_surfaces.white_paint.spec]
+emissivity = 0.9
+absorptivity = 0.2
+surface_treatment = "白塗装"
+
+
+[panel_surfaces.mli.spec]
+emissivity = 0.03
+absorptivity = 0.4
+surface_treatment = "MLI（多層断熱材）"
+
+[panel_surfaces.spec]
+mass_kg = 0.0 # 質量 [kg]
+emissivity = 0.0 # 放射率
+absorptivity = 0.0 # 太陽光吸収率
+surface_treatment = "" # 表面処理（白塗装/MLI 等）

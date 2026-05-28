@@ -24,27 +24,27 @@ CLI 表示 / API レスポンス / MCP tool result
 
 ## コアモジュール
 
-- **`schema/`** — Component / Config base class、Pydantic ベースの UnifiedRegistry（`__init_subclass__` で登録）、`fld()`、traits、root_model builder
-- **`core/`** — TOML I/O（`tomlkit`）、`merge`、`scaffold`、instance CRUD（ETag）、ファイルパス解決、`discover_systems`、`runs` / `history` / `jobs` / `analysis_cache` / `verify`
-- **`api/`** — FastAPI 本体。`main.py` で lifespan に discovery を仕込み、`routers/{schema,components,configs,merge,scaffold,verify,analyses,runs,history,veriq_passthrough}.py` を mount
-- **`cli/`** — Typer CLI (`craft` コマンド)。`schema` / `get` / `merge` / `scaffold` / `verify` / `runs` / `analysis` / `init` サブコマンド
-- **`mcp_server/`** — `craft-mcp`（stdio）。registry から MCP tool を自動生成（`tool_factory.py`）
-- **`systems/<name>/`** — ユーザ領域。`components.py` / `configs.py` / `analyses.py` / `scope.py` / `data.toml`
+- **`src/craft/schema/`** (`craft.schema`) — Component / Config base class、Pydantic ベースの UnifiedRegistry（`__init_subclass__` で登録）、`fld()`、traits、root_model builder
+- **`src/craft/core/`** (`craft.core`) — TOML I/O（`tomlkit`）、`merge`、`scaffold`、instance CRUD（ETag）、ファイルパス解決、`discover_systems`、`runs` / `history` / `jobs` / `analysis_cache` / `verify`
+- **`src/craft/api/`** (`craft.api`) — FastAPI 本体。`main.py` で lifespan に discovery を仕込み、`routers/{schema,components,configs,merge,scaffold,verify,analyses,runs,history,veriq_passthrough}.py` を mount
+- **`src/craft/cli/`** (`craft.cli`) — Typer CLI (`craft` コマンド)。`schema` / `get` / `merge` / `scaffold` / `verify` / `runs` / `analysis` / `init` サブコマンド
+- **`src/craft/mcp_server/`** (`craft.mcp_server`) — `craft-mcp`（stdio）。registry から MCP tool を自動生成（`tool_factory.py`）
+- **`systems/<name>/`** — ユーザ領域。`components.py` / `configs.py` / `analyses.py` / `scope.py` / `data.toml`。`systems/project.py` は veriq の CLI エントリポイント
 - **`generated/`** — `merge` の出力（`merged.toml` / `merged.lock` / `runs/`）
 
 ## レイヤー構成と依存方向
 
 ```
-systems/  →  schema/, core/  →  api/, cli/, mcp_server/
+systems/  →  craft.schema, craft.core  →  craft.api, craft.cli, craft.mcp_server
 ```
 
-- `systems/` は `schema` / `core` / `veriq` のみに依存
-- `api/` / `cli/` / `mcp_server/` は `core` と `schema` を介して systems を間接的に扱う
-- `schema/` と `core/` は他のどの層にも依存しない（循環禁止）
+- `systems/` は `craft.schema` / `craft.core` / `veriq` のみに依存
+- `craft.api` / `craft.cli` / `craft.mcp_server` は `craft.core` と `craft.schema` を介して systems を間接的に扱う
+- `craft.schema` と `craft.core` は他のどの層にも依存しない（循環禁止）
 
 ## 設計判断（なぜこうなっているか）
 
-- **フラット構成（`packages/<name>/` を使わない）** — uv workspace で member 化する案は議論されたが、Craft は単一プロジェクトとして配布する想定で、`schema` / `core` / `api` / `cli` / `mcp_server` は同一バージョンで動く必要があるためフラットに保つ。hatch wheel も `packages = ["schema", "core", "api", "systems", "cli", "mcp_server"]` で単一パッケージとしてビルドする。
+- **`src/craft/` レイアウトを採用** — framework 実装（`schema` / `core` / `api` / `cli` / `mcp_server`）と user 領域（`systems/`）を視覚的に分離するため、framework 本体を `src/craft/` 配下に集約した。ユーザが root を見たときに「自分が触るのは `systems/` だけ」が一目で分かる。uv workspace で member 化する案は議論されたが、Craft は単一プロジェクトとして配布する想定で `craft.*` モジュール群は同一バージョンで動く必要があるため、`pyproject.toml` の `packages = ["src/craft", "systems"]` で単一 wheel としてビルドする。
 - **`shared_spec=True` を採用（MultiInstance Component）** — 同種ハードウェア（同型バッテリ × 2 など）の `spec` は instance 間で共有が普通。TOML を `[batteries.spec]` + `[batteries.<name>.design]` に分けることで重複を排除し、選定変更時の差分も最小化する。
 - **`data.toml` で `<sys>.model.` プレフィックスを省略** — ユーザが書くのは「system 内の論理構造」だけにし、veriq 規約（`[<scope>.model.<...>]`）への変換は `core.merge` が担う。これで TOML の可読性と veriq との整合性を両立する。
 - **`tomlkit` でコメント保持** — `tomli-w` は書き込みでコメントを失う。`data.toml` はユーザが手で編集する一次資料なので、コメント・順序・空行を保持する `tomlkit` を merge / scaffold の両方で使う。
@@ -59,12 +59,14 @@ craft/
 ├── README.md
 ├── pyproject.toml          # uv 単一プロジェクト、hatchling
 ├── justfile                # 補助タスク
-├── schema/                 # Component / Config / Registry / fld / traits
-├── core/                   # merge, scaffold, instances, discovery, toml_io
-├── api/                    # FastAPI (main.py + routers/)
-├── cli/                    # Typer CLI
-├── mcp_server/             # MCP サーバ (stdio)
+├── src/craft/              # framework 本体（craft.* import パス）
+│   ├── schema/             # Component / Config / Registry / fld / traits
+│   ├── core/               # merge, scaffold, instances, discovery, toml_io
+│   ├── api/                # FastAPI (main.py + routers/)
+│   ├── cli/                # Typer CLI
+│   └── mcp_server/         # MCP サーバ (stdio)
 ├── systems/                # aocs / cdh / mission / orbital / power / thermal
+│   └── project.py          # veriq CLI エントリポイント
 ├── generated/              # merged.toml / merged.lock / runs/
 ├── tests/                  # pytest
 ├── plan/                   # 設計ドキュメント
