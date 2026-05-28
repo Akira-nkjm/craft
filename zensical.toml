@@ -1,4 +1,8 @@
 [project]
+extra_javascript = [
+  "javascripts/mathjax.js",
+  "https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js",
+]
 site_name = "Craft"
 site_description = "Concept Registry for Automated spacecraFT design"
 site_url = "https://Akira-nkjm.github.io/craft/"
