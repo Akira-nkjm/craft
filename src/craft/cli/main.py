@@ -23,7 +23,7 @@
 
 import typer
 
-from craft.cli.commands.data import merge_cmd, scaffold_cmd, verify_cmd
+from craft.cli.commands.data import merge_cmd, scaffold_cmd, validate_app, verify_cmd
 from craft.cli.commands.instances import create_cmd, delete_cmd, patch_cmd, put_cmd, spec_app
 from craft.cli.commands.maintenance import diff_cmd, gen_stubs_cmd, history_cmd, init_app
 from craft.cli.commands.runs_analysis import analysis_app, runs_app
@@ -42,6 +42,7 @@ app.add_typer(analysis_app, name="analysis")
 app.add_typer(init_app, name="init")
 app.add_typer(spec_app, name="spec")
 app.add_typer(runs_app, name="runs")
+app.add_typer(validate_app, name="validate")
 
 # Top-level commands from split modules
 app.command("create")(create_cmd)
