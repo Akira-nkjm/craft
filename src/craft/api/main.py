@@ -19,6 +19,7 @@ from craft.api.routers import (
     scaffold,
     schema,
     systems,
+    validate,
     verify,
     veriq_passthrough,
 )
@@ -30,6 +31,7 @@ TAGS_METADATA = [
     {"name": "components", "description": "TOML 上のインスタンス CRUD（ETag / If-Match）"},
     {"name": "configs", "description": "Config CRUD（Singleton / MultiInstance）"},
     {"name": "analyses", "description": "@analysis 関数の自動 API（一覧 / 実行）"},
+    {"name": "validate", "description": "Pydantic schema validation only"},
     {"name": "verify", "description": "veriq 検証実行"},
     {"name": "runs", "description": "verification run history"},
     {"name": "merge", "description": "systems/*/data.toml → generated/merged.toml"},
@@ -61,6 +63,7 @@ app.include_router(systems.router)
 app.include_router(components.router)
 app.include_router(configs.router)
 app.include_router(analyses.router)
+app.include_router(validate.router)
 app.include_router(verify.router)
 app.include_router(runs.router)
 app.include_router(merge.router)

@@ -38,15 +38,13 @@ def discover_systems(root: Any = _UNSET) -> list[str]:
     全 system の `components` をまず import、続いて `configs`、`analyses`、`scope`
     の順に system 横断でフェーズ並列処理する。
 
-    `root` が明示された場合、または `subsystems_root()` が importable な `systems`
-    package と別の場所を指す場合は file-only mode で import する。file-only mode は
-    `systems.<name>.*` と衝突しない一意な module 名を使うため、テスト fixture と実
-    `systems/` package が sys.modules 上で共存できる。
+    `root` が importable な `systems` package と別の場所を指す場合は file-only mode
+    で import する。file-only mode は `systems.<name>.*` と衝突しない一意な module 名
+    を使うため、テスト fixture と実 `systems/` package が sys.modules 上で共存できる。
 
     Returns:
         発見・import された system 名のリスト。
     """
-    explicit_root = root is not _UNSET
     if root is _UNSET:
         root = subsystems_root()
     if root is None:
@@ -63,7 +61,7 @@ def discover_systems(root: Any = _UNSET) -> list[str]:
             continue
         sub_dirs.append(sub_dir)
 
-    file_only = explicit_root or _should_use_file_only(root)
+    file_only = _should_use_file_only(root)
     prefix: str | None = None
 
     if file_only:
@@ -122,15 +120,34 @@ def _ensure_package(name: str, path: Path) -> None:
 
 
 def _import_subsystem_package(sub_dir: Path) -> None:
-    """`systems.<name>` package を import（あれば）。"""
+    """`systems.<name>` package を import（あれば）。
+
+    package が見つからない場合は silent skip（discover_systems 側で file-based
+    fallback に切り替える前提）。内部の依存モジュールが見つからない場合や他の
+    例外は raise する（実バグの隠蔽防止）。
+    """
     sub_name = sub_dir.name
     pkg_name = f"systems.{sub_name}"
-    with contextlib.suppress(ModuleNotFoundError):
+    try:
         importlib.import_module(pkg_name)
+    except ModuleNotFoundError as e:
+        if e.name != pkg_name:
+            msg = (
+                f"Failed to import system '{sub_name}' package '{pkg_name}': "
+                f"missing module '{e.name}'"
+            )
+            raise ModuleNotFoundError(msg) from e
+    except Exception as e:
+        msg = f"Failed to import system '{sub_name}' package '{pkg_name}'"
+        raise ImportError(msg) from e
 
 
 def _import_subsystem_file(sub_dir: Path, file_stem: str, prefix: str | None) -> ModuleType | None:
-    """1 system の 1 ファイルを import。package mode → fallback file mode。"""
+    """1 system の 1 ファイルを import。package mode → fallback file mode。
+
+    file 自体が見つからない場合は silent skip（その system にそのフェーズが
+    無いだけ）。内部の依存モジュールが見つからない場合や他の例外は raise する。
+    """
     sub_name = sub_dir.name
     pkg_name = f"{prefix}.systems.{sub_name}" if prefix else f"systems.{sub_name}"
     mod_full = f"{pkg_name}.{file_stem}"
@@ -142,8 +159,12 @@ def _import_subsystem_file(sub_dir: Path, file_stem: str, prefix: str | None) ->
         # package として import 可能なら通常 import
         try:
             return importlib.import_module(mod_full)
-        except ModuleNotFoundError:
-            pass
+        except ModuleNotFoundError as e:
+            if e.name != mod_full:
+                _raise_module_not_found(sub_name, file_stem, mod_full, e)
+            # この file は存在しない → file-based fallback へ
+        except Exception as e:
+            _raise_import_error(sub_name, file_stem, mod_full, e)
 
     # fallback: ファイル直接 import
     py_path = sub_dir / f"{file_stem}.py"
@@ -154,5 +175,39 @@ def _import_subsystem_file(sub_dir: Path, file_stem: str, prefix: str | None) ->
         return None
     module = importlib.util.module_from_spec(spec)
     sys.modules[mod_full] = module
-    spec.loader.exec_module(module)
+    try:
+        spec.loader.exec_module(module)
+    except ModuleNotFoundError as e:
+        sys.modules.pop(mod_full, None)
+        _raise_module_not_found(sub_name, file_stem, mod_full, e, py_path)
+    except Exception as e:
+        sys.modules.pop(mod_full, None)
+        _raise_import_error(sub_name, file_stem, mod_full, e, py_path)
     return module
+
+
+def _raise_module_not_found(
+    sub_name: str,
+    file_stem: str,
+    mod_name: str,
+    e: ModuleNotFoundError,
+    py_path: Path | None = None,
+) -> None:
+    path_context = f" from '{py_path}'" if py_path is not None else ""
+    msg = (
+        f"Failed to import system '{sub_name}' file '{file_stem}' "
+        f"as '{mod_name}'{path_context}: missing module '{e.name}'"
+    )
+    raise ModuleNotFoundError(msg) from e
+
+
+def _raise_import_error(
+    sub_name: str,
+    file_stem: str,
+    mod_name: str,
+    e: Exception,
+    py_path: Path | None = None,
+) -> None:
+    path_context = f" from '{py_path}'" if py_path is not None else ""
+    msg = f"Failed to import system '{sub_name}' file '{file_stem}' as '{mod_name}'{path_context}"
+    raise ImportError(msg) from e

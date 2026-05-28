@@ -8,7 +8,15 @@ from typing import Any
 
 import mcp.types as mcp_types
 
-from craft.mcp_server.tools import analyses, components, configs, history, introspection, verify
+from craft.mcp_server.tools import (
+    analyses,
+    components,
+    configs,
+    history,
+    introspection,
+    validate,
+    verify,
+)
 
 
 def build_tool_specs() -> list[mcp_types.Tool]:
@@ -18,6 +26,7 @@ def build_tool_specs() -> list[mcp_types.Tool]:
         *components.specs(),
         *configs.specs(),
         *analyses.specs(),
+        *validate.specs(),
         *verify.specs(),
         *history.specs(),
     ]
@@ -30,6 +39,7 @@ def build_handler_map() -> dict[str, Callable[[dict[str, Any]], Any]]:
     handlers.update(components.handlers())
     handlers.update(configs.handlers())
     handlers.update(analyses.handlers())
+    handlers.update(validate.handlers())
     handlers.update(verify.handlers())
     handlers.update(history.handlers())
     return handlers
