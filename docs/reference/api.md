@@ -6,8 +6,8 @@ API エンドポイントも自動で増える。
 
 ```bash
 uv run uvicorn api.main:app --reload
-# → http://127.0.0.1:8000/docs   (Swagger UI)
-# → http://127.0.0.1:8000/redoc  (ReDoc)
+# → http://localhost:8000/docs   (Swagger UI)
+# → http://localhost:8000/redoc  (ReDoc)
 ```
 
 Swagger UI から実際に GET/PUT/PATCH/POST を叩けるので、最初の探索には UI からの
@@ -263,6 +263,6 @@ FastAPI の dependency で API key 認証を追加する。
 
 ## 関連
 
-- [Swagger UI](http://127.0.0.1:8000/docs)（ローカル起動時）
+- [Swagger UI](http://localhost:8000/docs)（ローカル起動時）
 - [CLI リファレンス](cli/index.md) — 同じ操作を端末から行う
 - [MCP リファレンス](mcp.md) — 同じ操作を LLM エージェントから行う

@@ -30,7 +30,7 @@ uv run craft schema list
 # 3. merge + veriq 検証を実行
 uv run craft verify
 
-# 4. API サーバ起動 → http://127.0.0.1:8000/docs
+# 4. API サーバ起動 → http://localhost:8000/docs
 uv run uvicorn api.main:app --reload
 
 # 5. MCP サーバ起動（Claude Code / Desktop 等から接続）

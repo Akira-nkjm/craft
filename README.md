@@ -95,7 +95,7 @@ uv run craft schema list
 # merge + veriq による検証実行
 uv run craft verify
 
-# FastAPI 起動 → Swagger UI: http://127.0.0.1:8000/docs
+# FastAPI 起動 → Swagger UI: http://localhost:8000/docs
 uv run uvicorn craft.api.main:app --reload
 
 # MCP サーバ (stdio) — Claude Code / Desktop から利用
