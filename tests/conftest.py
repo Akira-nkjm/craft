@@ -30,6 +30,8 @@ def isolated_systems_root(request, tmp_path, monkeypatch):
     fake_root = tmp_path / "craft_root"
     fake_root.mkdir()
     shutil.copytree(FIXTURES_SYSTEMS_DIR, fake_root / "systems")
+    fake_generated = fake_root / "generated"
+    fake_generated.mkdir()
 
     import craft.core.paths
     from craft.core.discovery import discover_systems
@@ -44,6 +46,18 @@ def isolated_systems_root(request, tmp_path, monkeypatch):
     # NOTE: craft.core.persistence.history.REPO_ROOT は patch しない。
     # git history は systems/*/data.toml の現在内容ではなく commit に依存するため、
     # 実 repo に対して動かす方が正しい。
+
+    # generated/ も tmp に隔離する。merge() は MERGED_LOCK / MERGED_TOML 定数
+    # （import 時に確定）へ書くため REPO_ROOT 差し替えだけでは実 repo の
+    # generated/merged.lock を上書きしてしまう（CI の merge --check を壊す）。
+    fake_toml = fake_generated / "merged.toml"
+    fake_lock = fake_generated / "merged.lock"
+    monkeypatch.setattr(craft.core.paths, "GENERATED_DIR", fake_generated)
+    monkeypatch.setattr(craft.core.paths, "MERGED_TOML", fake_toml)
+    monkeypatch.setattr(craft.core.paths, "MERGED_LOCK", fake_lock)
+    monkeypatch.setattr(merge_module, "GENERATED_DIR", fake_generated)
+    monkeypatch.setattr(merge_module, "MERGED_TOML", fake_toml)
+    monkeypatch.setattr(merge_module, "MERGED_LOCK", fake_lock)
 
     snapshot: dict[str, Any] = {
         "components": dict(default_registry._components),
