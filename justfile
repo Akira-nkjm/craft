@@ -114,7 +114,13 @@ codegraph-sync:
 codegraph-status:
     npx -y @colbymchenry/codegraph status
 
-# FastAPI を起動する（Swagger UI: http://127.0.0.1:8000/docs）
+# CodeGraph MCP / watcher プロセスを停止する
+codegraph-stop:
+    -pkill -f "@colbymchenry/codegraph"
+    -pkill -f "codegraph"
+    @echo "codegraph processes stopped"
+
+# FastAPI を起動する（Swagger UI: http://localhost:8000/docs）
 # PORT=N で port 上書き可
 api:
     uv run uvicorn craft.api.main:app --reload --port {{ env_var_or_default("PORT", "8000") }}
