@@ -2,6 +2,12 @@
 
 > このファイルは **Claude Code から Codex CLI へタスクを委譲する**手順を扱う（Claude 固有のツール呼び出しを含む）。Codex を単体で使う場合の運用は [`../../.codex/README.md`](../../.codex/README.md) を参照。
 
+> ⚠️ **justfile は `.claude/justfile` にある**（プロジェクト直下の justfile と衝突させないため）。
+> 以下の `just codex-run ...` は **`just -f .claude/justfile codex-run ...`** と読み替える。
+> 毎回 `-f` を打つのが面倒なら、次のどちらかを使う:
+> - プロジェクト直下の `justfile` に `import '.claude/justfile'` を書く → 素の **`just codex-run ...`** で呼べてシェル補完も効く（推奨）
+> - `alias jc='just -f .claude/justfile'` を設定し `jc codex-run ...`
+
 ## セットアップ → 実行の2ステップ
 
 ### Step 1: `/codex:setup` スキルで初期化
