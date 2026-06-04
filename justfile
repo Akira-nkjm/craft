@@ -1,75 +1,34 @@
+# craft プロジェクトの justfile
+#
+# Codex 連携・CodeGraph レシピは `.claude/justfile`（プラグイン提供の正典）を import する。
+# これにより `just codex-run <task>` / `just codegraph-status` などが直接（補完付きで）使える。
+# 正典側は task name を quote() + 検証してシェルへ渡す（injection / path traversal 対策）ので、
+# ここで重複定義はしない。
+import '.claude/justfile'
+
+# import 元（.claude/justfile）の `default` をこのファイルの `default` で上書きする。
+# 後勝ちにするため allow-duplicate-recipes を有効化（衝突するのは default のみ）。
+set allow-duplicate-recipes := true
+
 default:
     @just --list
 
-# プロジェクトルート（親ディレクトリ）に非破壊でインストールする
-# 使い方: プロジェクト配下に git clone してから just install
-# FORCE=1 で既存ファイルをバックアップ後に上書き、DRY_RUN=1 で差分のみ表示
-install:
-    @python3 .claude/tools/install/install.py
-
-# Codex にタスクファイルを渡して実行する
-# 使い方: just codex-run <task-name>  (.tasks/<task-name>.md を渡す)
-codex-run name:
-    @python3 .claude/tools/codex/run.py "{{ name }}"
-
-# タスクファイルを新規作成する
-# 使い方: just codex-new-task <task-name>
-# FORCE=1 で既存 .tasks/<task-name>.md の上書きを許可
-codex-new-task name:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    mkdir -p .tasks
-    task=".tasks/{{ name }}.md"
-    if [ -e "$task" ] && [ "${FORCE:-0}" != "1" ]; then
-        echo "Task already exists: $task (set FORCE=1 to overwrite)" >&2
-        exit 1
-    fi
-    printf "# {{ name }}\n\n## 概要\n\n## 実装方針\n\n## 注意事項\n" > "$task"
-    echo "Created: $task"
-
-# 未処理タスク一覧
-codex-tasks:
-    @ls .tasks/*.md 2>/dev/null || echo "no task"
-
-# Codex を git worktree 隔離で実行する（並列実行時に推奨）
-# worktree: .worktrees/<task-name>/、branch: codex/<task-name>
-# 使い方: just codex-run-isolated <task-name>
-codex-run-isolated name:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    task=".tasks/{{ name }}.md"
-    if [ ! -f "$task" ]; then
-        echo "タスクファイルが見つかりません: $task" >&2
-        exit 1
-    fi
-    wt=".worktrees/{{ name }}"
-    branch="codex/{{ name }}"
-    if [ ! -d "$wt" ]; then
-        git worktree add -b "$branch" "$wt" HEAD
-    fi
-    mkdir -p "$wt/.tasks"
-    cp "$task" "$wt/$task"
-    (cd "$wt" && python3 .claude/tools/codex/run.py "{{ name }}")
-    echo "完了: $wt (branch: $branch)"
-    echo "マージ例: git merge --no-ff $branch  または  cd $wt && git diff main"
-    echo "破棄例:   just codex-cleanup-isolated {{ name }}"
-
-# worktree とブランチを削除する
-# 使い方: just codex-cleanup-isolated <task-name>
-codex-cleanup-isolated name:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    wt=".worktrees/{{ name }}"
-    branch="codex/{{ name }}"
-    if [ -d "$wt" ]; then
-        git worktree remove --force "$wt"
-    fi
-    git branch -D "$branch" 2>/dev/null || true
-    echo "削除: $wt, $branch"
+# --- 依存・実行 ---
 
 # 依存をインストール（dev グループ含む）
 sync:
     uv sync
+
+# FastAPI を起動する（Swagger UI: http://localhost:8000/docs）
+# PORT=N で port 上書き可
+api:
+    uv run uvicorn craft.api.main:app --reload --port {{ env_var_or_default("PORT", "8000") }}
+
+# craft-mcp を起動する（stdio MCP サーバ）
+craft-mcp:
+    uv run craft-mcp
+
+# --- コード品質 ---
 
 # ruff で format 実行
 fmt:
@@ -91,40 +50,9 @@ lint-fix:
 typecheck:
     uv run pyrefly check
 
+# 全テスト
 test:
     uv run pytest .
 
 # format + lint-fix + typecheck + test をまとめて実行
 check: fmt lint-fix typecheck test
-
-# CodeGraph index を作成・再構築する（初回または手動再構築時）
-# 通常はファイル監視で自動更新されるので不要
-codegraph-init:
-    npx -y @colbymchenry/codegraph init -i
-
-# CodeGraph index を完全に再インデックスする
-codegraph-index:
-    npx -y @colbymchenry/codegraph index
-
-# CodeGraph index を差分更新する
-codegraph-sync:
-    npx -y @colbymchenry/codegraph sync
-
-# CodeGraph の健康確認
-codegraph-status:
-    npx -y @colbymchenry/codegraph status
-
-# CodeGraph MCP / watcher プロセスを停止する
-codegraph-stop:
-    -pkill -f "@colbymchenry/codegraph"
-    -pkill -f "codegraph"
-    @echo "codegraph processes stopped"
-
-# FastAPI を起動する（Swagger UI: http://localhost:8000/docs）
-# PORT=N で port 上書き可
-api:
-    uv run uvicorn craft.api.main:app --reload --port {{ env_var_or_default("PORT", "8000") }}
-
-# craft-mcp を起動する（CodeGraph と連携してコード理解を提供）
-craft-mcp:
-    uv run craft-mcp

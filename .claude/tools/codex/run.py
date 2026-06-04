@@ -4,7 +4,6 @@
 The canonical entrypoint is the Claude plugin cache script:
   ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs
 """
-
 from __future__ import annotations
 
 import glob
@@ -17,6 +16,9 @@ from pathlib import Path
 
 
 PLUGIN_GLOB = "~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs"
+
+# task name は .tasks/<name>.md に展開されるため、path traversal・シェルメタ文字を禁止する
+TASK_NAME_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
 def version_key(path: Path) -> tuple[tuple[int, ...], str]:
@@ -35,10 +37,7 @@ def version_key(path: Path) -> tuple[tuple[int, ...], str]:
 def find_companion() -> Path:
     matches = [Path(p) for p in glob.glob(os.path.expanduser(PLUGIN_GLOB))]
     if not matches:
-        print(
-            "Codex plugin がインストールされていません。`/codex:setup` を実行してください。",
-            file=sys.stderr,
-        )
+        print("Codex plugin がインストールされていません。`/codex:setup` を実行してください。", file=sys.stderr)
         raise SystemExit(1)
     selected = sorted(matches, key=version_key)[-1]
     if len(matches) > 1:
@@ -51,13 +50,13 @@ def main(argv: list[str]) -> int:
         print("usage: run.py <task-name>", file=sys.stderr)
         return 2
     if not shutil.which("node"):
-        print(
-            "node が PATH にありません。Node.js をインストールしてから再実行してください。",
-            file=sys.stderr,
-        )
+        print("node が PATH にありません。Node.js をインストールしてから再実行してください。", file=sys.stderr)
         return 1
 
     task_name = argv[1]
+    if not TASK_NAME_RE.match(task_name) or ".." in task_name:
+        print(f"不正なタスク名: {task_name}（英数字 . _ - のみ、.. 不可）", file=sys.stderr)
+        return 2
     prompt_file = Path(".tasks") / f"{task_name}.md"
     if not prompt_file.exists():
         print(f"タスクファイルが見つかりません: {prompt_file}", file=sys.stderr)

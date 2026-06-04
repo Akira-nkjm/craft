@@ -88,6 +88,8 @@ Codex 単体で使う場合の運用は [`.codex/README.md`](.codex/README.md) �
 
 Claude Code では `/skill-name` で起動可能。Codex 等の他ハーネスでは `.claude/skills/<name>/SKILL.md` を直接参照して同じ手順を適用する。
 
+**いつどのスキルを使うか**（状況→スキルの早見表・トークン効率の読み方・codegraph の使い方）は [`.claude/rules/skills.md`](.claude/rules/skills.md) を参照（正典）。
+
 - `tdd-workflow` — TDD（RED → GREEN → REFACTOR）の手順化
 - `security-review` — OWASP・シークレット・入力検証チェック
 - `strategic-compact` — コンテキスト圧縮戦略
@@ -107,9 +109,9 @@ Claude Code では `/skill-name` で起動可能。Codex 等の他ハーネス�
 
 - `codegraph_search` — シンボル検索
 - `codegraph_callers` / `codegraph_callees` — 呼び出し関係
-- `codegraph_trace` — A → B の経路
+- `codegraph_explore` — 経路・フロー・概観・複数シンボルのソース一括（第一候補）
 - `codegraph_impact` — 影響範囲
-- `codegraph_context` / `codegraph_explore` — タスク用 context
+- `codegraph_node` / `codegraph_files` / `codegraph_status` — シンボル詳細 / ファイル一覧 / index 状態
 
 CodeGraph が利用できない環境では、`rg` / `rg --files` を代替として使い、必要なら「このセッションでは CodeGraph MCP が露出していない」と明記する。ローカル完結・API キー不要。詳細は [`.claude/CLAUDE.md`](.claude/CLAUDE.md)。
 

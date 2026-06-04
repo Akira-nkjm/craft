@@ -10,16 +10,21 @@ Claude Code 向けガイダンス。共通ルールは [`AGENTS.md`](AGENTS.md) 
 - `git-workflow.md` — コミットメッセージ規約・ブランチ戦略
 - `codex-workflow.md` — Claude Code から Codex へ委譲する手順・並列実行・フォールバック
 - `security.md` — セキュリティ規約・AgentShield 等の外部ツール
+- `skills.md` - skillの使い所
 
-## 利用可能なコマンド (`.claude/commands/`)
+## 利用可能なコマンド（`my-plugin` プラグイン提供）
 
-- `/read-pdf <path> [--pages N] [--interval N]` — PDF をページごとに読み込み Markdown サマリーを生成。出力先: `book_analysis/`
+コマンド・スキル・フック・MCP は `my-plugin` プラグインが提供する。プロジェクト内の `.claude/commands/` や `.claude/skills/` には**置かれない**（プラグインキャッシュ `~/.claude/plugins/cache/.../my-plugin/` に住み、そこから自動で効く）。
 
-## 利用可能なスキル (`.claude/skills/`)
+- `/setup-project [--force] [--no-codex]` — このルール一式・Codex 機械をプロジェクトに展開／更新する
+- `/markitdown`（スキル） — Office/PDF/画像等を Markdown へ忠実変換（PDF の内容を読む・要約する場合もまずこれで変換する）
 
-Claude Code では `/skill-name` で起動できる。他ハーネスで同じ手順を使う場合は、該当する `.claude/skills/<name>/SKILL.md` を直接参照する。
+## 利用可能なスキル（`my-plugin` プラグイン提供）
+
+Claude Code では `/skill-name` で起動できる。プラグインが提供するので、**プロジェクト内に `.claude/skills/` は存在しない**。Codex 等の他ハーネスで同じ手順を使う場合は、プラグインリポジトリ（`my-plugin/skills/<name>/SKILL.md`）を参照する。
 
 - `find-skills` — インストール済みスキルの探索
+- `markitdown` — ファイル → Markdown 変換（markitdown CLI）
 - `tdd-workflow` / `security-review` / `strategic-compact` / `deep-research` / `documentation-lookup`
 - `agent-introspection-debugging` / `eval-harness` / `coding-standards` / `api-design` / `mcp-server-patterns` / `e2e-testing`
 
@@ -34,11 +39,11 @@ Claude Code では `/skill-name` で起動できる。他ハーネスで同じ�
 | 「X はどこで定義？」「シンボル X 検索」 | `codegraph_search` |
 | 「Y を呼ぶのは？」 | `codegraph_callers` |
 | 「Y は何を呼ぶ？」 | `codegraph_callees` |
-| 「X から Y への経路」 | `codegraph_trace` |
+| 「X から Y への経路・フロー」 | `codegraph_explore` |
 | 「Z を変えると何が壊れる？」 | `codegraph_impact` |
 | 「Y のシグネチャ/ソース」 | `codegraph_node` |
-| 「タスク用の context」 | `codegraph_context` |
-| 「複数シンボルのソース一括」 | `codegraph_explore` |
+| 「ファイル構成・一覧」 | `codegraph_files` |
+| 「複数シンボルのソース一括／概観」 | `codegraph_explore` |
 | 「index は健康？」 | `codegraph_status` |
 
 詳細な使い方ガイドは [`.claude/CLAUDE.md`](.claude/CLAUDE.md)（CodeGraph 公式の説明）を参照。
@@ -47,8 +52,8 @@ Claude Code では `/skill-name` で起動できる。他ハーネスで同じ�
 
 ## メモリと学習
 
-- **`.claude/sessions/`** — `session_start.py` / `session_end.py` / `pre_compact.py` フックが自動保存（要 settings.local.json 登録）
-- **`.claude/instincts/`** — 再利用可能な経験則（YAML）。詳細は `.claude/instincts/README.md`
+- **`.claude/sessions/`** — `session_start` / `session_end` / `pre_compact` フックが自動保存（フックは `my-plugin` 提供。`CLAUDE_SESSION_PERSIST=1` の時だけ動作。`.claude/sessions/` は git 管理外に）
+- **`.claude/instincts/`** — 再利用可能な経験則（YAML）。使う場合のみ作成する
 
 ## Codex 連携ワークフロー
 
@@ -56,7 +61,7 @@ Claude Code では `/skill-name` で起動できる。他ハーネスで同じ�
 
 ## 参照ドキュメント (`.claude/docs/`)
 
-大きめのリファレンスは `.claude/docs/` に置き、必要時に `@.claude/docs/<file>.md` で参照する。
+大きめのリファレンスはプロジェクトで必要になったら `.claude/docs/` に置き、`@.claude/docs/<file>.md` で参照する（既定では存在しない）。
 
 ---
 
@@ -69,3 +74,4 @@ Claude Code では `/skill-name` で起動できる。他ハーネスで同じ�
 @.claude/rules/git-workflow.md
 @.claude/rules/codex-workflow.md
 @.claude/rules/security.md
+@.claude/rules/skills.md

@@ -1,0 +1,119 @@
+# .claude/justfile — Codex 連携レシピ
+#
+# このファイルは .claude/ 配下に置かれ、プロジェクト直下の justfile と衝突しない。
+# 各レシピは `root`（このファイルのある .claude/ の親 = プロジェクトルート）を cwd として
+# 実行される（= .claude/tools/... や .tasks/ などの相対パスがそのまま解決される）。
+#
+# root は source_directory() から求める。これにより:
+#   - `just -f .claude/justfile <recipe>`           で直接呼んでも
+#   - プロジェクト直下の justfile に `import '.claude/justfile'` を書いて `just <recipe>` でも
+# cwd が同じくリポルートに揃う。（`set working-directory := '..'` は import すると基準が
+# ズレるため使わない。import ならレシピがフラットになりシェル補完も効くので推奨。）
+#
+# セキュリティ: task name はユーザー入力なので、シェルへ渡す箇所は just の `quote()` で
+# 安全に単一引用化し、各レシピ冒頭で英数字 . _ - のみに検証する（コマンドインジェクション・
+# path traversal 対策）。
+#
+# 使い方:
+#   just -f .claude/justfile codex-run <task-name>      # 直接
+#   alias jc='just -f .claude/justfile'                 # alias なら  jc codex-run <task-name>
+#   # 推奨: プロジェクト直下の justfile に  import '.claude/justfile'  → `just codex-run <task-name>`（補完あり）
+
+root := source_directory() / '..'
+
+default:
+    @just -f "{{ source_directory() }}/justfile" --list
+
+# Codex にタスクファイルを渡して実行する
+# 使い方: just codex-run <task-name>  (.tasks/<task-name>.md を渡す)
+codex-run name:
+    @cd "{{ root }}" && python3 .claude/tools/codex/run.py {{ quote(name) }}
+
+# タスクファイルを新規作成する
+# 使い方: just codex-new-task <task-name>
+# FORCE=1 で既存 .tasks/<task-name>.md の上書きを許可
+codex-new-task name:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    name={{ quote(name) }}
+    [[ "$name" =~ ^[A-Za-z0-9._-]+$ && "$name" != *..* ]] || { echo "不正なタスク名: $name（英数字 . _ - のみ）" >&2; exit 1; }
+    cd "{{ root }}"
+    mkdir -p .tasks
+    task=".tasks/${name}.md"
+    if [ -e "$task" ] && [ "${FORCE:-0}" != "1" ]; then
+        echo "Task already exists: $task (set FORCE=1 to overwrite)" >&2
+        exit 1
+    fi
+    printf "# %s\n\n## 概要\n\n## 実装方針\n\n## 注意事項\n" "$name" > "$task"
+    echo "Created: $task"
+
+# 未処理タスク一覧
+codex-tasks:
+    @cd "{{ root }}" && (ls .tasks/*.md 2>/dev/null || echo "no task")
+
+# Codex を git worktree 隔離で実行する（並列実行時に推奨）
+# worktree: .worktrees/<task-name>/、branch: codex/<task-name>
+# 使い方: just codex-run-isolated <task-name>
+codex-run-isolated name:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    name={{ quote(name) }}
+    [[ "$name" =~ ^[A-Za-z0-9._-]+$ && "$name" != *..* ]] || { echo "不正なタスク名: $name（英数字 . _ - のみ）" >&2; exit 1; }
+    cd "{{ root }}"
+    task=".tasks/${name}.md"
+    if [ ! -f "$task" ]; then
+        echo "タスクファイルが見つかりません: $task" >&2
+        exit 1
+    fi
+    wt=".worktrees/${name}"
+    branch="codex/${name}"
+    if [ ! -d "$wt" ]; then
+        git worktree add -b "$branch" "$wt" HEAD
+    fi
+    mkdir -p "$wt/.tasks"
+    cp "$task" "$wt/$task"
+    (cd "$wt" && python3 .claude/tools/codex/run.py "$name")
+    echo "完了: $wt (branch: $branch)"
+    echo "マージ例: git merge --no-ff $branch  または  cd $wt && git diff main"
+    echo "破棄例:   just codex-cleanup-isolated $name"
+
+# worktree とブランチを削除する
+# 使い方: just codex-cleanup-isolated <task-name>
+codex-cleanup-isolated name:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    name={{ quote(name) }}
+    [[ "$name" =~ ^[A-Za-z0-9._-]+$ && "$name" != *..* ]] || { echo "不正なタスク名: $name（英数字 . _ - のみ）" >&2; exit 1; }
+    cd "{{ root }}"
+    wt=".worktrees/${name}"
+    branch="codex/${name}"
+    if [ -d "$wt" ]; then
+        git worktree remove --force "$wt"
+    fi
+    git branch -D "$branch" 2>/dev/null || true
+    echo "削除: $wt, $branch"
+
+# CodeGraph index を作成・再構築する（初回または手動再構築時）
+# 通常はファイル監視で自動更新されるので不要
+codegraph-init:
+    @cd "{{ root }}" && npx -y @colbymchenry/codegraph init -i
+
+# CodeGraph index を完全に再インデックスする
+codegraph-index:
+    @cd "{{ root }}" && npx -y @colbymchenry/codegraph index
+
+# CodeGraph index を差分更新する
+codegraph-sync:
+    @cd "{{ root }}" && npx -y @colbymchenry/codegraph sync
+
+# CodeGraph の健康確認
+codegraph-status:
+    @cd "{{ root }}" && npx -y @colbymchenry/codegraph status
+
+# CodeGraph MCP / watcher プロセスを停止する
+# 注意: パターンは "@colbymchenry/codegraph" に限定する。
+# `-f` はコマンドライン全体にマッチするため、"codegraph" だと
+# `just codegraph-stop` 自身にマッチして自滅し SIGTERM になる。
+codegraph-stop:
+    -pkill -f "@colbymchenry/codegraph"
+    @echo "codegraph processes stopped"
