@@ -9,8 +9,9 @@ import veriq as vq
 from fastapi.testclient import TestClient
 
 from craft.api.main import app
+from craft.core import paths
 from craft.core.discovery import discover_systems, get_scope
-from craft.core.pipeline.merge import MERGED_TOML, merge
+from craft.core.pipeline.merge import merge
 from craft.schema import default_registry
 
 
@@ -47,7 +48,7 @@ def test_cross_scope_evaluate(clean_generated_dir):
         project.add_scope(scope)
 
     merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, paths.MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
 
     assert result.success is True, f"errors: {result.errors}"

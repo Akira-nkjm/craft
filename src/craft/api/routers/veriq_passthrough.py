@@ -12,8 +12,9 @@ import veriq as vq
 from fastapi import APIRouter, Query
 
 from craft.api.errors import CraftAPIError, NotFoundError, ValidationFailedError
+from craft.core import paths
 from craft.core.discovery import get_scope
-from craft.core.pipeline.merge import MERGED_TOML, MergeConflict, merge
+from craft.core.pipeline.merge import MergeConflict, merge
 from craft.schema import default_registry
 
 router = APIRouter(prefix="/veriq", tags=["veriq"])
@@ -177,7 +178,7 @@ def get_trace() -> dict[str, Any]:
         raise CraftAPIError(f"merge failed: {e}") from e
 
     try:
-        model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+        model_data = vq.load_model_data_from_toml(project, paths.MERGED_TOML)
         result = vq.evaluate_project(project, model_data)
     except Exception as e:  # veriq 内部例外を 500 として包む
         raise CraftAPIError(f"veriq evaluation failed: {e}") from e

@@ -2,8 +2,9 @@
 
 import veriq as vq
 
+from craft.core import paths
 from craft.core.discovery import get_scope
-from craft.core.pipeline.merge import MERGED_TOML, merge
+from craft.core.pipeline.merge import merge
 
 
 def test_evaluate_project_runs_and_reports_verifications(clean_generated_dir):
@@ -13,7 +14,7 @@ def test_evaluate_project_runs_and_reports_verifications(clean_generated_dir):
         assert scope is not None
         project.add_scope(scope)
     merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, paths.MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
 
     assert result.success is True

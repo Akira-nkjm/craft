@@ -2,8 +2,8 @@
 
 from typing import Any
 
+from craft.core import paths
 from craft.core.discovery import get_scope
-from craft.core.paths import MERGED_TOML
 from craft.core.pipeline.merge import merge
 from craft.core.serialization import to_jsonable
 from craft.schema import default_registry
@@ -21,7 +21,7 @@ def handle_verify_all() -> Any:
 
     project = _build_project()
     merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, paths.MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
     out: dict[str, Any] = {"success": result.success, "errors": [str(e) for e in result.errors]}
     scopes: dict[str, Any] = {}
@@ -49,7 +49,7 @@ def _run_veriq_node(system: str, name: str, *, verify: bool) -> Any:
 
     project = _build_project()
     merge()
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, paths.MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
     tree = result.get_scope_tree(system)
     if tree is None:

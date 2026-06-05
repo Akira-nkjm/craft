@@ -9,7 +9,7 @@ from typing import Any
 
 import veriq as vq
 
-from craft.core.paths import MERGED_TOML
+from craft.core import paths
 from craft.core.persistence.runs import (
     create_run_dir,
     new_run_id,
@@ -26,10 +26,10 @@ def run_verify_core() -> dict[str, Any]:
     started = time.monotonic()
 
     merge_result, _ = merge()
-    input_bytes = MERGED_TOML.read_bytes()
+    input_bytes = paths.MERGED_TOML.read_bytes()
     input_sha = hashlib.sha256(input_bytes).hexdigest()
 
-    model_data = vq.load_model_data_from_toml(project, MERGED_TOML)
+    model_data = vq.load_model_data_from_toml(project, paths.MERGED_TOML)
     result = vq.evaluate_project(project, model_data)
 
     run_id = new_run_id(input_sha=input_sha)
