@@ -3,36 +3,35 @@
 import hashlib
 import tempfile
 import time
+import tomllib
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import tomli_w
 import veriq as vq
 
-from craft.core import paths
 from craft.core.persistence.runs import (
     create_run_dir,
     new_run_id,
     update_latest,
     write_run_artifacts,
 )
-from craft.core.pipeline.merge import merge
 from craft.core.pipeline.veriq_project import build_project_with_scope_input
 from craft.core.serialization import to_jsonable
 
 
 def run_verify_core() -> dict[str, Any]:
-    # データは scope-input（各 systems/<name>/data.toml）から直接ロードする。
-    # merge() / merged.toml は run の artifact・provenance 用に温存。
+    # SSOT: 各 scope は自分の systems/<name>/data.toml を直接読む（scope-input）。
+    # merge / merged.toml には依存しない。provenance は data.toml 群のハッシュ、
+    # run の input artifact は data.toml を結合した派生スナップショット。
     project = build_project_with_scope_input()
     started = time.monotonic()
 
-    merge_result, _ = merge()
-    input_bytes = paths.MERGED_TOML.read_bytes()
-    input_sha = hashlib.sha256(input_bytes).hexdigest()
-
     model_data = vq.load_model_data(project)
     result = vq.evaluate_project(project, model_data)
+
+    input_bytes, input_sha, sources = _snapshot_inputs(project)
 
     run_id = new_run_id(input_sha=input_sha)
     create_run_dir(run_id)
@@ -54,16 +53,32 @@ def run_verify_core() -> dict[str, Any]:
     update_latest(run_id)
 
     payload = _result_payload(result)
-    payload.update(
-        {
-            "run_id": run_id,
-            "merge": {
-                "systems": list(merge_result.systems),
-                "source_files": merge_result.source_files,
-            },
-        }
-    )
+    payload.update({"run_id": run_id, "sources": sources})
     return payload
+
+
+def _snapshot_inputs(project: vq.Project) -> tuple[bytes, str, dict[str, str]]:
+    """各 scope の data.toml から provenance と結合スナップショットを作る。
+
+    SSOT は data.toml なので、provenance は merged.toml ではなく data.toml 群の
+    内容から計算する。
+
+    Returns:
+        (combined_snapshot_bytes, input_sha, {data_path: sha256}).
+    """
+    combined: dict[str, Any] = {}
+    sources: dict[str, str] = {}
+    digest = hashlib.sha256()
+    for scope_name, scope in sorted(project.scopes.items()):
+        src = scope.input_path
+        if src is None or not src.exists():
+            continue
+        raw_bytes = src.read_bytes()
+        combined[scope_name] = {"model": tomllib.loads(raw_bytes.decode())}
+        sources[str(src)] = hashlib.sha256(raw_bytes).hexdigest()
+        digest.update(str(src).encode())
+        digest.update(raw_bytes)
+    return tomli_w.dumps(combined).encode(), digest.hexdigest(), sources
 
 
 def _export_result_toml(

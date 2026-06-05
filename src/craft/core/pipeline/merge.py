@@ -1,5 +1,9 @@
 """Merge engine — systems/*/data.toml → generated/merged.toml。
 
+**export 専用**: merged.toml は data.toml を 1 ファイルに束ねた派生成果物。
+verify/eval は scope-input で各 data.toml を直接読むため merge には依存しない
+（`craft merge` / `GET /merged` の combined export 用途のみ）。
+
 仕様: plan/Craft/01_仕様/データパイプライン.md §3
 """
 

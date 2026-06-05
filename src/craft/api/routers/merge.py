@@ -1,4 +1,9 @@
-"""POST /merge / GET /merged — TOML merge エンドポイント。"""
+"""POST /merge / GET /merged — TOML merge エンドポイント（export 専用）。
+
+merged.toml は全 system の data.toml を 1 ファイルに束ねた**派生 export 成果物**。
+verify/eval は各 data.toml を scope-input で直接読むため、これらは検証に不要で、
+デバッグ・外部連携用の combined ビューとしてのみ提供する。
+"""
 
 from typing import Any
 

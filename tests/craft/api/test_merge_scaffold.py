@@ -49,11 +49,12 @@ def test_post_scaffold_unknown_404():
     assert r.status_code == 404
 
 
-def test_verify_via_merged(clean_generated_dir):
-    """/verify は内部で merge → merged.toml → veriq を回す。"""
+def test_verify_via_scope_input(clean_generated_dir):
+    """/verify は scope-input（各 data.toml を直接ロード）で veriq を回す。"""
     with TestClient(app) as client:
         r = client.post("/verify")
     assert r.status_code == 200
     body = r.json()
     assert body["success"] is True
-    assert "power" in body["merge"]["systems"]
+    # provenance は data.toml 群（merged.toml ではない）。power の data.toml を含む。
+    assert any("power" in src for src in body["sources"])
