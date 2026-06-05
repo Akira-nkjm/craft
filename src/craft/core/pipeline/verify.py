@@ -17,19 +17,21 @@ from craft.core.persistence.runs import (
     write_run_artifacts,
 )
 from craft.core.pipeline.merge import merge
-from craft.core.pipeline.veriq_project import build_project
+from craft.core.pipeline.veriq_project import build_project_with_scope_input
 from craft.core.serialization import to_jsonable
 
 
 def run_verify_core() -> dict[str, Any]:
-    project = build_project()
+    # データは scope-input（各 systems/<name>/data.toml）から直接ロードする。
+    # merge() / merged.toml は run の artifact・provenance 用に温存。
+    project = build_project_with_scope_input()
     started = time.monotonic()
 
     merge_result, _ = merge()
     input_bytes = paths.MERGED_TOML.read_bytes()
     input_sha = hashlib.sha256(input_bytes).hexdigest()
 
-    model_data = vq.load_model_data_from_toml(project, paths.MERGED_TOML)
+    model_data = vq.load_model_data(project)
     result = vq.evaluate_project(project, model_data)
 
     run_id = new_run_id(input_sha=input_sha)

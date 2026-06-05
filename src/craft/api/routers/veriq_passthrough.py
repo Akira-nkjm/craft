@@ -12,9 +12,8 @@ import veriq as vq
 from fastapi import APIRouter, Query
 
 from craft.api.errors import CraftAPIError, NotFoundError, ValidationFailedError
-from craft.core import paths
 from craft.core.discovery import get_scope
-from craft.core.pipeline.merge import MergeConflict, merge
+from craft.core.pipeline.veriq_project import build_project_with_scope_input
 from craft.schema import default_registry
 
 router = APIRouter(prefix="/veriq", tags=["veriq"])
@@ -170,15 +169,11 @@ def get_node_detail(node_path: str) -> dict[str, Any]:
 @router.get("/trace")
 def get_trace() -> dict[str, Any]:
     """traceability report (要求 ↔ verification マッピング)。"""
-    project = _build_project()
+    # データは scope-input（各 systems/<name>/data.toml）から直接ロードする。
+    project = build_project_with_scope_input()
 
     try:
-        merge()
-    except MergeConflict as e:
-        raise CraftAPIError(f"merge failed: {e}") from e
-
-    try:
-        model_data = vq.load_model_data_from_toml(project, paths.MERGED_TOML)
+        model_data = vq.load_model_data(project)
         result = vq.evaluate_project(project, model_data)
     except Exception as e:  # veriq 内部例外を 500 として包む
         raise CraftAPIError(f"veriq evaluation failed: {e}") from e

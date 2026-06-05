@@ -54,7 +54,7 @@ def extract_analysis_value(result: Any, system: str, name: str, *, verify: bool)
     """Extract a named analysis node value from a veriq evaluation result.
 
     Args:
-        result: vq.EvaluationResult returned by evaluate_project_from_merged().
+        result: vq.EvaluationResult returned by evaluate_project_via_scope_input().
         system: scope name.
         name: analysis name.
         verify: True for verification nodes, False for calculation nodes.
@@ -119,9 +119,9 @@ def _run_adhoc(
 
 def _run_via_veriq(adef: AnalysisDefinition) -> AnalysisRunResult:
     assert adef.system is not None
-    from craft.core.pipeline.veriq_project import evaluate_project_from_merged
+    from craft.core.pipeline.veriq_project import evaluate_project_via_scope_input
 
-    _, result = evaluate_project_from_merged()
+    _, result = evaluate_project_via_scope_input()
     value = extract_analysis_value(result, adef.system, adef.name, verify=adef.verify)
 
     return AnalysisRunResult(
