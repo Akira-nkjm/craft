@@ -1,490 +1,614 @@
 # Structure system instance data
 #
-# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
-#   - SEIRIOS_コンポ管理シート / 子衛星1 Structure / Power（HRM）セクション
+# Source: ONGLAISAT（6U 地球観測 CubeSat）構体系
+#   - [S2E]  s2e-mobc-settings/.../satellite_structure.ini（フライト確定 質量・慣性・表面）
+#   - [CSV]  99_Sources/raw/mass_inertia_breakdown.csv §1.structure（部品表 CAD-DD 列）
+#   - [PCDU] 03_Power/PCDU.md §4（HRM ch12 5.19W）
+#   - [MD]   08_Structure/Structure and Configuration.md
+#   - [MB]   00_System/Mass Budget.md
+#
+# 値の信頼性凡例:
+#   [確定値] = S2E ini / SAP-DD CAD 列（フライトモデル反映）
+#   [推定]   = CAD 参照値・設計途中値
+#   TBD      = 未確定
 
 
 
-# === Frames (4 面の構体フレーム) ===
-# コンポ管理: Frame_MY 750g, Frame_PY/PZ/MZ 各 550g
+# === Frames ===
+# Sony Group 共同開発・製造（PX/MX frame_sony）。CSV §1.structure CAD-DD 列から採用。
+# 全アルミ（密度 2.7 g/cm³）構造。[CSV §1.structure]
 
-[frames.my.spec]
-mass_kg = 0.750
-material = "Al7075"
-yield_strength_mpa = 503.0
+[frames.spec]
+mass_kg            = 0.17256   # PX frame_sony 172.56g — 代表 spec [確定値 CAD-DD]
+material           = "Al"      # アルミ 密度 2.7 g/cm³ [CSV §1.structure]
+yield_strength_mpa = 0.0       # TBD（合金グレード未確定）
 
-[frames.my.design]
+[frames.px_frame.design]
 quantity = 1
 
-[frames.my.design.placement]
-face = "MY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 200.0
-dy = 200.0
-dz = 200.0
-rz = 0.0
-side = "IN"
-cad_file = ""
+[frames.px_frame.design.placement]
+face         = "PX"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 100.0   # 機体エンベロープ X [S2E 面定義]
+dy           = 226.3   # 機体エンベロープ Y [S2E]
+dz           = 366.0   # 機体エンベロープ Z [S2E]
+rz           = 0.0
+side         = "IN"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
+
+[frames.px_frame.meta]
+notes = "PX frame_sony 172.56g — Sony 製フレーム [確定値 CAD-DD]"
 
 
-[frames.py.spec]
-mass_kg = 0.550
-material = "Al7075"
-yield_strength_mpa = 503.0
+[frames.mx_frame.spec]
+mass_kg            = 0.46015   # MX frame_sony 460.15g 最重量フレーム [確定値 CAD-DD]
+material           = "Al"
+yield_strength_mpa = 0.0
 
-[frames.py.design]
+[frames.mx_frame.design]
 quantity = 1
 
-[frames.py.design.placement]
-face = "PY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 200.0
-dy = 200.0
-dz = 200.0
-rz = 0.0
-side = "IN"
-cad_file = ""
+[frames.mx_frame.design.placement]
+face         = "MX"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 100.0
+dy           = 226.3
+dz           = 366.0
+rz           = 0.0
+side         = "IN"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
+
+[frames.mx_frame.meta]
+notes = "MX frame_sony 460.15g — Sony 製フレーム・最重量 [確定値 CAD-DD]"
 
 
-[frames.pz.spec]
-mass_kg = 0.550
-material = "Al7075"
-yield_strength_mpa = 503.0
 
-[frames.pz.design]
+# === StructuralPanels ===
+# 外板パネル（PX plate, PY/MY plate, PZ/MZ Plate_sony, MY_Cover_2）。
+# CSV §1.structure CAD-DD 列から採用。[CSV §1.structure]
+
+[structural_panels.spec]
+mass_kg      = 0.14666   # PX plate (Assem33) 代表 spec [確定値 CAD-DD]
+material     = "Al"
+thickness_mm = 0.0       # TBD（CAD から要抽出）
+
+[structural_panels.px_plate.design]
 quantity = 1
 
-[frames.pz.design.placement]
-face = "PZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 200.0
-dy = 200.0
-dz = 200.0
-rz = 0.0
-side = "IN"
-cad_file = ""
+[structural_panels.px_plate.design.placement]
+face         = "PX"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 100.0
+dy           = 226.3
+dz           = 5.0
+rz           = 0.0
+side         = "OUT"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
+
+[structural_panels.px_plate.meta]
+notes = "Assem33 146.66g [確定値 CAD-DD]"
 
 
-[frames.mz.spec]
-mass_kg = 0.550
-material = "Al7075"
-yield_strength_mpa = 503.0
+[structural_panels.py_plate.spec]
+mass_kg      = 0.06257   # PY_Plate [確定値 CAD-DD]
+material     = "Al"
+thickness_mm = 0.0
 
-[frames.mz.design]
+[structural_panels.py_plate.design]
 quantity = 1
 
-[frames.mz.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 200.0
-dy = 200.0
-dz = 200.0
-rz = 0.0
-side = "IN"
-cad_file = ""
+[structural_panels.py_plate.design.placement]
+face         = "PY"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 226.3
+dy           = 100.0
+dz           = 5.0
+rz           = 0.0
+side         = "OUT"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
+
+[structural_panels.py_plate.meta]
+notes = "PY_Plate 62.57g [確定値 CAD-DD]"
 
 
+[structural_panels.my_plate.spec]
+mass_kg      = 0.07003   # MY_Plate [確定値 CAD-DD]
+material     = "Al"
+thickness_mm = 0.0
 
-# === Structural Panels (外板 5 枚) ===
-# コンポ管理: Panel_PX/MX 80g, PZ/MZ 40g, PY 200g
-
-[structural_panels.px.spec]
-mass_kg = 0.080
-material = "Al honeycomb"
-thickness_mm = 5.0
-
-[structural_panels.px.design]
+[structural_panels.my_plate.design]
 quantity = 1
 
-[structural_panels.px.design.placement]
-face = "PX"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 100.0
-dy = 200.0
-dz = 5.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
+[structural_panels.my_plate.design.placement]
+face         = "MY"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 226.3
+dy           = 100.0
+dz           = 5.0
+rz           = 0.0
+side         = "OUT"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
+
+[structural_panels.my_plate.meta]
+notes = "MY_Plate 70.03g [確定値 CAD-DD]"
 
 
-[structural_panels.mx.spec]
-mass_kg = 0.080
-material = "Al honeycomb"
-thickness_mm = 5.0
+[structural_panels.pz_plate.spec]
+mass_kg      = 0.01050   # PZ_Plate_sony [確定値 CAD-DD]
+material     = "Al"
+thickness_mm = 0.0
 
-[structural_panels.mx.design]
+[structural_panels.pz_plate.design]
 quantity = 1
 
-[structural_panels.mx.design.placement]
-face = "MX"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 100.0
-dy = 200.0
-dz = 5.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
+[structural_panels.pz_plate.design.placement]
+face         = "PZ"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 100.0
+dy           = 226.3
+dz           = 5.0
+rz           = 0.0
+side         = "OUT"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
+
+[structural_panels.pz_plate.meta]
+notes = "PZ_Plate_sony 10.50g — Sony 製 [確定値 CAD-DD]"
 
 
-[structural_panels.pz.spec]
-mass_kg = 0.040
-material = "Al honeycomb"
-thickness_mm = 5.0
+[structural_panels.mz_plate.spec]
+mass_kg      = 0.01159   # MZ_Plate-sony-logo [確定値 CAD-DD]
+material     = "Al"
+thickness_mm = 0.0
 
-[structural_panels.pz.design]
+[structural_panels.mz_plate.design]
 quantity = 1
 
-[structural_panels.pz.design.placement]
-face = "PZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 100.0
-dy = 100.0
-dz = 5.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
+[structural_panels.mz_plate.design.placement]
+face         = "MZ"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 100.0
+dy           = 226.3
+dz           = 5.0
+rz           = 0.0
+side         = "OUT"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
+
+[structural_panels.mz_plate.meta]
+notes = "MZ_Plate-sony-logo 11.59g — Sony 製（ロゴ入り） [確定値 CAD-DD]"
 
 
-[structural_panels.mz.spec]
-mass_kg = 0.040
-material = "Al honeycomb"
-thickness_mm = 5.0
+[structural_panels.my_cover.spec]
+mass_kg      = 0.01215   # MY_Cover_2 [確定値 CAD-DD]
+material     = "Al"
+thickness_mm = 0.0
 
-[structural_panels.mz.design]
+[structural_panels.my_cover.design]
 quantity = 1
 
-[structural_panels.mz.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 100.0
-dy = 100.0
-dz = 5.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
+[structural_panels.my_cover.design.placement]
+face         = "MY"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 100.0
+dy           = 50.0
+dz           = 5.0
+rz           = 0.0
+side         = "OUT"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
 
-
-[structural_panels.py.spec]
-mass_kg = 0.200 # SAP マウント側、大型パネル
-material = "Al honeycomb"
-thickness_mm = 8.0
-
-[structural_panels.py.design]
-quantity = 1
-
-[structural_panels.py.design.placement]
-face = "PY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 200.0
-dy = 200.0
-dz = 8.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[structural_panels.my_cover.meta]
+notes = "MY_Cover_2 12.15g [確定値 CAD-DD]"
 
 
 
-# === Brackets (placeholder — 個別未記載のため暫定) ===
+# === Brackets ===
+# コーナーフレーム × 4 + SS_bracket_MZ。CSV §1.structure CAD-DD 列から採用。
+# [CSV §1.structure]
 
 [brackets.spec]
-mass_kg = 0.050
-material = "Al7075"
+mass_kg  = 0.01104   # CornerFrame1 PYPZ 代表 spec [確定値 CAD-DD]
+material = "Al"
 
-[brackets.generic.design]
+[brackets.corner_pypz.design]
 quantity = 1
 
-[brackets.generic.design.placement]
-face = "MY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 50.0
-dy = 50.0
-dz = 10.0
-rz = 0.0
-side = "IN"
-cad_file = ""
+[brackets.corner_pypz.design.placement]
+face         = "PZ"
+u            = 113.0
+v            = 0.0
+w            = 0.0
+dx           = 30.0
+dy           = 30.0
+dz           = 30.0
+rz           = 0.0
+side         = "IN"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
+
+[brackets.corner_pypz.meta]
+notes = "PYPZ_cornerFrame 11.04g [確定値 CAD-DD]"
+
+
+[brackets.corner_pymz.spec]
+mass_kg  = 0.02026   # CornerFrame2 PYMZ + SS bracket [確定値 CAD-DD]
+material = "Al"
+
+[brackets.corner_pymz.design]
+quantity = 1
+
+[brackets.corner_pymz.design.placement]
+face         = "MZ"
+u            = 113.0
+v            = 0.0
+w            = 0.0
+dx           = 30.0
+dy           = 30.0
+dz           = 30.0
+rz           = 0.0
+side         = "IN"
+cad_file     = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox  = 0
+
+[brackets.corner_pymz.meta]
+notes = "PYMZ_cornerFrame_SS_bracket 20.26g [確定値 CAD-DD]"
+
+
+[brackets.corner_mymz.spec]
+mass_kg  = 0.01442   # CornerFrame3 MYMZ + SS bracket [確定値 CAD-DD]
+material = "Al"
+
+[brackets.corner_mymz.design]
+quantity = 1
+
+[brackets.corner_mymz.design.placement]
+face         = "MZ"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 30.0
+dy           = 30.0
+dz           = 30.0
+rz           = 0.0
+side         = "IN"
+cad_file     = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox  = 0
+
+[brackets.corner_mymz.meta]
+notes = "MYMZ_cornerFrame_SS_bracket 14.42g [確定値 CAD-DD]"
+
+
+[brackets.corner_mypz.spec]
+mass_kg  = 0.03508   # CornerFrame4 MYPZ + bracket [確定値 CAD-DD]
+material = "Al"
+
+[brackets.corner_mypz.design]
+quantity = 1
+
+[brackets.corner_mypz.design.placement]
+face         = "PZ"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 30.0
+dy           = 30.0
+dz           = 30.0
+rz           = 0.0
+side         = "IN"
+cad_file     = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox  = 0
+
+[brackets.corner_mypz.meta]
+notes = "MYPZ_cornerFrame_with_bracket 35.08g [確定値 CAD-DD]"
+
+
+[brackets.ss_bracket_mz.spec]
+mass_kg  = 0.01099   # SS_bracket_MZ [確定値 CAD-DD]
+material = "SUS"
+
+[brackets.ss_bracket_mz.design]
+quantity = 1
+
+[brackets.ss_bracket_mz.design.placement]
+face         = "MZ"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 30.0
+dy           = 30.0
+dz           = 10.0
+rz           = 0.0
+side         = "IN"
+cad_file     = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox  = 0
+
+[brackets.ss_bracket_mz.meta]
+notes = "SS_bracket_MZ 10.99g — ステンレスブラケット [確定値 CAD-DD]"
 
 
 
-# === Hinges (パネル展開ヒンジ × 4) ===
-# コンポ管理: パネル展開機構 ヒンジ 20g × 4
+# === Hinges ===
+# SAP 展開ヒンジ。個別 CAD データ未掲載のため推定質量。TBD。[推定]
 
 [hinges.spec]
-mass_kg = 0.020
-deploy_angle_deg = 180.0
+mass_kg          = 0.03000   # 推定 30g/個（TBD）[推定]
+deploy_angle_deg = 180.0     # SAP 展開角度
 
-[hinges.sap_deploy.design]
-quantity = 4
+[hinges.sap_hinge.design]
+quantity = 4   # TBD — SAP × 2 wing, 各 2 ヒンジ想定 [推定]
 
-[hinges.sap_deploy.design.placement]
-face = "PY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 30.0
-dy = 30.0
-dz = 30.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
+[hinges.sap_hinge.design.placement]
+face         = "PZ"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 30.0
+dy           = 30.0
+dz           = 30.0
+rz           = 0.0
+side         = "OUT"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
+
+[hinges.sap_hinge.meta]
+notes = "SAP 展開ヒンジ — 質量・数量 TBD [推定]"
 
 
 
-# === Hold/Release Mechanism (HRM × 2) ===
-# コンポ管理: パネル展開機構 HRM 30g × 2
-# 子機電力消費 行4: 5.0W/個, 分離後 1 回のみ → 通常運用は全 OFF
+# === Hold/Release Mechanisms ===
+# HRM-008-HRM ASSY × 2（SAP 拘束・解放）。
+# PCDU ch12 経由 5.19W 駆動（12V × 3.6A 電流制限）。展開後 1 回のみ駆動。
+# HRM-DCDC PCB ASSY1(19.02g)/ASSY2(19.18g) は power.data.toml 側で別計上。
+# [CSV §3.Power / PCDU.md §4 ch12]
 
 [hold_release_mechanisms.spec]
-mass_kg = 0.030
-power_per_unit_w = 5.0
+mass_kg           = 0.14150   # HRM-008-HRM ASSY 単体 141.5g [確定値 CSV]
+power_per_unit_w  = 5.19      # ch12 PCDU 定格 5.19W [PCDU.md §4]
 release_mechanism = "burn_wire"
 
 [hold_release_mechanisms.sap_hrm.design]
-quantity = 2
+quantity = 2  # HRM-008-HRM ASSY × 2 [確定値 CSV]
 
 [hold_release_mechanisms.sap_hrm.design.placement]
-face = "PY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 40.0
-dy = 40.0
-dz = 40.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
+face         = "PZ"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 60.0
+dy           = 60.0
+dz           = 40.0
+rz           = 0.0
+side         = "OUT"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
 
+# 展開後 1 回のみ駆動 — 通常運用中は全モード OFF
 [hold_release_mechanisms.sap_hrm.design.power_modes]
-# 通常運用中は OFF（分離後 1 回のみ駆動）
-safe = false
-sun_acquisition = false
-coarse_3axis = false
-fine_3axis = false
-propulsion = false
-mated_check = false
-mated_calibration = false
-mated_actuator = false
-coarse_ff = false
-fine_ff = false
+initial              = false
+bdot                 = false
+rough_sun_pointing   = false
+rough_three_axis_mtq = false
+rough_three_axis_rw  = false
+fine_three_axis      = false
+imaging              = false
+xband_downlink       = false
+
+[hold_release_mechanisms.sap_hrm.meta]
+notes = "HRM-008-HRM ASSY ×2 = 283g。PCDU ch12 5.19W は展開時瞬時消費。DCDC PCB ASSY1/2 は power 系で別計上 [CSV / PCDU.md §4]"
 
 
 
-# === Separation Brackets (子衛星側 × 6) ===
-# コンポ管理: 子機分離ブラケット(子衛星側) 13g × 6
+# === Separation Brackets / Connectors ===
+# ONGLAISAT は子機分離機構なし。スキーマ必須フィールドのため最小エントリを置く。
+# [推定 — ONGLAISAT 非搭載]
 
 [separation_brackets.spec]
-mass_kg = 0.013
-side = "child"
+mass_kg = 0.001  # 実質ゼロ質量プレースホルダ（ONGLAISAT 子機分離機構なし）[推定]
+side    = "child"
 
-[separation_brackets.child.design]
-quantity = 6
+[separation_brackets.placeholder.design]
+quantity = 1
 
-[separation_brackets.child.design.placement]
-face = "PY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 30.0
-dy = 30.0
-dz = 15.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
+[separation_brackets.placeholder.design.placement]
+face         = "PX"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 1.0
+dy           = 1.0
+dz           = 1.0
+rz           = 0.0
+side         = "OUT"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
 
+[separation_brackets.placeholder.meta]
+notes = "ONGLAISAT 非搭載 — 子機分離機構なし。スキーマ必須フィールドのプレースホルダ"
 
-
-# === Separation Connector (Upper × 1) ===
-# コンポ管理: 分離コネクタ（子衛星側: Upper）12g
 
 [separation_connectors.spec]
-mass_kg = 0.012
+mass_kg        = 0.001  # 実質ゼロ質量プレースホルダ（ONGLAISAT 子機分離機構なし）[推定]
 connector_type = "electrical"
-contact_count = 50
+contact_count  = 0
 
-[separation_connectors.upper.design]
+[separation_connectors.placeholder.design]
 quantity = 1
 
-[separation_connectors.upper.design.placement]
-face = "PY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 30.0
-dy = 30.0
-dz = 15.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
+[separation_connectors.placeholder.design.placement]
+face         = "PX"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 1.0
+dy           = 1.0
+dz           = 1.0
+rz           = 0.0
+side         = "OUT"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
+
+[separation_connectors.placeholder.meta]
+notes = "ONGLAISAT 非搭載 — 子機分離機構なし。スキーマ必須フィールドのプレースホルダ"
 
 
 
-# === Baffles (Mission 50g, STT 20g) ===
+# === Baffles ===
+# Korsch 望遠鏡バッフル（光学系）。質量は mission 系に含まれるが構体として計上。
+# 個別質量未確定 → 推定 50g（TBD）。[推定]
 
-[baffles.mission.spec]
-mass_kg = 0.050
-instrument = "mission_payload"
+[baffles.spec]
+mass_kg    = 0.05000   # 推定 50g（TBD）[推定]
+instrument = "korsch_telescope"
 
-[baffles.mission.design]
+[baffles.telescope.design]
 quantity = 1
 
-[baffles.mission.design.placement]
-face = "PX"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 60.0
-dy = 60.0
-dz = 60.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
+[baffles.telescope.design.placement]
+face         = "PX"    # 望遠鏡開口方向（機体 LoS 折り返し後） [MD §2]
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 80.0
+dy           = 80.0
+dz           = 50.0
+rz           = 0.0
+side         = "OUT"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
 
-
-[baffles.stt.spec]
-mass_kg = 0.020
-instrument = "star_tracker"
-
-[baffles.stt.design]
-quantity = 1
-
-[baffles.stt.design.placement]
-face = "PY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 50.0
-dy = 50.0
-dz = 50.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[baffles.telescope.meta]
+notes = "Korsch 望遠鏡バッフル — 質量 TBD [推定]"
 
 
 
-# === Counter Mass (全体 1% 想定, 100g) ===
+# === Counter Masses ===
+# 重心調整マス。個別設計値未確定 → 推定 50g（TBD）。[推定]
 
 [counter_masses.spec]
-mass_kg = 0.100
+mass_kg = 0.05000   # 推定 50g（TBD）[推定]
 
-[counter_masses.main.design]
+[counter_masses.balance.design]
 quantity = 1
 
-[counter_masses.main.design.placement]
-face = "MY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 40.0
-dy = 40.0
-dz = 40.0
-rz = 0.0
-side = "IN"
-cad_file = ""
+[counter_masses.balance.design.placement]
+face         = "MX"
+u            = 0.0
+v            = 0.0
+w            = 0.0
+dx           = 40.0
+dy           = 40.0
+dz           = 10.0
+rz           = 0.0
+side         = "IN"
+cad_file     = ""
 cad_offset_x = 0.0
 cad_offset_y = 0.0
 cad_offset_z = 0.0
-update_bbox = 0
+update_bbox  = 0
+
+[counter_masses.balance.meta]
+notes = "重心調整マス — 質量・位置 TBD [推定]"
 
 
 
-# === Fasteners (ボルト類 80g) ===
+# === Fasteners ===
+# CSV §6.fastener: ボルト・ナット類 79.77g。[CSV §6.fastener]
 
 [fasteners.spec]
-mass_kg = 0.080
-material = "A286"
+mass_kg  = 0.07977   # CSV §6 fastener 合計 [確定値 CSV]
+material = "A286"    # 推定（宇宙機標準ボルト鋼）[推定]
 
 [fasteners.main.design]
 quantity = 1
 
 
 
-# === Harness (計装類 120g) ===
+# === Harness ===
+# フライト確定値 8.925kg に含まれる「ハーネス等込み」分。
+# 個別質量は CSV 未掲載 → 推定 150g（TBD）。
+# [推定 / S2E satellite_structure.ini コメント]
 
 [harnesses.spec]
-mass_kg = 0.120
+mass_kg = 0.15000   # 推定 150g — CSV 未掲載（TBD）[推定]
 
 [harnesses.main.design]
 quantity = 1
+
+[harnesses.main.meta]
+notes = "フライト確定質量 8.925kg に含まれる配線類。個別質量 CSV 未掲載 — TBD [推定]"
