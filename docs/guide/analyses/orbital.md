@@ -157,7 +157,8 @@ $$t_{pass} \approx \frac{T}{\pi} \cdot \theta_{max}$$
 
 $$\tau \approx -\frac{H}{\Delta h_{rev}} T \cdot \ln(1 - \Delta h_{rev}/h_0)$$
 
-ここで $\Delta h_{rev} = 2\pi a^2 \rho_a / (B \cdot v)$、$B = m/(C_D A)$ は弾道係数。
+ここで $\Delta h_{rev} = 2\pi a^2 \rho_a / B$（King-Hele の 1 周あたり高度低下 [m]）、$B = m/(C_D A)$ は弾道係数。
+（旧記載の $/(B \cdot v)$ は $v$ が余分で $\Delta h_{rev}$ が時間次元になり $\ln(1-\Delta h_{rev}/h_0)$ と整合しないため修正。）
 
 **入力:**
 

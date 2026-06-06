@@ -10,9 +10,9 @@
     craft delete <sub> <comp> <inst>    インスタンス削除
     craft spec get <sub> <comp>         MultiInstance の shared spec 取得
     craft spec set <sub> <comp>         shared spec 更新（--data/--json/stdin）
-    craft merge [--check] [--dry-run]   merged.toml 再生成
+    craft merge [--check] [--dry-run]   merged.toml 生成 (export 専用・verify には不要)
     craft scaffold [<sub>] [--dry-run]  data.toml 雛形生成
-    craft verify                        merge → veriq evaluate
+    craft verify                        scope-input → veriq evaluate
     craft analysis list                 全 analysis 一覧
     craft analysis run <sub> <name>     analysis 実行
     craft history [PATH] [--limit N]    git log

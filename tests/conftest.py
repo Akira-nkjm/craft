@@ -97,7 +97,6 @@ def clean_generated_dir(tmp_path, monkeypatch):
     from craft.api.routers import merge as merge_router
     from craft.api.routers import verify as verify_router
     from craft.core import paths as core_paths
-    from craft.core.pipeline import verify as core_verify
 
     core_merge_mod = sys.modules["craft.core.pipeline.merge"]
 
@@ -113,5 +112,4 @@ def clean_generated_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(core_merge_mod, "MERGED_LOCK", new_lock)
     monkeypatch.setattr(merge_router, "MERGED_TOML", new_toml)
     monkeypatch.setattr(verify_router, "MERGED_TOML", new_toml, raising=False)
-    monkeypatch.setattr(core_verify, "MERGED_TOML", new_toml)
     yield gen_dir

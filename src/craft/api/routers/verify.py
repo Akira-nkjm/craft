@@ -1,13 +1,13 @@
 """POST /verify — veriq による検証を同期実行。
 
-実行前に自動で `generated/merged.toml` を再生成し、それを veriq の入力とする。
+入力は各 `systems/<name>/data.toml` を scope-input で直接ロードする
+（`merged.toml` には依存しない。merge は別途 export 専用）。
 """
 
 from fastapi import APIRouter
 
-from craft.api.errors import ConflictError, CraftAPIError, NotFoundError
+from craft.api.errors import CraftAPIError, NotFoundError
 from craft.core.persistence.jobs import get_job, job_to_dict, submit_verify_job
-from craft.core.pipeline.merge import MergeConflict
 from craft.core.pipeline.verify import run_verify_core
 
 router = APIRouter(prefix="/verify", tags=["verify"])
@@ -17,8 +17,6 @@ router = APIRouter(prefix="/verify", tags=["verify"])
 def run_verify():
     try:
         return run_verify_core()
-    except MergeConflict as e:
-        raise ConflictError(f"merge failed: {e}") from e
     except Exception as e:
         raise CraftAPIError(f"veriq evaluation failed: {e}") from e
 

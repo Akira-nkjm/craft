@@ -34,7 +34,10 @@ TAGS_METADATA = [
     {"name": "validate", "description": "Pydantic schema validation only"},
     {"name": "verify", "description": "veriq 検証実行"},
     {"name": "runs", "description": "verification run history"},
-    {"name": "merge", "description": "systems/*/data.toml → generated/merged.toml"},
+    {
+        "name": "merge",
+        "description": "systems/*/data.toml → merged.toml (export 専用・verify には不要)",
+    },
     {"name": "scaffold", "description": "registry → data.toml 雛形生成"},
     {"name": "veriq", "description": "veriq pass-through (graph / trace / schema)"},
     {"name": "history", "description": "git log / diff"},

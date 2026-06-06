@@ -30,7 +30,10 @@ def merge_cmd(
     dry_run: bool = typer.Option(False, "--dry-run", help="書き込まず stdout に出力"),
     check: bool = typer.Option(False, "--check", help="lock が古ければ exit 1 (CI 用)"),
 ) -> None:
-    """全 systems/*/data.toml を generated/merged.toml に統合。"""
+    """全 systems/*/data.toml を generated/merged.toml に統合（export 専用）。
+
+    merged.toml は combined export 成果物。verify は data.toml を直接読むため不要。
+    """
     _bootstrap()
     from craft.core.pipeline.merge import is_merge_stale, merge
 
