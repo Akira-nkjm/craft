@@ -8,25 +8,26 @@ from craft.schema import Config, MultiInstance, fld
 class OperationMode(StrEnum):
     """衛星の運用モード。値はここで自由に追加・変更できる。
 
-    Source: SEIRIOS 子衛星 電源モード検討 (shared drive: SEIRIOS)。
-    フェーズ別に 子衛星単独運用 / 合体時特殊運用 / FF運用 を区切る。
+    Source: ONGLAISAT C2A フライトソフト Mode Manager（権威・一次情報）。
+      - AOBC: `MM_START_TRANSITION` 引数定義
+        `Start=0; Initial=1; Bdot=2; SunPoint=3; R3ax-MTQ=4; R3ax-RW=5; F3ax=6`
+        （99_Sources/raw/tlm_cmd_db/db/cmddb, *.ops の遷移コメント）
+      - MOBC: INITIAL → NOMINAL、撮像シーケンスでミッション遷移
+    姿勢制御チェーン（C2A）に、撮像 / X帯DL の活動オーバーレイ
+    （Power Overview §5）を加えた 8 モード。
     """
 
-    # --- 子衛星単独運用 ---
-    SAFE = "safe"  # セーフモード（姿勢制御無し）
-    SUN_ACQUISITION = "sun_acquisition"  # 太陽捕捉
-    COARSE_3AXIS = "coarse_3axis"  # 粗三軸 (RW)
-    FINE_3AXIS = "fine_3axis"  # 精三軸 (STT+RW)
-    PROPULSION = "propulsion"  # 推進系運用
+    # --- 姿勢制御チェーン (C2A AOBC Mode Manager) ---
+    INITIAL = "initial"  # 起動直後（最小構成、CDH のみ）
+    BDOT = "bdot"  # デタンブル（MTQ + 磁気センサ）
+    ROUGH_SUN_POINTING = "rough_sun_pointing"  # 太陽捕捉（太陽センサ + MTQ）
+    ROUGH_THREE_AXIS_MTQ = "rough_three_axis_mtq"  # 粗三軸（MTQ 制御）
+    ROUGH_THREE_AXIS_RW = "rough_three_axis_rw"  # 粗三軸（RW 制御）
+    FINE_THREE_AXIS = "fine_three_axis"  # 精三軸（STT+RW、NOMINAL/撮像待機姿勢）
 
-    # --- 合体時 (mated) ---
-    MATED_CHECK = "mated_check"  # 子衛星動作確認
-    MATED_CALIBRATION = "mated_calibration"  # キャリブレーション
-    MATED_ACTUATOR = "mated_actuator"  # アクチュエータ動作
-
-    # --- FF 運用 (Formation Flying) ---
-    COARSE_FF = "coarse_ff"  # 粗FF（CDGNSS のみ）
-    FINE_FF = "fine_ff"  # 精FF（光学・レーザー）
+    # --- 活動オーバーレイ (MOBC ミッション / Power Overview §5) ---
+    IMAGING = "imaging"  # 撮像実行（fine_three_axis + MISSION_IF/1/2）
+    XBAND_DOWNLINK = "xband_downlink"  # X帯ダウンリンク（fine + XTx）
 
 
 class MissionProfile(Config):

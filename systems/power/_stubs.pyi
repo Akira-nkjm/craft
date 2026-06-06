@@ -8,7 +8,13 @@ class BatterySpec(BaseModel):
     temp_min_c: float
     temp_max_c: float
     capacity_wh: float
+    capacity_ah: float
     nominal_voltage_v: float
+    series_count: int
+    parallel_count: int
+    max_charge_voltage_v: float
+    charge_current_rate_c: float
+    internal_resistance_ohm: float
     manufacturer: str
 
 class BatteryDesign(BaseModel):
@@ -29,6 +35,8 @@ class PDMSpec(BaseModel):
     mass_kg: float
     power_per_unit_w: float
     rated_current_a: float
+    bus_voltage_v: float
+    channel_count: int
 
 class PDMDesign(BaseModel):
     quantity: int
@@ -47,7 +55,10 @@ class SolarPanelSpec(BaseModel):
     temp_max_c: float
     area_m2: float
     default_power_generation_per_unit_w: float
+    bol_power_w: float
+    eol_power_w: float
     efficiency: float
+    cell_type: str
 
 class SolarPanelDesign(BaseModel):
     quantity: int

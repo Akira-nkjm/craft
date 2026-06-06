@@ -10,7 +10,18 @@ veriq 制約: scope に貼られる calculation / verification の引数は全�
 from typing import Annotated
 
 import veriq as vq
-from toolbox.power.battery import required_battery_capacity_wh as tb_required_battery_capacity_wh
+from toolbox.power.battery import (
+    power_margin_pct as tb_power_margin_pct,
+)
+from toolbox.power.battery import (
+    required_battery_capacity_wh as tb_required_battery_capacity_wh,
+)
+from toolbox.power.battery import (
+    required_orbit_energy_wh as tb_required_orbit_energy_wh,
+)
+from toolbox.power.battery import (
+    usable_capacity_wh as tb_usable_capacity_wh,
+)
 
 from craft.analyses import auto_inject_refs, power_per_mode
 from craft.schema import analysis
@@ -54,32 +65,6 @@ def pdm_power_per_mode_w(
     return result
 
 
-@analysis(verify=True, desc="全バッテリーが要求 DoD 制約を満たすか")
-def verify_battery_capacity(
-    batteries: Annotated[vq.Table, vq.Ref("$.batteries")],
-) -> bool:
-    """全 battery が `capacity * DoD_max >= 50 Wh` を満たすか（仮の要求値）。"""
-    required_energy_wh = 50.0
-    if not batteries:
-        return False
-    return all(
-        b.spec.capacity_wh * b.requirements.depth_of_discharge_max >= required_energy_wh
-        for b in batteries.values()
-    )
-
-
-@analysis(
-    desc="軌道 1 周あたりに必要なエネルギー量 [Wh]",
-    imports=["orbital"],
-)
-def required_orbit_energy_wh(
-    pdm_power: Annotated[float, vq.Ref("@total_pdm_power_w")],
-    eclipse_s: Annotated[float, vq.Ref("$.orbitalparams.eclipse_duration_s", scope="orbital")],
-) -> float:
-    """eclipse 中の必要エネルギー（W * 時間）。"""
-    return pdm_power * eclipse_s / 3600.0
-
-
 @analysis(desc="モード別 全バス消費電力 [W] — 全 PowerConsuming コンポを集計")
 @auto_inject_refs(
     trait="PowerConsuming",
@@ -88,6 +73,75 @@ def required_orbit_energy_wh(
 def bus_power_per_mode_w(mode_configs, *tables) -> dict[str, float]:
     """各運用モードにおける全 PowerConsuming コンポの消費電力合計 [W]。"""
     return power_per_mode(mode_configs, *tables)
+
+
+@analysis(desc="最悪ケース（全モード中最大）のバス消費電力 [W]")
+def worst_case_bus_power_w(
+    per_mode: Annotated[dict, vq.Ref("@bus_power_per_mode_w")],
+) -> float:
+    """全運用モードのうち最大のバス消費電力 [W]。電源サイジングの最悪条件。"""
+    if not per_mode:
+        return 0.0
+    return max(per_mode.values())
+
+
+@analysis(desc="日照中の発電電力（EOL）[W] — 全 SolarPanel の eol_power_w 合計")
+def eol_generation_w(
+    panels: Annotated[vq.Table, vq.Ref("$.solar_panels")],
+) -> float:
+    """EOL の発生電力合計 [W]（MPPT 損失込み）。"""
+    if not panels:
+        return 0.0
+    return sum(p.spec.eol_power_w * p.design.quantity for p in panels.values())
+
+
+@analysis(desc="実効バッテリエネルギー [Wh]（容量 × DoD_max, toolbox.usable_capacity_wh）")
+def usable_battery_energy_wh(
+    batteries: Annotated[vq.Table, vq.Ref("$.batteries")],
+) -> float:
+    """全バッテリの実効エネルギー合計 [Wh]。DoD 上限まで放電可能な分。"""
+    if not batteries:
+        return 0.0
+    return sum(
+        tb_usable_capacity_wh(b.spec.capacity_wh, b.requirements.depth_of_discharge_max)
+        * b.design.quantity
+        for b in batteries.values()
+    )
+
+
+@analysis(
+    desc="軌道 1 周あたり蝕中に必要なエネルギー [Wh]（toolbox.required_orbit_energy_wh）",
+    imports=["orbital"],
+)
+def required_orbit_energy_wh(
+    load_w: Annotated[float, vq.Ref("@worst_case_bus_power_w")],
+    eclipse_s: Annotated[float, vq.Ref("$.orbitalparams.eclipse_duration_s", scope="orbital")],
+) -> float:
+    """蝕中の最悪負荷を賄うのに必要な 1 軌道あたりエネルギー [Wh]。"""
+    return tb_required_orbit_energy_wh(load_w, eclipse_s)
+
+
+@analysis(desc="EOL 電力マージン [%]（発電EOL vs 最悪バス負荷, toolbox.power_margin_pct）")
+def eol_power_margin_pct(
+    gen_w: Annotated[float, vq.Ref("@eol_generation_w")],
+    load_w: Annotated[float, vq.Ref("@worst_case_bus_power_w")],
+) -> float:
+    """日照時の EOL 電力マージン [%]。PDR 段階では >= 20% が目安。"""
+    if gen_w <= 0.0:
+        return 0.0
+    return tb_power_margin_pct(gen_w, load_w)
+
+
+@analysis(
+    verify=True,
+    desc="実効バッテリ容量が蝕中必要エネルギーを満たすか",
+)
+def verify_battery_capacity(
+    usable_wh: Annotated[float, vq.Ref("@usable_battery_energy_wh")],
+    required_wh: Annotated[float, vq.Ref("@required_orbit_energy_wh")],
+) -> bool:
+    """実効バッテリエネルギー >= 蝕中必要エネルギー（最悪負荷）を満たすか。"""
+    return usable_wh > 0.0 and usable_wh >= required_wh
 
 
 # ─── (ad-hoc 例) — veriq 非登録、API/CLI 専用 ─────────────────────────

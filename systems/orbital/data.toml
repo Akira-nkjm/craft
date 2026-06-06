@@ -1,13 +1,12 @@
 # orbital system data
 #
-# Source: SEIRIOS 子衛星 電源モード検討 / 発電計算用パラメーター シート
-#   shared drive: SEIRIOS / 1JZYh6Di-uHLEoDU2Q9rHu7K1VFMP4upW_TlERT3p0yQ
-
-
-
-# === Orbital Params ===
+# Source: ONGLAISAT — ISS 放出軌道（TLE NORAD 62299）
+#   高度 約410 km / 傾斜角 51.63° / 離心率 0.0010（ほぼ円）/ 平均運動 15.818 rev/day
+# 周期・食時間は toolbox.orbital（円軌道 + 円柱影モデル, β=0 最悪条件）で算出。
+#   - TLE 観測の平均運動からは周期 ~91.0 min。円軌道近似（toolbox）では 92.6 min。
+#   - 解析（@orbital_period_min 等）と整合させるため toolbox 値を採用。
 
 [orbitalparams]
-altitude_km = 600.0 # 軌道高度 [km] — SEIRIOS LEO（蝕割合 21.5%）
-period_min = 96.7 # 軌道周期 [min] (a = Re + 600 km, 円軌道)
-eclipse_duration_s = 1247.3 # 食時間 [s] (T × 21.5%)
+altitude_km = 410.0 # 軌道高度 [km] — ISS 放出軌道（撮像高度）
+period_min = 92.62 # 軌道周期 [min] (a = Re + 410 km, 円軌道 / toolbox.orbital_period_s)
+eclipse_duration_s = 2160.3 # 食時間 [s] (β=0, 円柱影 / toolbox.eclipse_duration_s) ≈ 38.9%

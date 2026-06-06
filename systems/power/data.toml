@@ -1,172 +1,143 @@
 # Power system instance data
 #
-# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
-#   - SEIRIOS_コンポ管理シート / 子衛星1
-#   - 電源モード検討 / 子衛星電力消費・子衛星発電量計算・発電計算用パラメーター
+# Source: ONGLAISAT（6U 地球観測 CubeSat）電源系（EPS）
+#   - [SAP-MasterSheet] SAP_MasterSheet_CESI_CTJ30.csv（発電・MPPT・アレイ性能 確定値）
+#   - [SPHERE論文] 宇科連2023 SPHERE-1 EYE バッテリ・太陽電池（共通6Uバス）
+#   - [S2E] s2e-mobc-settings/.../power/{sap,pcdu,battery}.ini
+#   - 質量: mass_inertia_breakdown.csv「3.Power」
 
 
 
-# === Batteries (ASXB23004 × 1) ===
-# コンポ管理 行: バッテリー/BAT, ASXB23004 (Astrex), 96.6 × 84 × 53 mm, 664g
-# 8 直 3 並（中須賀研系の標準構成、GEO-X と同等）想定
+# === Battery (Li-ion 2P3S × 1) ===
+# BAT_kumitate_asm 618.55g, モジュール 84×83×54mm。SPHERE-1 EYE 共通モジュール。
 
 [batteries.spec]
-mass_kg = 0.664
-temp_min_c = -10.0
-temp_max_c = 45.0 # Li-ion 充電上限
-capacity_wh = 80.0 # Astrex ASXB23004 概算（TBD: データシート要確認）
-nominal_voltage_v = 28.0 # 8直 × 3.5V cell
-manufacturer = "Astrex"
+mass_kg = 0.61855 # 質量 [kg]
+temp_min_c = -10.0 # 動作温度下限 [degC]
+temp_max_c = 45.0 # 動作温度上限 [degC]
+capacity_wh = 73.0 # パックエネルギー [Wh]
+capacity_ah = 6.6 # パック容量（並列込み） [Ah]
+nominal_voltage_v = 11.1 # パック公称電圧 [V]
+series_count = 3 # 直列セル数
+parallel_count = 2 # 並列セル数
+max_charge_voltage_v = 12.3 # CV 充電電圧上限 [V]
+charge_current_rate_c = 0.4 # CC 充電レート [C] [1/h]
+internal_resistance_ohm = 0.20 # 内部+配線抵抗 [ohm]
+manufacturer = "ISSL/ArkEdge (SPHERE-1 EYE 共通モジュール)" # Manufacturer
 
 [batteries.main.design]
-quantity = 1
-depth_of_discharge = 0.3 # 蝕時間 ~21 min @ 14W ≈ 5Wh 放電、80Wh 容量で DoD ~6% → 安全側
+quantity = 1 # 搭載個数
+depth_of_discharge = 0.3 # 設計時 DoD（初期）
 
-[batteries.main.design.placement]
-face = "MY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 96.6
-dy = 84.0
-dz = 53.0
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[batteries.main.design.placement] # 搭載位置・CAD パラメータ
+face = "MY" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 84.0 # Bounding box x dimension [mm]
+dy = 83.0 # Bounding box y dimension [mm]
+dz = 54.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
 [batteries.main.requirements]
-depth_of_discharge_max = 0.5
+depth_of_discharge_max = 0.5 # 要求 DoD 上限
 
 [batteries.main.meta]
-notes = "Astrex ASXB23004。子衛星 1 個構成。容量は要データシート確認"
+notes = "2P3S 6.6Ah ~73Wh。保護: 過充電12.6V/復帰12.2V, 過放電7.8V, 過電流7.0A。気密構造"
 
 
 
-# === Solar Panel (60 cells, MZ ボディマウント + PY 展開パネル) ===
-# コンポ管理 行: 太陽電池 60枚 + 展開パネル 1
-# Cell: SHARP 三接合, 37.8 × 76.4 mm, 0.00274 m²/cell, 28% efficiency
-# 発生電力: 太陽指向時全日照 16.1W, 蝕最大 14.5W (子衛星発電量計算 variant 1)
+# === Solar Array Panel (CESI CTJ30, 7s8p = 56 cells) ===
+# SAP-ASSY-D1-4_OPEN ×2 wing = 984.56g。電気設計の正 = マスターシート(56セル)。
+# 1 アレイ（56 セル）として 1 インスタンスで電気モデル化（quantity=1）。
+
+
+
+# === Solar Panel ===
 
 [solar_panels.spec]
-mass_kg = 0.003 # 1 cell あたり 3g
-temp_min_c = -80.0
-temp_max_c = 100.0
-area_m2 = 0.00274 # 1 cell の面積
-default_power_generation_per_unit_w = 0.27 # 16.1W / 60 cell ≈ 0.27W/cell
-efficiency = 0.28 # SHARP triple-junction
+mass_kg = 0.98456 # 質量 [kg]
+temp_min_c = -80.0 # 動作温度下限 [degC]
+temp_max_c = 100.0 # 動作温度上限 [degC]
+area_m2 = 0.148456 # アレイ総セル面積 [m^2]
+default_power_generation_per_unit_w = 52.56 # BOL 発生電力（MPPT 損失込み） [W]
+bol_power_w = 52.56 # BOL 発生電力（MPPT 込み） [W]
+eol_power_w = 50.53 # EOL 発生電力（MPPT 込み） [W]
+efficiency = 0.288 # セル効率 @AM0
+cell_type = "CESI CTJ30 SCA (InGaP/GaAs/Ge)" # セル品種
 
-[solar_panels.body_mz.design]
-# MZ 面 BODY マウント 12 枚
-quantity = 12
-cell_count = 12
-string_count = 2
+[solar_panels.sap_array.design]
+quantity = 1 # 搭載個数
+cell_count = 56 # 7 直 × 8 並
+string_count = 8
 
-[solar_panels.body_mz.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 100.0
-dy = 100.0
-dz = 1.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[solar_panels.sap_array.design.placement] # 搭載位置・CAD パラメータ
+face = "PZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 366.0 # Bounding box x dimension [mm]
+dy = 100.0 # Bounding box y dimension [mm]
+dz = 2.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "OUT" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-
-[solar_panels.deploy_py_front.design]
-# PY 展開パネル表 24 枚 (variant 1: 6 直 4 並)
-quantity = 24
-cell_count = 24
-string_count = 4
-
-[solar_panels.deploy_py_front.design.placement]
-face = "PY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 510.0
-dy = 100.0
-dz = 2.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
-
-
-[solar_panels.deploy_py_back.design]
-# PY 展開パネル裏 24 枚
-quantity = 24
-cell_count = 24
-string_count = 4
-
-[solar_panels.deploy_py_back.design.placement]
-face = "PY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 510.0
-dy = 100.0
-dz = 2.0
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[solar_panels.sap_array.meta]
+notes = "MPPT 制御（ストリング毎 DCDC）。±Z 面配置(84セル)は参考、電気設計は56セル/マスターシート"
 
 
 
-# === PDM (PCDU × 1) ===
-# コンポ管理 行: PCDU, 90 × 87 × 30 mm, 265g
-# 子衛星電力消費 行3: PCDU = 1.00 W @ 7V, 全モード ON
-# 衛星内部電力変換効率 e2 = 80% (発電計算用パラメーター)
+# === PCDU (PCDU_rev3 × 1) ===
+# 267.52g, 13ch, 12V/5V バス, RS422(PCU_PIC1) で MOBC 接続。SAP→バス伝送効率 0.9。
+
+
+
+# === PDM ===
 
 [pdms.spec]
-mass_kg = 0.265
-power_per_unit_w = 1.0
-rated_current_a = 5.0
+mass_kg = 0.26752 # 質量 [kg]
+power_per_unit_w = 1.0 # 単位あたりの想定消費電力 [W]
+rated_current_a = 20.0 # [A]
+bus_voltage_v = 12.0 # 主バス電圧 [V]
+channel_count = 13 # 出力チャネル数
 
-[pdms.main.design]
-quantity = 1
-efficiency = 0.80
+[pdms.pcdu.design]
+quantity = 1 # 搭載個数
+efficiency = 0.9 # SAP→12V バス伝送効率
 
-[pdms.main.design.placement]
-face = "MY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 90.0
-dy = 87.0
-dz = 30.0
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[pdms.pcdu.design.placement] # 搭載位置・CAD パラメータ
+face = "MY" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 90.0 # Bounding box x dimension [mm]
+dy = 87.0 # Bounding box y dimension [mm]
+dz = 30.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[pdms.main.design.power_modes]
-safe = true
-sun_acquisition = true
-coarse_3axis = true
-fine_3axis = true
-propulsion = true
-mated_check = true
-mated_calibration = true
-mated_actuator = true
-coarse_ff = true
-fine_ff = true
+[pdms.pcdu.design.power_modes] # OperationMode 別の on/off
+initial = true
+bdot = true
+rough_sun_pointing = true
+rough_three_axis_mtq = true
+rough_three_axis_rw = true
+fine_three_axis = true
+imaging = true
+xband_downlink = true

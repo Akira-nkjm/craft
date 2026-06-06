@@ -1,103 +1,94 @@
 # Mission system — Config のみ
 #
-# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
-#   - 電源モード検討 / サマリ
-#   - SEIRIOS_コンポ管理シート / 子衛星1
-#   - SEIRIOS_ブロック図
+# Source: ONGLAISAT（6U 地球観測 CubeSat, TASA × ISSL 東大 × ArkEdge）
+#   - C2A フライトソフト Mode Manager（運用モード・権威）
+#     99_Sources/raw/tlm_cmd_db, s2e-mobc-settings/.../command_sender/*.ops
+#   - TLE (NORAD 62299) / S2E satellite.ini（軌道要素）
+#   - Power Overview §5（活動オーバーレイの消費電力）
 
 
 
 # === Mission Profile ===
 
 [missionprofile]
-duration_years = 1.0 # SEIRIOS フルサクセス期間（TBD）
-target_altitude_km = 600.0 # 想定 LEO 高度（蝕計算と整合）
-primary_payload = "formation_flying" # 主ペイロード: 編隊飛行制御
-contact_frequency_per_day = 4 # 1 日あたりの地上局可視回数（S 帯）
-launch_window_start = "2027-01-01T00:00:00Z" # 打ち上げ窓開始 (TBD)
+duration_years = 0.17 # ISS 放出後 約2か月の短寿命実証フェーズ（自然減衰軌道）
+target_altitude_km = 410.0 # 撮像高度 約410 km（ISS 放出軌道）
+primary_payload = "earth_observation" # 主ペイロード: 高分解能光学地球観測（GSD 2.5–3 m）
+contact_frequency_per_day = 5 # S 帯地上局可視回数（沖縄/牧之原/台湾）概算
+launch_window_start = "2024-11-05T00:00:00Z" # Falcon 9 / CRS SpX-31 打上げ (JST)
 
 
 
 # === Orbital Parameters ===
+# TLE (NORAD 62299):
+#   2 62299  51.6304 175.9676 0010096 289.2373  70.7536 15.81807777 10864
 
 [orbitalparameters]
-semi_major_axis_km = 6978.137 # Re + 600 km
-eccentricity = 0.001
-inclination_deg = 51.6 # ISS 軌道想定（編隊飛行）
-raan_deg = 45.0
-arg_periapsis_deg = 0.0
-mean_anomaly_deg = 0.0
-epoch_utc = "2027-01-01T00:00:00Z"
+semi_major_axis_km = 6788.137 # Re(6378.137) + 410 km
+eccentricity = 0.001 # TLE 0.0010096（ほぼ円）
+inclination_deg = 51.63 # TLE 51.6304°（ISS 軌道）
+raan_deg = 175.97 # TLE 175.9676°
+arg_periapsis_deg = 289.24 # TLE 289.2373°
+mean_anomaly_deg = 70.75 # TLE 70.7536°
+epoch_utc = "2024-12-10T00:00:00Z" # 運用開始時期（通信確立 2024-12-09〜10）
 
 
 
 # === Operation Mode Config ===
 #
-# Source: SEIRIOS 子衛星 電源モード検討 / 子衛星電力消費 シート
-#   各モードの消費電力 [W] とマージン込み [W] は description に記載。
+# Source: ONGLAISAT C2A Mode Manager（一次情報）
+#   - AOBC 遷移: INITIAL→BDOT→ROUGH_SUN_POINTING→R3ax-MTQ→R3ax-RW→FINE_THREE_AXIS
+#   - MOBC: INITIAL→NOMINAL、撮像シーケンス（撮像 1.5 分後に NOMINAL 復帰）
+# 消費電力の目安は Power Overview §5（CDH 基盤 ~7.7W を基準に活動分を加算）。
 
-# --- 子衛星単独運用 ---
+# --- 姿勢制御チェーン (C2A AOBC Mode Manager) ---
 
-[operation_mode_configs.safe]
-description = "セーフモード（姿勢制御無し）。子衛星単独 4.9W、margin 5.3W、発電 9.5W。蝕中はヒーターON で 6.9W/7.4W、発電 7.4W"
+[operation_mode_configs.initial]
+description = "起動直後。最小構成（CDH のみ）、姿勢制御なし。C2A INITIAL"
 max_duration_s = 0.0
 is_initial_mode = true
-allowed_transitions = ["sun_acquisition", "coarse_3axis"]
+allowed_transitions = ["bdot"]
 
-[operation_mode_configs.sun_acquisition]
-description = "太陽捕捉モード。SAP を太陽方向に向ける。消費 7.0W、Tx ON 時 14.0W"
+[operation_mode_configs.bdot]
+description = "B-dot デタンブル。MTQ + 磁気センサで角運動量を減衰。C2A BDOT"
 max_duration_s = 0.0
 is_initial_mode = false
-allowed_transitions = ["safe", "coarse_3axis", "fine_3axis"]
+allowed_transitions = ["initial", "rough_sun_pointing"]
 
-[operation_mode_configs.coarse_3axis]
-description = "粗三軸モード（RW + 粗ジャイロ）。消費 9.4W、Tx ON 時 16.4W"
+[operation_mode_configs.rough_sun_pointing]
+description = "粗太陽捕捉。太陽センサ + MTQ で SAP を太陽方向へ。C2A ROUGH_SUN_POINTING"
 max_duration_s = 0.0
 is_initial_mode = false
-allowed_transitions = ["safe", "sun_acquisition", "fine_3axis", "propulsion"]
+allowed_transitions = ["bdot", "rough_three_axis_mtq"]
 
-[operation_mode_configs.fine_3axis]
-description = "精三軸モード（STT + RW + 精ジャイロ）。消費 10.9W、Tx ON 時 17.9W"
+[operation_mode_configs.rough_three_axis_mtq]
+description = "粗三軸（MTQ 制御）。磁気トルカ主体の三軸安定。C2A ROUGH_THREE_AXIS_MTQ"
 max_duration_s = 0.0
 is_initial_mode = false
-allowed_transitions = ["safe", "coarse_3axis", "propulsion", "coarse_ff", "fine_ff"]
+allowed_transitions = ["rough_sun_pointing", "rough_three_axis_rw"]
 
-[operation_mode_configs.propulsion]
-description = "推進系運用モード（FF 制御推進機 ON）。消費 32.2W、Tx ON 時 39.2W。インパルス的動作"
-max_duration_s = 600.0
-is_initial_mode = false
-allowed_transitions = ["fine_3axis", "coarse_ff", "fine_ff"]
-
-# --- 合体時 (mated) ---
-
-[operation_mode_configs.mated_check]
-description = "合体時、子衛星の動作確認。消費 4.9W"
+[operation_mode_configs.rough_three_axis_rw]
+description = "粗三軸（RW 制御）。リアクションホイール主体の三軸安定。C2A ROUGH_THREE_AXIS_RW"
 max_duration_s = 0.0
 is_initial_mode = false
-allowed_transitions = ["mated_calibration", "mated_actuator", "safe"]
+allowed_transitions = ["rough_three_axis_mtq", "fine_three_axis"]
 
-[operation_mode_configs.mated_calibration]
-description = "合体時キャリブレーション。消費 9.9W"
-max_duration_s = 3600.0
-is_initial_mode = false
-allowed_transitions = ["mated_check", "mated_actuator"]
-
-[operation_mode_configs.mated_actuator]
-description = "合体時アクチュエータ動作試験。消費 32.7W"
-max_duration_s = 3600.0
-is_initial_mode = false
-allowed_transitions = ["mated_check", "mated_calibration"]
-
-# --- FF 運用 (Formation Flying) ---
-
-[operation_mode_configs.coarse_ff]
-description = "粗 FF（CDGNSS 主体）。消費 12.6W、Tx ON 時 19.6W、推進系 ON 時 32.6W"
+[operation_mode_configs.fine_three_axis]
+description = "精三軸（STT + RW + 精ジャイロ）。撮像可能な高精度指向。C2A FINE_THREE_AXIS / MOBC NOMINAL"
 max_duration_s = 0.0
 is_initial_mode = false
-allowed_transitions = ["fine_3axis", "fine_ff", "propulsion"]
+allowed_transitions = ["rough_three_axis_rw", "imaging", "xband_downlink"]
 
-[operation_mode_configs.fine_ff]
-description = "精 FF（光学航法 + レーザー距離計）。消費 13.6W、推進系 ON 時 33.6W。発電 16.1W、蝕中は margin -1.2%"
-max_duration_s = 0.0
+# --- 活動オーバーレイ (MOBC ミッション / Power Overview §5) ---
+
+[operation_mode_configs.imaging]
+description = "撮像実行。fine_three_axis 姿勢 + MISSION_IF/1/2 ON。消費 ~29.5W（撮像系 21.75W + CDH 7.7W）"
+max_duration_s = 120.0 # 撮像は短時間（main_sequence.ops の撮像窓）
 is_initial_mode = false
-allowed_transitions = ["coarse_ff", "propulsion"]
+allowed_transitions = ["fine_three_axis", "xband_downlink"]
+
+[operation_mode_configs.xband_downlink]
+description = "X帯ダウンリンク。fine_three_axis 姿勢 + XTx(36Mbps) ON。消費 ~24W（XTx 16.15W + CDH 7.7W）"
+max_duration_s = 600.0 # 地上局可視時間オーダー
+is_initial_mode = false
+allowed_transitions = ["fine_three_axis", "imaging"]
