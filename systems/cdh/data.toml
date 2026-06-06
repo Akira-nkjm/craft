@@ -1,66 +1,360 @@
-# C&DH system (Singleton: OBC)
+# C&DH system instance data
 #
-# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
-#   - SEIRIOS_コンポ管理シート / 子衛星1 行: MOBC
-#   - 電源モード検討 / 子衛星電力消費 行7
+# Source: ONGLAISAT C&DH
+#   - 01_CDH/CDH Overview.md, MOBC.md, AOBC.md, TOBC.md
+#   - 01_CDH/Data Buses and Ports.md
+#   - [S2E] s2e-mobc-settings/satellite/components/{cdh,thermal}/*.ini
+#   - 質量: mass_inertia_breakdown.csv「3.CDH」
 
 
 
-# === OBC (MOBC) ===
-# Model: 中須賀研系 MOBC, 150g, 2.18W @ 12V, 全モード ON
+# === OBC: MOBC (Main OBC) ===
+# [確定値] SH-2A 200MHz, 128KiB internal RAM + 8MiB SRAM, 2MiB MRAM, 2GiB NAND.
+# [S2E] mass_inertia_breakdown.csv: MOBC board1&2 (OBC) 145.98g.
+# [確定値] PCDU ch0: 1.89W, all 8 operation modes ON.
 
-[obc.spec]
-mass_kg = 0.150
-temp_min_c = -40.0
-temp_max_c = 85.0
-power_per_unit_w = 2.18
+[obcs.mobc.spec]
+mass_kg = 0.14598 # 質量 [kg]
+temp_min_c = -20.0 # [推定] 動作温度下限 [degC] TBD: board-level qualified range
+temp_max_c = 60.0 # [推定] 動作温度上限 [degC] TBD: board-level qualified range
+power_per_unit_w = 1.89 # PCDU MOBC ch0 想定消費 [W]
+processor = "Renesas Electronics SH-2A"
 clock_mhz = 200
-ram_mb = 512
-storage_gb = 16.0
-architecture = "ARM Cortex-A"
+ram_kb = 8320 # 128KiB internal + 8MiB external SRAM
+rom_kb = 2560 # 2.5MiB internal ROM
+nvm_kb = 2048 # 2MiB MRAM
+storage_gb = 2.0 # NAND flash
+architecture = "SH-2A / ArkEdge YODAKA-AE1b heritage"
+role = "bus master, command distribution, telemetry aggregation, downlink, time, FDIR"
+primary_bus = "MOBC UART master: RS-422/LVTTL"
+nominal_packet_rate_hz = 4.0 # [推定] MOBC aggregated HK cadence
+nominal_packet_size_bits = 4096.0 # [推定] aggregated HK packet size
 
-[obc.spec.bus_interface]
-voltage_v = 12.0
-rated_current_a = 0.2
-protocol = "CAN"
+[obcs.mobc.design]
+quantity = 1 # 搭載個数
+firmware_version = "c2a-mobc-onglaisat"
+boot_partition_count = 1
+estimated_wcet_s = 0.08 # 主要周期処理の概算 WCET [s]
+control_period_s = 1.0 # 主要周期処理の周期 [s]
 
-[obc.design]
-quantity = 1
-firmware_version = "TBD"
-boot_partition_count = 2
+[obcs.mobc.design.placement] # 搭載位置・CAD パラメータ
+face = "MY" # Panel face to mount on
+u = 0.0 # [S2E] CG x=-44.2mm; Placement u is constrained non-negative
+v = 62.4 # Position along face v-axis [mm]
+w = 0.0 # [S2E] CG z=-0.25mm; Placement w is constrained non-negative
+dx = 90.0 # Bounding box x dimension [mm]
+dy = 90.0 # Bounding box y dimension [mm]
+dz = 15.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[obc.design.placement]
-face = "MY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 90.0
-dy = 90.0
-dz = 15.0
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[obcs.mobc.design.power_modes] # OperationMode 別の on/off
+initial = true
+bdot = true
+rough_sun_pointing = true
+rough_three_axis_mtq = true
+rough_three_axis_rw = true
+fine_three_axis = true
+imaging = true
+xband_downlink = true
 
-[obc.design.power_modes]
-safe = true
-sun_acquisition = true
-coarse_3axis = true
-fine_3axis = true
-propulsion = true
-mated_check = true
-mated_calibration = true
-mated_actuator = true
-coarse_ff = true
-fine_ff = true
+[obcs.mobc.requirements]
+mtbf_hours = 50000.0 # [h]
+radiation_tolerance_krad = 20.0 # [krad]
+max_cpu_utilization = 0.7 # 許容 CPU 占有率
+max_no_contact_days = 3.0 # オンボード保存を要求する最大無通信日数 [d]
 
-[obc.requirements]
-mtbf_hours = 50000.0
-radiation_tolerance_krad = 30.0
+[obcs.mobc.meta]
+notes = "MOBC board1&2。Data source: MOBC.md / CDH Overview.md / mass_inertia_breakdown.csv"
 
-[obc.meta]
-vendor = "TBD"
-heritage = "中須賀研 ISSL6U 系 MOBC"
+
+
+# === OBC: AOBC (AOCS OBC) ===
+# [確定値] PIC32MX7 80MHz, 128KiB RAM, 512KiB ROM, 512KiB FRAM.
+# [S2E] mass_inertia_breakdown.csv gives AOBC/AOCS module all-assy 1124.29g (includes AOCS hardware).
+# [確定値] PCDU ch1 AOBC_5V 1.94W + ch2 AOBC_BUS 3.56W = 5.50W, all 8 operation modes ON.
+
+
+[obcs.aobc.spec]
+mass_kg = 1.12429 # [S2E] AOCS module total; AOBC board-only mass TBD
+temp_min_c = -20.0 # [推定] 動作温度下限 [degC] TBD
+temp_max_c = 60.0 # [推定] 動作温度上限 [degC] TBD
+power_per_unit_w = 5.50 # AOBC_5V + AOBC_BUS [W]
+processor = "Microchip PIC32MX7"
+clock_mhz = 80
+ram_kb = 128
+rom_kb = 512
+nvm_kb = 512 # FRAM
+storage_gb = 0.0
+architecture = "PIC32MX7 / C2A-AOBC"
+role = "AOCS attitude determination and control"
+primary_bus = "MOBC port 8 LVTTL UART; local I2C/SPI/GPIO/ADC"
+nominal_packet_rate_hz = 8.0 # [推定] AOCS HK/control telemetry cadence
+nominal_packet_size_bits = 2048.0 # [推定]
+
+[obcs.aobc.design]
+quantity = 1 # 搭載個数
+firmware_version = "c2a-aobc-onglaisat v1.1.1 sync"
+boot_partition_count = 1
+estimated_wcet_s = 0.12 # 主要周期処理の概算 WCET [s]
+control_period_s = 1.0 # 主要周期処理の周期 [s]
+
+[obcs.aobc.design.placement] # 搭載位置・CAD パラメータ
+face = "MY" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 95.0 # Bounding box x dimension [mm]
+dy = 95.0 # Bounding box y dimension [mm]
+dz = 45.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+[obcs.aobc.design.power_modes] # OperationMode 別の on/off
+initial = true
+bdot = true
+rough_sun_pointing = true
+rough_three_axis_mtq = true
+rough_three_axis_rw = true
+fine_three_axis = true
+imaging = true
+xband_downlink = true
+
+[obcs.aobc.requirements]
+mtbf_hours = 50000.0 # [h]
+radiation_tolerance_krad = 20.0 # [krad]
+max_cpu_utilization = 0.75 # 許容 CPU 占有率
+max_no_contact_days = 3.0 # オンボード保存を要求する最大無通信日数 [d]
+
+[obcs.aobc.meta]
+notes = "AOBC board-only mass is TBD; current value is S2E AOCS module all-assy mass."
+
+
+
+# === OBC: TOBC (Thermal OBC) ===
+# [確定値] PIC32MX7 30MHz, 128KiB RAM, 512KiB ROM, no NVM.
+# [推定] board-only mass is not listed in mass_inertia_breakdown.csv.
+# [確定値] PCDU ch3: 0.29W, all 8 operation modes ON.
+
+
+[obcs.tobc.spec]
+mass_kg = 0.050 # [推定] TOBC board mass TBD
+temp_min_c = -20.0 # [推定] 動作温度下限 [degC] TBD
+temp_max_c = 60.0 # [推定] 動作温度上限 [degC] TBD
+power_per_unit_w = 0.29 # PCDU TOBC ch3 想定消費 [W]
+processor = "Microchip PIC32MX7"
+clock_mhz = 30
+ram_kb = 128
+rom_kb = 512
+nvm_kb = 0
+storage_gb = 0.0
+architecture = "PIC32MX7 / C2A-TOBC"
+role = "thermal control, heater command, thermistor telemetry"
+primary_bus = "MOBC port 11 LVTTL UART; local I2C/GPIO/ADC"
+nominal_packet_rate_hz = 2.0 # [推定] thermal HK cadence
+nominal_packet_size_bits = 1024.0 # [推定]
+
+[obcs.tobc.design]
+quantity = 1 # 搭載個数
+firmware_version = "c2a-tobc v1.8 sync"
+boot_partition_count = 1
+estimated_wcet_s = 0.05 # 主要周期処理の概算 WCET [s]
+control_period_s = 1.0 # 主要周期処理の周期 [s]
+
+[obcs.tobc.design.placement] # 搭載位置・CAD パラメータ
+face = "MY" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 50.0 # Bounding box x dimension [mm]
+dy = 50.0 # Bounding box y dimension [mm]
+dz = 10.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+[obcs.tobc.design.power_modes] # OperationMode 別の on/off
+initial = true
+bdot = true
+rough_sun_pointing = true
+rough_three_axis_mtq = true
+rough_three_axis_rw = true
+fine_three_axis = true
+imaging = true
+xband_downlink = true
+
+[obcs.tobc.requirements]
+mtbf_hours = 50000.0 # [h]
+radiation_tolerance_krad = 20.0 # [krad]
+max_cpu_utilization = 0.7 # 許容 CPU 占有率
+max_no_contact_days = 3.0 # オンボード保存を要求する最大無通信日数 [d]
+
+[obcs.tobc.meta]
+notes = "TOBC board mass and placement are TBD; electrical/CPU values are from TOBC.md and PCDU table."
+
+
+
+# === BusInterface: MOBC master UART ports ===
+# [確定値] Data Buses and Ports.md: 13 UART ports, RS-422/LVTTL, MOBC master.
+
+[obcs.spec]
+mass_kg = 0.0 # 質量 [kg]
+temp_min_c = 0.0 # 動作温度下限 [degC]
+temp_max_c = 0.0 # 動作温度上限 [degC]
+power_per_unit_w = 0.0 # 単位あたりの想定消費電力 [W]
+processor = "" # CPU / MCU
+clock_mhz = 0 # [MHz]
+ram_kb = 0 # 内蔵+外部 RAM 容量 [KiB]
+rom_kb = 0 # ROM / program flash 容量 [KiB]
+nvm_kb = 0 # MRAM / FRAM 等 NVM 容量 [KiB]
+storage_gb = 0.0 # 大容量データ保存領域 [GB]
+architecture = "" # CPU アーキ / heritage
+role = "" # 衛星内での役割
+primary_bus = "" # MOBC との主接続
+nominal_packet_rate_hz = 1.0 # HK/制御テレメトリの概算パケット頻度 [Hz]
+nominal_packet_size_bits = 2048.0 # HK/制御テレメトリの概算パケットサイズ [bit]
+
+
+
+# === Bus Interface ===
+
+[bus_interfaces.mobc_uart.spec]
+mass_kg = 0.0
+protocol = "UART"
+physical_layer = "RS-422 / LVTTL"
+port_count = 13
+endpoint_count = 9
+bandwidth_bps = 115200.0 # [推定] representative per-port UART baud TBD
+nominal_traffic_bps = 22528.0 # [推定] OBC HK aggregate from packet assumptions
+master = "MOBC"
+
+[bus_interfaces.mobc_uart.design]
+quantity = 1 # 搭載個数
+
+[bus_interfaces.mobc_uart.design.placement] # 搭載位置・CAD パラメータ
+face = "MY" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 0.0 # Bounding box x dimension [mm]
+dy = 0.0 # Bounding box y dimension [mm]
+dz = 0.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+[bus_interfaces.mobc_uart.requirements]
+max_utilization = 0.5 # 許容バス占有率
+
+[bus_interfaces.mobc_uart.meta]
+notes = "Ports 0..12: XTx, MISSION_IF, RSI/MISSION, PCU, AOBC, TOBC, STx, LoRa; port 4 and 7 have source TODOs."
+
+
+
+# === BusInterface: AOBC local buses ===
+# [確定値] AOBC.md/Data Buses: I2C addresses for MPU9250, RM3100, nanoSSOC-D60, RW; SPI/UART for STT.
+
+
+[bus_interfaces.aobc_local.spec]
+mass_kg = 0.0
+protocol = "I2C / SPI / UART / GPIO / ADC"
+physical_layer = "LVTTL / board local"
+port_count = 12 # [確定値] listed I2C endpoints plus representative local channels
+endpoint_count = 11
+bandwidth_bps = 400000.0 # [推定] fast-mode I2C representative TBD
+nominal_traffic_bps = 16384.0 # [推定] AOCS local sensor/control traffic
+master = "AOBC"
+
+[bus_interfaces.aobc_local.design]
+quantity = 1 # 搭載個数
+
+[bus_interfaces.aobc_local.design.placement] # 搭載位置・CAD パラメータ
+face = "MY" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 0.0 # Bounding box x dimension [mm]
+dy = 0.0 # Bounding box y dimension [mm]
+dz = 0.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+[bus_interfaces.aobc_local.requirements]
+max_utilization = 0.5 # 許容バス占有率
+
+[bus_interfaces.aobc_local.meta]
+notes = "MPU9250 0x68, AK8963 0x0C, RM3100 0x20/0x23, nanoSSOC-D60 0x60/0x61/0x62/0x6C/0x64/0x65, RW 0x11/0x37/0x39."
+
+
+
+# === BusInterface: TOBC local buses ===
+# [確定値] TOBC.md: thermistor ADC, heater GPIO, digital temperature sensor I2C.
+
+
+[bus_interfaces.tobc_local.spec]
+mass_kg = 0.0
+protocol = "I2C / GPIO / ADC"
+physical_layer = "LVTTL / board local"
+port_count = 8 # [推定] thermal local channels TBD
+endpoint_count = 6 # [推定] thermistor/heater groups TBD
+bandwidth_bps = 100000.0 # [推定] standard-mode I2C / low-rate thermal HK
+nominal_traffic_bps = 2048.0 # [推定]
+master = "TOBC"
+
+[bus_interfaces.tobc_local.design]
+quantity = 1 # 搭載個数
+
+[bus_interfaces.tobc_local.design.placement] # 搭載位置・CAD パラメータ
+face = "MY" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 0.0 # Bounding box x dimension [mm]
+dy = 0.0 # Bounding box y dimension [mm]
+dz = 0.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+[bus_interfaces.tobc_local.requirements]
+max_utilization = 0.5 # 許容バス占有率
+
+[bus_interfaces.tobc_local.meta]
+notes = "Thermal-control local I/F: ADC thermistors, GPIO heaters, I2C temperature sensors."
+
+[bus_interfaces.spec]
+mass_kg = 0.0 # 質量 [kg]
+protocol = "" # UART / I2C / SPI / GPIO / ADC / CCSDS 等
+physical_layer = "" # RS-422 / RS-485 / LVTTL 等
+port_count = 0 # ポートまたはチャネル数
+endpoint_count = 0 # 接続先ノード数
+bandwidth_bps = 0.0 # 想定バス帯域 [bit/s]
+nominal_traffic_bps = 0.0 # 通常時の概算テレメトリ/コマンド流量 [bit/s]
+master = "" # バスマスタまたは管理 OBC

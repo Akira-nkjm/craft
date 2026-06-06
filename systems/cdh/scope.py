@@ -4,6 +4,7 @@ import veriq as vq
 
 from craft.core.paths import system_data_path
 from craft.schema import build_system_root_model, default_registry
+from systems.cdh import analyses as _analyses  # noqa: F401
 from systems.cdh import components as _components  # noqa: F401
 
 cdh = vq.Scope("cdh")
@@ -14,9 +15,9 @@ def _build_and_attach() -> type:
     cdh.root_model()(root_model)
     for adef in default_registry.analyses(system="cdh"):
         if adef.verify:
-            cdh.verification(adef.name)(adef.func)
+            cdh.verification(adef.name, imports=adef.imports)(adef.func)
         else:
-            cdh.calculation(adef.name)(adef.func)
+            cdh.calculation(adef.name, imports=adef.imports)(adef.func)
     return root_model
 
 
