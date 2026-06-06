@@ -13,6 +13,7 @@ import veriq as vq
 
 from craft.analyses import auto_inject_refs, power_per_mode
 from craft.schema import analysis
+from toolbox.power.battery import required_battery_capacity_wh as tb_required_battery_capacity_wh
 
 
 @analysis(desc="全 PDM の想定消費電力合計（W） — 最大消費モードを採用")
@@ -90,6 +91,27 @@ def bus_power_per_mode_w(mode_configs, *tables) -> dict[str, float]:
 
 
 # ─── (ad-hoc 例) — veriq 非登録、API/CLI 専用 ─────────────────────────
+
+
+@analysis(
+    system=None,
+    desc="必要バッテリ容量 [Wh]（toolbox.power.battery の式を利用）",
+    cache=True,
+)
+def battery_capacity_required_wh(
+    eclipse_load_w: float,
+    eclipse_duration_h: float,
+    dod_max: float,
+    discharge_efficiency: float = 0.95,
+) -> float:
+    """toolbox の式をそのまま craft の analysis として公開する（パターン A: ラッパー）。
+
+    物理式は toolbox 側（astropy で次元・参照値を検証済み）にあり、craft は
+    引数を受けて呼ぶだけ。craft 内に式を直書きする従来パターンと併存できる。
+    """
+    return tb_required_battery_capacity_wh(
+        eclipse_load_w, eclipse_duration_h, dod_max, discharge_efficiency
+    )
 
 
 @analysis(system=None, desc="バッテリ EOL 容量推定（ad-hoc）", cache=True)
