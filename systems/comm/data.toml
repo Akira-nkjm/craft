@@ -1,291 +1,479 @@
 # Comm system instance data
 #
-# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
-#   - SEIRIOS_コンポ管理シート / 子衛星1 Comm セクション
-#   - 電源モード検討 / 子衛星電力消費 行 8-11
-#
-# Transceiver は 4 種混在のため per-instance spec を使う
+# Source: ONGLAISAT（6U 地球観測 CubeSat）通信系
+#   - 04_Communication/*.md（Comm Overview / SRx / STx / XTx / LoRa / Antennas / Ground Station）
+#   - [S2E] s2e-mobc-settings/satellite/components/comm/{srx,stx,xtx}.ini
+#   - [S2E] s2e-mobc-settings/ground_station/components/ground_station_{sup,sdown,xdown}.ini
+#   - 質量: mass_inertia_breakdown.csv「2.communication」
 
 
 
-# === Transceiver: 対親衛星 Bluetooth (24g, 0.4W) ===
-# 電力消費 行8: 0.40W @ 5V, FF モードのみ ON
+# === Transceiver: SRx (S-band uplink command receiver) ===
+# [S2E] srx.ini: 2104.7 MHz, 4 kbps, rx gain 4.5 dBi, Tsys 881.05 K。
+# [確定値] PCDU 消費電力 0.81 W。STRx は STx と一体のため主質量は STx 側に計上。
 
-[transceivers.bt_intersat.spec]
-mass_kg = 0.024
-temp_min_c = -20.0
-temp_max_c = 60.0
-power_per_unit_w = 0.40
-band = "bluetooth"
-direction = "tx_rx"
-frequency_mhz = 2400.0
-tx_power_w = 0.1
-data_rate_kbps = 1000.0
-modulation = "GFSK"
-
-[transceivers.bt_intersat.design]
-quantity = 1
-
-[transceivers.bt_intersat.design.placement]
-face = "PY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 76.0
-dy = 31.0
-dz = 16.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
-
-[transceivers.bt_intersat.design.power_modes]
-safe = false
-sun_acquisition = false
-coarse_3axis = false
-fine_3axis = false
-propulsion = false
-mated_check = false
-mated_calibration = false
-mated_actuator = false
-coarse_ff = true
-fine_ff = true
-
-
-
-# === Transceiver: 対地上局 S 帯 TX (ADD1445AZ, 140g, 7W) ===
-# 電力消費 行9: 7.0W @ 12V (軌道平均 1.6W = duty ~23%)
-
-[transceivers.s_band_tx.spec]
-mass_kg = 0.140
-temp_min_c = -20.0
-temp_max_c = 60.0
-power_per_unit_w = 7.0
-band = "s_band"
-direction = "tx"
-frequency_mhz = 2200.0 # S 帯下りリンク
-tx_power_w = 2.0
-data_rate_kbps = 1000.0
-modulation = "QPSK"
-
-[transceivers.s_band_tx.design]
-quantity = 1
-
-[transceivers.s_band_tx.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 80.0
-dy = 80.0
-dz = 15.0
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
-
-# Tx 動作は地上局可視時のみ → 簡略 10 モードでは false 固定
-# 実運用では Tx-ON pass mode をフェーズ管理で別途扱う
-[transceivers.s_band_tx.design.power_modes]
-safe = false
-sun_acquisition = false
-coarse_3axis = false
-fine_3axis = false
-propulsion = false
-mated_check = false
-mated_calibration = false
-mated_actuator = false
-coarse_ff = false
-fine_ff = false
-
-
-
-# === Transceiver: 対地上局 S 帯 RX (ADD1443AZ, 140g, 1W) ===
-# 電力消費 行10: 1.0W @ 12V, 全モード ON
-
-[transceivers.s_band_rx.spec]
-mass_kg = 0.140
-temp_min_c = -20.0
-temp_max_c = 60.0
-power_per_unit_w = 1.0
+[transceivers.srx.spec]
+mass_kg = 0.0 # TBD: STRx 265.96 g は stx に一括計上（二重計上回避）
+temp_min_c = -20.0 # [推定] Addnics 小型 S-band 機器の一般動作範囲
+temp_max_c = 60.0 # [推定]
+power_per_unit_w = 0.81 # [確定値] PCDU SRx channel [W]
 band = "s_band"
 direction = "rx"
-frequency_mhz = 2100.0 # S 帯上りリンク
-tx_power_w = 0.0
-data_rate_kbps = 32.0
-modulation = "BPSK"
+frequency_mhz = 2104.7 # [S2E] srx.ini frequency_MHz
+tx_power_w = 0.0 # [S2E] 受信専用
+data_rate_kbps = 4.0 # [S2E] tx_bitrate_bps = 4000（上り受信レート）
+s2e_data_rate_kbps = 4.0
+max_data_rate_kbps = 4.0 # [JESA論文] 1/4 kbps 対応の上限
+modulation = "QPSK" # [S2E] GS calculator required Eb/N0 注記。TBD: 実変調設定確認
+tx_gain_dbi = 0.0
+rx_gain_dbi = 4.5 # [S2E] srx.ini rx_gain_dBi
+tx_loss_feeder_db = 0.0
+tx_loss_pointing_db = 0.0
+rx_loss_feeder_db = -3.0 # [S2E] srx.ini rx_loss_feeder_dB
+rx_loss_pointing_db = 0.0 # [S2E]
+rx_system_noise_temperature_k = 881.05 # [S2E]
+ground_tx_power_w = 20.0 # [S2E] ground_station_sup.ini tx_output_W
+ground_tx_gain_dbi = 34.0 # [S2E] ground_station_sup.ini tx_gain_dBi
+ground_rx_gain_dbi = 0.0
+ground_loss_feeder_db = -3.01 # [S2E] ground_station_sup.ini tx_loss_feeder_dB
+ground_loss_pointing_db = 0.0 # [S2E]
+ground_rx_system_noise_temperature_k = 0.0
+atmospheric_loss_db = -0.5 # [S2E] GS calculator
+rainfall_loss_db = -0.61 # [S2E]
+polarization_loss_db = 0.0 # [S2E]
+other_loss_db = 0.0 # [S2E]
+required_ebn0_db = 22.03 # [S2E] BER 1e-6
+hardware_deterioration_db = 1.5 # [S2E]
+coding_gain_db = -8.17 # [S2E] RS(E16)+Convolution gain
+margin_requirement_db = 3.0 # [S2E]
+pass_duration_s = 600.0 # [推定] ISS 410 km 級の可視パス代表値
+link_efficiency = 0.9 # [推定] toolbox comm.data 既定値
 
-[transceivers.s_band_rx.design]
-quantity = 1
+[transceivers.srx.design]
+quantity = 1 # 搭載個数
 
-[transceivers.s_band_rx.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 80.0
-dy = 80.0
-dz = 16.0
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[transceivers.srx.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 80.0 # Bounding box x dimension [mm]
+dy = 80.0 # Bounding box y dimension [mm]
+dz = 16.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[transceivers.s_band_rx.design.power_modes]
-safe = true
-sun_acquisition = true
-coarse_3axis = true
-fine_3axis = true
-propulsion = true
-mated_check = true
-mated_calibration = true
-mated_actuator = true
-coarse_ff = true
-fine_ff = true
+[transceivers.srx.design.power_modes] # OperationMode 別の on/off
+initial = true
+bdot = true
+rough_sun_pointing = true
+rough_three_axis_mtq = true
+rough_three_axis_rw = true
+fine_three_axis = true
+imaging = true
+xband_downlink = true
+
+[transceivers.srx.meta]
+notes = "常時コマンド受信。STRx は STx と筐体共有、質量は stx に一括計上"
 
 
 
-# === Transceiver: 対地上局 LoRa (SF-ONE, 50g, 0.44W) ===
-# 電力消費 行11: 0.44W @ 5.18V, 異常時/初期運用で ON
+# === Transceiver: STx (S-band telemetry downlink transmitter) ===
+# [S2E] stx.ini: 2277.3 MHz, 64 kbps, RF 0.28 W, tx gain 4.5 dBi。
+# [確定値] PCDU 消費電力 6.28 W。STRx 265.96 g はここに一括計上。
+
+
+[transceivers.stx.spec]
+mass_kg = 0.26596 # [S2E] mass_inertia_breakdown.csv STRx
+temp_min_c = -20.0 # [推定]
+temp_max_c = 60.0 # [推定]
+power_per_unit_w = 6.28 # [確定値] PCDU STx channel [W]
+band = "s_band"
+direction = "tx"
+frequency_mhz = 2277.3 # [S2E] stx.ini frequency_MHz
+tx_power_w = 0.28 # [S2E] stx.ini tx_output_W
+data_rate_kbps = 64.0 # [S2E] tx_bitrate_bps = 64000
+s2e_data_rate_kbps = 64.0
+max_data_rate_kbps = 100.0 # [JESA論文] 10-100 kbps
+modulation = "QPSK" # [S2E] GS calculator required Eb/N0 注記
+tx_gain_dbi = 4.5 # [S2E] stx.ini tx_gain_dBi
+rx_gain_dbi = 0.0
+tx_loss_feeder_db = -3.0 # [S2E] stx.ini tx_loss_feeder_dB
+tx_loss_pointing_db = 0.0 # [S2E]
+rx_loss_feeder_db = 0.0
+rx_loss_pointing_db = 0.0
+rx_system_noise_temperature_k = 0.0
+ground_tx_power_w = 0.0
+ground_tx_gain_dbi = 0.0
+ground_rx_gain_dbi = 43.0 # [S2E] ground_station_sdown.ini rx_gain_dBi
+ground_loss_feeder_db = 0.0 # [S2E] ground_station_sdown.ini rx_loss_feeder_dB
+ground_loss_pointing_db = 0.0 # [S2E]
+ground_rx_system_noise_temperature_k = 1000.0 # [S2E]
+atmospheric_loss_db = -0.5 # [S2E] GS calculator
+rainfall_loss_db = -0.61 # [S2E]
+polarization_loss_db = 0.0 # [S2E]
+other_loss_db = 0.0 # [S2E]
+required_ebn0_db = 10.8 # [S2E] BER 1e-6
+hardware_deterioration_db = 1.5 # [S2E]
+coding_gain_db = -8.17 # [S2E]
+margin_requirement_db = 3.0 # [S2E]
+pass_duration_s = 600.0 # [推定]
+link_efficiency = 0.9 # [推定]
+
+[transceivers.stx.design]
+quantity = 1 # 搭載個数
+
+[transceivers.stx.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 80.0 # Bounding box x dimension [mm]
+dy = 80.0 # Bounding box y dimension [mm]
+dz = 15.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+[transceivers.stx.design.power_modes] # OperationMode 別の on/off
+initial = false
+bdot = false
+rough_sun_pointing = false
+rough_three_axis_mtq = false
+rough_three_axis_rw = false
+fine_three_axis = true
+imaging = true
+xband_downlink = true
+
+[transceivers.stx.meta]
+notes = "地上局可視時の HK/TLM 送信。STRx 一体質量 265.96 g を代表計上"
+
+
+
+# === Transceiver: XTx (X-band mission data downlink transmitter) ===
+# [S2E] xtx.ini: 8160 MHz, RF 1 W, tx gain 4.5 dBi。
+# [確定値] 最大 36 Mbps、PCDU 消費電力 16.15 W。
+
+
+[transceivers.xtx.spec]
+mass_kg = 0.47622 # [S2E] mass_inertia_breakdown.csv XTx
+temp_min_c = -20.0 # [推定]
+temp_max_c = 60.0 # [推定]
+power_per_unit_w = 16.15 # [確定値] PCDU XTx channel [W]
+band = "x_band"
+direction = "tx"
+frequency_mhz = 8160.0 # [S2E] xtx.ini frequency_MHz
+tx_power_w = 1.0 # [S2E] xtx.ini tx_output_W
+data_rate_kbps = 36000.0 # [確定値] 最大 36 Mbps
+s2e_data_rate_kbps = 10000.0 # [S2E] tx_bitrate_bps = 10 Mbps
+max_data_rate_kbps = 36000.0 # [JESA論文] 最大 36 Mbps
+modulation = "QPSK" # [S2E] GS calculator required Eb/N0 注記
+tx_gain_dbi = 4.5 # [S2E] xtx.ini tx_gain_dBi
+rx_gain_dbi = 0.0
+tx_loss_feeder_db = -1.8 # [S2E] xtx.ini tx_loss_feeder_dB
+tx_loss_pointing_db = 0.0 # [S2E]
+rx_loss_feeder_db = 0.0
+rx_loss_pointing_db = 0.0
+rx_system_noise_temperature_k = 0.0
+ground_tx_power_w = 0.0
+ground_tx_gain_dbi = 0.0
+ground_rx_gain_dbi = 48.5 # [S2E] ground_station_xdown.ini rx_gain_dBi
+ground_loss_feeder_db = 0.0 # [S2E]
+ground_loss_pointing_db = 0.0 # [S2E]
+ground_rx_system_noise_temperature_k = 200.0 # [S2E]
+atmospheric_loss_db = -0.5 # [S2E] GS calculator
+rainfall_loss_db = -0.12 # [S2E]
+polarization_loss_db = 0.0 # [S2E]
+other_loss_db = 0.0 # [S2E]
+required_ebn0_db = 10.8 # [S2E] BER 1e-6
+hardware_deterioration_db = 1.5 # [S2E]
+coding_gain_db = -8.17 # [S2E]
+margin_requirement_db = 3.0 # [S2E]
+pass_duration_s = 600.0 # [推定] xband_downlink max_duration_s と整合
+link_efficiency = 0.9 # [推定]
+
+[transceivers.xtx.design]
+quantity = 1 # 搭載個数
+
+[transceivers.xtx.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 80.0 # Bounding box x dimension [mm]
+dy = 80.0 # Bounding box y dimension [mm]
+dz = 44.0 # Bounding box z dimension [mm]
+rz = -90.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+[transceivers.xtx.design.power_modes] # OperationMode 別の on/off
+initial = false
+bdot = false
+rough_sun_pointing = false
+rough_three_axis_mtq = false
+rough_three_axis_rw = false
+fine_three_axis = false
+imaging = false
+xband_downlink = true
+
+[transceivers.xtx.meta]
+notes = "高速ミッションデータ下り。S2E レート 10 Mbps、設計最大 36 Mbps"
+
+
+
+# === Transceiver: LoRa S&F / TT&C backup ===
+# [JESA論文] 920 MHz 帯、20 mW、45/146/293/586/1953 bps、モジュール本体 12.7 g。
+# [確定値] PCDU 消費電力 0.44 W。
+
 
 [transceivers.lora.spec]
-mass_kg = 0.050
-temp_min_c = -20.0
-temp_max_c = 60.0
-power_per_unit_w = 0.44
+mass_kg = 0.0127 # [JESA論文] LoRa module body
+temp_min_c = -20.0 # [推定]
+temp_max_c = 60.0 # [推定]
+power_per_unit_w = 0.44 # [確定値] PCDU LoRa channel [W]
 band = "lora"
 direction = "tx_rx"
-frequency_mhz = 920.0
-tx_power_w = 0.1
-data_rate_kbps = 5.0
+frequency_mhz = 922.0 # [公開] NORAD 62299 downlink 922.000 MHz FM
+tx_power_w = 0.02 # [JESA論文] 20 mW
+data_rate_kbps = 0.293 # [JESA論文] 約 300 bps 運用
+s2e_data_rate_kbps = 0.0 # [S2E] comm/lora.ini はポート定義のみ
+max_data_rate_kbps = 1.953 # [JESA論文] 最高 1953 bps
 modulation = "LoRa CSS"
+tx_gain_dbi = 3.5 # [JESA論文] LoRa-ant 最大利得
+rx_gain_dbi = 3.5 # [JESA論文]
+tx_loss_feeder_db = 0.5 # [推定] TBD: RF 配線損失
+tx_loss_pointing_db = 0.0 # [推定]
+rx_loss_feeder_db = 0.5 # [推定] TBD
+rx_loss_pointing_db = 0.0 # [推定]
+rx_system_noise_temperature_k = 1000.0 # [推定] TBD: LoRa 受信系 Tsys
+ground_tx_power_w = 0.25 # [JESA論文] 地上送信は法令許可 250 mW まで
+ground_tx_gain_dbi = 0.0 # [推定] TBD: 100 × 100 mm patch RHCP
+ground_rx_gain_dbi = 8.0 # [JESA論文] 7 素子八木
+ground_loss_feeder_db = 0.5 # [推定] TBD
+ground_loss_pointing_db = 0.0 # [推定]
+ground_rx_system_noise_temperature_k = 1000.0 # [推定] TBD
+atmospheric_loss_db = 0.0 # [推定] 920 MHz では小さい
+rainfall_loss_db = 0.0 # [推定]
+polarization_loss_db = 0.0 # [推定]
+other_loss_db = 0.0 # [推定]
+required_ebn0_db = 6.0 # [推定] TBD: LoRa SF 別値
+hardware_deterioration_db = 1.5 # [推定] S-band/X-band と同じ保守値
+coding_gain_db = 0.0 # [推定] TBD
+margin_requirement_db = 3.0 # [推定]
+pass_duration_s = 600.0 # [推定]
+link_efficiency = 0.8 # [推定] 低速パケット・再送余裕
 
 [transceivers.lora.design]
-quantity = 1
+quantity = 1 # 搭載個数
 
-[transceivers.lora.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 50.0
-dy = 50.0
-dz = 5.9
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[transceivers.lora.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 50.0 # Bounding box x dimension [mm]
+dy = 50.0 # Bounding box y dimension [mm]
+dz = 6.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[transceivers.lora.design.power_modes]
-safe = true
-sun_acquisition = true
-coarse_3axis = false
-fine_3axis = false
-propulsion = false
-mated_check = true
-mated_calibration = true
-mated_actuator = true
-coarse_ff = false
-fine_ff = false
+[transceivers.lora.design.power_modes] # OperationMode 別の on/off
+initial = true
+bdot = false
+rough_sun_pointing = false
+rough_three_axis_mtq = false
+rough_three_axis_rw = false
+fine_three_axis = true
+imaging = false
+xband_downlink = false
+
+[transceivers.lora.meta]
+notes = "Store & Forward と S-band TT&C backup。軽負荷モードで待受"
 
 
 
-# === Antenna: S 帯 受信 (NSPO-SRXANT × 2, 14g each) ===
+# === Antenna: SRXANT (S-band uplink receiver patch × 2) ===
 
-[antennas.s_band_rx.spec]
-mass_kg = 0.014
+[transceivers.spec]
+mass_kg = 0.0 # 質量 [kg]
+temp_min_c = 0.0 # 動作温度下限 [degC]
+temp_max_c = 0.0 # 動作温度上限 [degC]
+power_per_unit_w = 0.0 # 単位あたりの想定消費電力 [W]
+band = "" # 周波数帯: bluetooth / s_band / lora / x_band 等
+direction = "tx_rx" # tx / rx / tx_rx
+frequency_mhz = 0.0 # 中心周波数 [MHz]
+tx_power_w = 0.0 # 送信電力 [W]
+data_rate_kbps = 0.0 # データレート [kbps]
+s2e_data_rate_kbps = 0.0 # S2E 設定レート [kbps]
+max_data_rate_kbps = 0.0 # 最大データレート [kbps]
+modulation = "" # 変調方式
+tx_gain_dbi = 0.0 # 衛星送信アンテナ利得 [dBi]
+rx_gain_dbi = 0.0 # 衛星受信アンテナ利得 [dBi]
+tx_loss_feeder_db = 0.0 # 衛星送信フィーダ損失 [dB]
+tx_loss_pointing_db = 0.0 # 衛星送信ポインティング損失 [dB]
+rx_loss_feeder_db = 0.0 # 衛星受信フィーダ損失 [dB]
+rx_loss_pointing_db = 0.0 # 衛星受信ポインティング損失 [dB]
+rx_system_noise_temperature_k = 0.0 # 衛星受信系雑音温度 [K]
+ground_tx_power_w = 0.0 # 地上局送信電力 [W]
+ground_tx_gain_dbi = 0.0 # 地上局送信利得 [dBi]
+ground_rx_gain_dbi = 0.0 # 地上局受信利得 [dBi]
+ground_loss_feeder_db = 0.0 # 地上局フィーダ損失 [dB]
+ground_loss_pointing_db = 0.0 # 地上局ポインティング損失 [dB]
+ground_rx_system_noise_temperature_k = 0.0 # 地上局受信系雑音温度 [K]
+atmospheric_loss_db = 0.0 # 大気損失 [dB]
+rainfall_loss_db = 0.0 # 降雨損失 [dB]
+polarization_loss_db = 0.0 # 偏波損失 [dB]
+other_loss_db = 0.0 # その他損失 [dB]
+required_ebn0_db = 0.0 # 要求 Eb/N0 [dB]
+hardware_deterioration_db = 0.0 # ハードウェア劣化 [dB]
+coding_gain_db = 0.0 # 符号化利得（負値で要求低減） [dB]
+margin_requirement_db = 0.0 # 要求リンクマージン [dB]
+pass_duration_s = 0.0 # 1 パス可視時間 [s]
+link_efficiency = 0.9 # リンク実効効率
+
+
+
+# === Antenna ===
+
+[antennas.srx_patch.spec]
+mass_kg = 0.01365 # [S2E] mass_inertia_breakdown.csv SRXANT per unit
 band = "s_band"
-gain_dbi = 6.0
-polarization = "RHCP"
+gain_dbi = 4.5 # [S2E] srx.ini rx_gain_dBi
+polarization = "RHCP" # [推定] TBD: S-band patch polarization
 direction = "rx"
+linked_transceiver = "srx"
+radiation_pattern = "ong_sup.csv" # [S2E]
 
-[antennas.s_band_rx.design]
-quantity = 2
+[antennas.srx_patch.design]
+quantity = 2 # 搭載個数
 
-[antennas.s_band_rx.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 45.0
-dy = 45.0
-dz = 2.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[antennas.srx_patch.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 45.0 # Bounding box x dimension [mm]
+dy = 45.0 # Bounding box y dimension [mm]
+dz = 2.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "OUT" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
 
-
-# === Antenna: S 帯 送信 (NSPO-STXANT × 2, 14g each) ===
-
-[antennas.s_band_tx.spec]
-mass_kg = 0.014
+[antennas.stx_patch.spec]
+mass_kg = 0.01365 # [S2E] mass_inertia_breakdown.csv STXANT per unit
 band = "s_band"
-gain_dbi = 6.0
-polarization = "RHCP"
+gain_dbi = 4.5 # [S2E] stx.ini tx_gain_dBi
+polarization = "RHCP" # [推定] TBD
 direction = "tx"
+linked_transceiver = "stx"
+radiation_pattern = "ong_sdown.csv" # [S2E]
 
-[antennas.s_band_tx.design]
-quantity = 2
+[antennas.stx_patch.design]
+quantity = 2 # 搭載個数
 
-[antennas.s_band_tx.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 45.0
-dy = 45.0
-dz = 2.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[antennas.stx_patch.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 45.0 # Bounding box x dimension [mm]
+dy = 45.0 # Bounding box y dimension [mm]
+dz = 2.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "OUT" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
 
+[antennas.xtx_patch.spec]
+mass_kg = 0.00281 # [S2E] mass_inertia_breakdown.csv XANT-sphere per unit
+band = "x_band"
+gain_dbi = 4.5 # [S2E] xtx.ini tx_gain_dBi
+polarization = "RHCP" # [JESA論文] 4-element array patch RHCP
+direction = "tx"
+linked_transceiver = "xtx"
+radiation_pattern = "ong_xdown.csv" # [S2E]
 
-# === Antenna: LoRa (80 × 44 × 80 mm) ===
+[antennas.xtx_patch.design]
+quantity = 2 # 搭載個数
 
-[antennas.lora.spec]
-mass_kg = 0.020
+[antennas.xtx_patch.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 80.0 # Bounding box x dimension [mm]
+dy = 80.0 # Bounding box y dimension [mm]
+dz = 2.0 # Bounding box z dimension [mm]
+rz = -90.0 # Rotation around face normal [degrees]
+side = "OUT" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+
+[antennas.lora_patch.spec]
+mass_kg = 0.02996 # [S2E] mass_inertia_breakdown.csv LoRaANT
 band = "lora"
-gain_dbi = 3.0
-polarization = "Linear"
+gain_dbi = 3.5 # [JESA論文] 最大利得
+polarization = "LHCP" # [JESA論文] S&F patch
 direction = "tx_rx"
+linked_transceiver = "lora"
+radiation_pattern = "" # [S2E対象外]
 
-[antennas.lora.design]
-quantity = 1
+[antennas.lora_patch.design]
+quantity = 1 # 搭載個数
 
-[antennas.lora.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 80.0
-dy = 44.0
-dz = 80.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[antennas.lora_patch.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 82.0 # Bounding box x dimension [mm]
+dy = 82.0 # Bounding box y dimension [mm]
+dz = 3.2 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "OUT" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+[antennas.spec]
+mass_kg = 0.0 # 質量 [kg]
+band = "" # 対応周波数帯: s_band / lora / bluetooth 等
+gain_dbi = 0.0 # アンテナ利得 [dBi]
+polarization = "LHCP" # 偏波: LHCP / RHCP / Linear
+direction = "tx_rx" # tx / rx / tx_rx
+linked_transceiver = "" # 対応 Transceiver インスタンス名
+radiation_pattern = "" # 放射パターン CSV 等
