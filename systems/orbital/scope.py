@@ -1,9 +1,10 @@
-"""Orbital system veriq scope。Config のみで構成。"""
+"""Orbital system veriq scope。Config + toolbox 解析で構成。"""
 
 import veriq as vq
 
 from craft.core.paths import system_data_path
 from craft.schema import build_system_root_model, default_registry
+from systems.orbital import analyses as _analyses  # noqa: F401
 from systems.orbital import configs as _configs  # noqa: F401
 
 orbital = vq.Scope("orbital")

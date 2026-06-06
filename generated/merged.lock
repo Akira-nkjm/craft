@@ -9,9 +9,6 @@ sha256 = "b8527fa132683d2f5c7fc7089b4cce290246205d4821faf4b9e3a2e1130bbb3e"
 [sources."systems/comm/data.toml"]
 sha256 = "549ebe424c03bdfd101051eb5db1309871478510767ff793e648f09688a02342"
 
-[sources."systems/ff/data.toml"]
-sha256 = "c4badbebfc8a20c3dcb765b9951e0324804b1fc0b6759d96a996a508dacea716"
-
 [sources."systems/mission/data.toml"]
 sha256 = "86c8954798cbfb2e2bb1dbca95f9cc8570d96b777be20ff8044fc6c69ec020b6"
 
@@ -20,9 +17,6 @@ sha256 = "a76c27b6d265d6c490adce290e195cbc57434bc630b2dfa15a2943ed303e0823"
 
 [sources."systems/power/data.toml"]
 sha256 = "df49de33573913a844683c8d6ee6c2c3af07944cc5c582463dcc125434825f91"
-
-[sources."systems/propulsion/data.toml"]
-sha256 = "0d498f4fa383e4300f9297cd22522f25d7fa3cd51816ba124354b94d71d86906"
 
 [sources."systems/structure/data.toml"]
 sha256 = "805f8c0dc1b79dcae0fc2ec4eaa580826c105379ae32f9157a7eb6e3c737444b"
