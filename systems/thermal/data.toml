@@ -1,32 +1,44 @@
-# Thermal system
+# Thermal system instance data
 #
-# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
-#   - SEIRIOS_コンポ管理シート / 子衛星1
-#   - 電源モード検討 / 子衛星電力消費 行6 (ヒーター = 2.0W, 蝕中のみ ON)
+# Source: ONGLAISAT（6U 地球観測 CubeSat）熱制御系
+#   - [S2E]       s2e-mobc-settings/satellite/thermal_csv_files/{node,heaters,heatload}.csv
+#   - [S2E-AOBC]  s2e-aobc-initialize_files/satellite_structure.ini（表面光学特性）
+#   - [ThermalMD] 06_Thermal/Thermal Control.md（ノード・ヒーター設計）
+#   - [BatteryMD] 03_Power/Battery.md §5（BAT_HTR: PCDU ch11, 12V/0.4A/2.88W）
+#   - 質量シート:  mass_inertia_breakdown.csv「7.thermal」（ヒーター×7、TBD）
+# 凡例: [確定値]/[S2E]/[推定]/TBD
 
 
 
-# === Heater (BAT 周りで safe 中保温) ===
-# 子衛星電力消費 行6: ヒーター 2.0W, 蝕中の safe / sun_acq でのみ ON
-# 簡略化: 子衛星単独 safe モード時に常時 ON（最悪蝕条件想定）
+# ─── Heaters ────────────────────────────────────────────────────────────────
+#
+# 質量シート「7.thermal」はヒーター×7 を計上するが個別質量の記載なし（TBD）。
+# S2E heaters.csv には BAT_HTR（node4）1 系統のみ明示。
+# 他 6 系統は実機実装だが S2E モデル未計上（[推定] フラグ）。
+# サーモスタット制御のため全モードで "待機 ON"（TOBC が閾値判定で実際の ON/OFF を決定）。
 
-[heaters.battery_pack.spec]
-power_per_unit_w = 2.0
-rated_power_w = 2.0
-target_temperature_c = -5.0 # ASXB23004 動作下限想定
+# --- BAT_HTR（バッテリヒーター）---
+# PCDU ch11, 12V × 0.4A = 2.88W [確定値: BatteryMD §5 / ThermalMD §3]
+# サーモスタット: TOBC が 10degC で ON、15degC で OFF [確定値: S2E heaters.csv]
 
-[heaters.battery_pack.design]
-quantity = 1
-hysteresis_c = 2.0
+[heaters.spec]
+mass_kg = 0.0            # 個別質量 TBD（質量シート「7.thermal」合計値に含まれるが内訳なし）
+power_per_unit_w = 2.88  # BAT_HTR: 12V × 0.4A [確定値: BatteryMD §5]
+rated_power_w = 2.88     # 定格電力 [W] [確定値]
+target_temperature_c = 12.5  # 制御中心温度 (10degC ON / 15degC OFF の中点) [S2E]
 
-[heaters.battery_pack.design.placement]
-face = "MY"
+[heaters.bat_htr.design]
+quantity = 1        # [確定値: PCDU ch11 1系統]
+hysteresis_c = 2.5  # (15-10)/2 = 2.5degC [S2E: lower=10, upper=15]
+
+[heaters.bat_htr.design.placement]
+face = "MY"         # バッテリ搭載面に倣う [推定]
 u = 0.0
 v = 0.0
 w = 0.0
-dx = 96.6
-dy = 84.0
-dz = 1.0
+dx = 84.0   # バッテリモジュール X [mm] [確定値: BatteryMD]
+dy = 83.0   # バッテリモジュール Y [mm] [確定値: BatteryMD]
+dz = 1.0    # ヒーター薄板 [推定]
 rz = 0.0
 side = "IN"
 cad_file = ""
@@ -35,33 +47,95 @@ cad_offset_y = 0.0
 cad_offset_z = 0.0
 update_bbox = 0
 
-[heaters.battery_pack.design.power_modes]
-safe = true
-sun_acquisition = false
-coarse_3axis = false
-fine_3axis = false
-propulsion = false
-mated_check = false
-mated_calibration = false
-mated_actuator = false
-coarse_ff = false
-fine_ff = false
+[heaters.bat_htr.design.power_modes]
+# サーモスタット制御のため全モードで待機 ON（実制御は TOBC が閾値判定）TBD
+initial = true
+bdot = true
+rough_sun_pointing = true
+rough_three_axis_mtq = true
+rough_three_axis_rw = true
+fine_three_axis = true
+imaging = true
+xband_downlink = true
+
+[heaters.bat_htr.meta]
+notes = "PCDU ch11 BAT_HTR。サーモスタット制御（10degC ON / 15degC OFF）。他6系統は質量シート計上・S2E未計上（TBD）"
 
 
 
-# === Panel Surface (SAP / MLI / 構体白塗装) ===
+# ─── Panel Surfaces（表面光学特性）────────────────────────────────────────────
+#
+# 出典: [S2E-AOBC] satellite_structure.ini
+#   PX/MX body: reflectivity=0.8, specularity=0.9 → α=1-0.8=0.2（[S2E-AOBC]）
+#   PY/MY body: reflectivity=0.8, specularity=0.9 → α=0.2
+#   PZ/MZ body: reflectivity=0.7, specularity=0.7 → α=0.3
+#   SAP front:  reflectivity=0.1, specularity=0.9 → α=0.9（高吸収・発電面）
+#   SAP back:   reflectivity=0.05, specularity=0.5 → α=0.95
+# 放射率（ε）は表面処理から推定（ThermalMD §4・一般値）:
+#   機体白系コーティング: ε≈0.85、SAP front（GaAsセル表面）: ε≈0.85
 
-[panel_surfaces.sap_cell.spec]
-emissivity = 0.85 # GaAs 三接合セル表面 typical
-absorptivity = 0.92 # AM0 吸収率
-surface_treatment = "SHARP triple-junction cell"
+# --- 機体 PX / MX 面（放熱面主体）---
 
-[panel_surfaces.mli.spec]
-emissivity = 0.03
-absorptivity = 0.4
-surface_treatment = "MLI（多層断熱材）"
+[panel_surfaces.spec]
+mass_kg = 0.0           # 表面処理のみ（パネル質量は structural に計上）
+emissivity = 0.85       # 白系コーティング typical [推定]
+absorptivity = 0.20     # α = 1 - reflectivity = 1 - 0.8 [S2E-AOBC]
+surface_treatment = "白系コーティング（機体 PX/MX 面）"
 
-[panel_surfaces.white_paint.spec]
-emissivity = 0.9
-absorptivity = 0.2
-surface_treatment = "白塗装"
+[panel_surfaces.body_px_mx.meta]
+notes = "機体 ±X 面。reflectivity=0.8 [S2E-AOBC satellite_structure.ini]"
+
+# --- 機体 PY / MY 面 ---
+
+[panel_surfaces.body_py_my.spec]
+mass_kg = 0.0
+emissivity = 0.85       # [推定]
+absorptivity = 0.20     # reflectivity=0.8 [S2E-AOBC]
+surface_treatment = "白系コーティング（機体 PY/MY 面）"
+
+[panel_surfaces.body_py_my.meta]
+notes = "機体 ±Y 面。reflectivity=0.8 [S2E-AOBC satellite_structure.ini]"
+
+# --- 機体 PZ / MZ 面 ---
+
+[panel_surfaces.body_pz_mz.spec]
+mass_kg = 0.0
+emissivity = 0.85       # [推定]
+absorptivity = 0.30     # reflectivity=0.7 [S2E-AOBC]
+surface_treatment = "白系コーティング（機体 PZ/MZ 面）"
+
+[panel_surfaces.body_pz_mz.meta]
+notes = "機体 ±Z 面。reflectivity=0.7 [S2E-AOBC satellite_structure.ini]"
+
+# --- SAP 表面（太陽電池面・発電側）---
+
+[panel_surfaces.sap_front.spec]
+mass_kg = 0.0
+emissivity = 0.85       # CESI CTJ30 セル表面 typical [推定]
+absorptivity = 0.90     # reflectivity=0.1 → α=0.9（高吸収で発電） [S2E-AOBC]
+surface_treatment = "CESI CTJ30 三接合セル表面（SAP front）"
+
+[panel_surfaces.sap_front.meta]
+notes = "SAP 発電面。reflectivity=0.1 [S2E-AOBC]. node.csv: MAIN_SAP_*.1 α=0.85 [S2E]"
+
+# --- SAP 裏面（back side）---
+
+[panel_surfaces.sap_back.spec]
+mass_kg = 0.0
+emissivity = 0.85       # [推定]
+absorptivity = 0.95     # reflectivity=0.05 → α=0.95 [S2E-AOBC]
+surface_treatment = "SAP 裏面（back side）"
+
+[panel_surfaces.sap_back.meta]
+notes = "SAP 裏面。reflectivity=0.05, specularity=0.5 [S2E-AOBC satellite_structure.ini]"
+
+# --- RSI バッフル（望遠鏡開口部・低α設計）---
+
+[panel_surfaces.rsi_baffle.spec]
+mass_kg = 0.0
+emissivity = 0.85       # [推定]
+absorptivity = 0.20     # α=0.2 [S2E node.csv: MAIN_MISSION_RSI_BAFFLE.1]
+surface_treatment = "RSI バッフル（低α・迷光抑制コーティング）"
+
+[panel_surfaces.rsi_baffle.meta]
+notes = "望遠鏡開口バッフル。S2E node.csv: node5, α=0.2, area=0.0064m², face=-Z [S2E]"

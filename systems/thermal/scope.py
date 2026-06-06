@@ -4,6 +4,9 @@ import veriq as vq
 
 from craft.core.paths import system_data_path
 from craft.schema import build_system_root_model, default_registry
+
+# components / analyses を先に登録させる
+from systems.thermal import analyses as _analyses  # noqa: F401
 from systems.thermal import components as _components  # noqa: F401
 
 thermal = vq.Scope("thermal")
@@ -14,9 +17,9 @@ def _build_and_attach() -> type:
     thermal.root_model()(root_model)
     for adef in default_registry.analyses(system="thermal"):
         if adef.verify:
-            thermal.verification(adef.name)(adef.func)
+            thermal.verification(adef.name, imports=adef.imports)(adef.func)
         else:
-            thermal.calculation(adef.name)(adef.func)
+            thermal.calculation(adef.name, imports=adef.imports)(adef.func)
     return root_model
 
 
