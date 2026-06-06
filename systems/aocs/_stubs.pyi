@@ -3,6 +3,41 @@ from pydantic import BaseModel
 
 from craft.schema.dsl.placement import Placement
 
+class GNSSAntennaSpec(BaseModel):
+    mass_kg: float
+    band: str
+    gain_dbi: float
+    half_angle_deg: float
+
+class GNSSAntennaDesign(BaseModel):
+    quantity: int
+    placement: Placement | None
+
+class GNSSAntennaEntry(BaseModel):
+    spec: GNSSAntennaSpec
+    design: GNSSAntennaDesign
+    meta: dict[str, object] | None
+
+class GNSSReceiverSpec(BaseModel):
+    mass_kg: float
+    temp_min_c: float
+    temp_max_c: float
+    power_per_unit_w: float
+    constellation: str
+    channel_count: int
+    update_rate_hz: float
+    position_noise_m: float
+
+class GNSSReceiverDesign(BaseModel):
+    quantity: int
+    placement: Placement | None
+    power_modes: dict[str, bool]
+
+class GNSSReceiverEntry(BaseModel):
+    spec: GNSSReceiverSpec
+    design: GNSSReceiverDesign
+    meta: dict[str, object] | None
+
 class GyroscopeSpec(BaseModel):
     mass_kg: float
     temp_min_c: float
@@ -59,6 +94,8 @@ class ReactionWheelSpec(BaseModel):
     power_per_unit_w: float
     max_torque_nms: float
     max_momentum_nms: float
+    rotor_inertia_kg_m2: float
+    max_speed_rpm: float
 
 class ReactionWheelDesign(BaseModel):
     quantity: int
@@ -78,6 +115,8 @@ class StarTrackerSpec(BaseModel):
     accuracy_arcsec: float
     fov_deg: float
     update_rate_hz: float
+    sun_exclusion_deg: float
+    earth_exclusion_deg: float
 
 class StarTrackerDesign(BaseModel):
     quantity: int
