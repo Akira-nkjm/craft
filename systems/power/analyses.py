@@ -10,10 +10,10 @@ veriq 制約: scope に貼られる calculation / verification の引数は全�
 from typing import Annotated
 
 import veriq as vq
+from toolbox.power.battery import required_battery_capacity_wh as tb_required_battery_capacity_wh
 
 from craft.analyses import auto_inject_refs, power_per_mode
 from craft.schema import analysis
-from toolbox.power.battery import required_battery_capacity_wh as tb_required_battery_capacity_wh
 
 
 @analysis(desc="全 PDM の想定消費電力合計（W） — 最大消費モードを採用")
