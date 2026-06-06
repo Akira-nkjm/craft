@@ -4,6 +4,7 @@ import veriq as vq
 
 from craft.core.paths import system_data_path
 from craft.schema import build_system_root_model, default_registry
+from systems.comm import analyses as _analyses  # noqa: F401
 from systems.comm import components as _components  # noqa: F401
 
 comm = vq.Scope("comm")
@@ -14,9 +15,9 @@ def _build_and_attach() -> type:
     comm.root_model()(root_model)
     for adef in default_registry.analyses(system="comm"):
         if adef.verify:
-            comm.verification(adef.name)(adef.func)
+            comm.verification(adef.name, imports=adef.imports)(adef.func)
         else:
-            comm.calculation(adef.name)(adef.func)
+            comm.calculation(adef.name, imports=adef.imports)(adef.func)
     return root_model
 
 

@@ -9,6 +9,8 @@ class AntennaSpec(BaseModel):
     gain_dbi: float
     polarization: str
     direction: str
+    linked_transceiver: str
+    radiation_pattern: str
 
 class AntennaDesign(BaseModel):
     quantity: int
@@ -29,7 +31,32 @@ class TransceiverSpec(BaseModel):
     frequency_mhz: float
     tx_power_w: float
     data_rate_kbps: float
+    s2e_data_rate_kbps: float
+    max_data_rate_kbps: float
     modulation: str
+    tx_gain_dbi: float
+    rx_gain_dbi: float
+    tx_loss_feeder_db: float
+    tx_loss_pointing_db: float
+    rx_loss_feeder_db: float
+    rx_loss_pointing_db: float
+    rx_system_noise_temperature_k: float
+    ground_tx_power_w: float
+    ground_tx_gain_dbi: float
+    ground_rx_gain_dbi: float
+    ground_loss_feeder_db: float
+    ground_loss_pointing_db: float
+    ground_rx_system_noise_temperature_k: float
+    atmospheric_loss_db: float
+    rainfall_loss_db: float
+    polarization_loss_db: float
+    other_loss_db: float
+    required_ebn0_db: float
+    hardware_deterioration_db: float
+    coding_gain_db: float
+    margin_requirement_db: float
+    pass_duration_s: float
+    link_efficiency: float
 
 class TransceiverDesign(BaseModel):
     quantity: int
