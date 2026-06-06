@@ -2,18 +2,46 @@
 from pydantic import BaseModel
 
 from craft.schema.dsl.placement import Placement
-from systems.cdh.components import BusInterface
+
+class BusInterfaceSpec(BaseModel):
+    mass_kg: float
+    protocol: str
+    physical_layer: str
+    port_count: int
+    endpoint_count: int
+    bandwidth_bps: float
+    nominal_traffic_bps: float
+    master: str
+
+class BusInterfaceDesign(BaseModel):
+    quantity: int
+    placement: Placement | None
+
+class BusInterfaceRequirements(BaseModel):
+    max_utilization: float
+
+class BusInterfaceEntry(BaseModel):
+    spec: BusInterfaceSpec
+    design: BusInterfaceDesign
+    requirements: BusInterfaceRequirements
+    meta: dict[str, object] | None
 
 class OBCSpec(BaseModel):
     mass_kg: float
     temp_min_c: float
     temp_max_c: float
     power_per_unit_w: float
+    processor: str
     clock_mhz: int
-    ram_mb: int
-    storage_gb: float
+    ram_kb: int
+    rom_kb: int
     architecture: str
-    bus_interface: BusInterface
+    nvm_kb: int
+    storage_gb: float
+    role: str
+    primary_bus: str
+    nominal_packet_rate_hz: float
+    nominal_packet_size_bits: float
 
 class OBCDesign(BaseModel):
     quantity: int
@@ -21,10 +49,14 @@ class OBCDesign(BaseModel):
     power_modes: dict[str, bool]
     firmware_version: str
     boot_partition_count: int
+    estimated_wcet_s: float
+    control_period_s: float
 
 class OBCRequirements(BaseModel):
     mtbf_hours: float
     radiation_tolerance_krad: float
+    max_cpu_utilization: float
+    max_no_contact_days: float
 
 class OBCEntry(BaseModel):
     spec: OBCSpec
