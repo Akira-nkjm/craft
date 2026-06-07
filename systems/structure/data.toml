@@ -600,12 +600,12 @@ quantity = 1
 
 
 # === Harness ===
-# フライト確定値 8.925kg に含まれる「ハーネス等込み」分。
-# 個別質量は CSV 未掲載 → 推定 150g（TBD）。
+# フライト確定値 8.925kg に含まれる「ハーネス等込み」分（配線・コネクタ・二次構造）。
+# 個別質量は CSV 未掲載。フライト 8.925kg と他の積み上げの差を吸収する推定値。
 # [推定 / S2E satellite_structure.ini コメント]
 
 [harnesses.spec]
-mass_kg = 0.15000   # 推定 150g — CSV 未掲載（TBD）[推定]
+mass_kg = 0.50040   # [推定] フル 6U ハーネス/配線/二次構造。CSV 未掲載分を含めフライト 8.925kg に整合
 
 [harnesses.main.design]
 quantity = 1

@@ -144,6 +144,39 @@ def verify_battery_capacity(
     return usable_wh > 0.0 and usable_wh >= required_wh
 
 
+@analysis(desc="持続運用（精三軸指向）負荷に対する EOL 電力マージン [%]")
+def sustained_power_margin_pct(
+    per_mode: Annotated[dict, vq.Ref("@bus_power_per_mode_w")],
+    gen_w: Annotated[float, vq.Ref("@eol_generation_w")],
+) -> float:
+    """精三軸指向（撮像待機）の持続負荷に対する EOL 発電マージン [%]。
+
+    撮像・X帯DL のピーク負荷は短時間でバッテリ併用前提（@eol_power_margin_pct が
+    薄いのはこのため）。持続的にバランスすべきは精三軸指向の負荷で、ここに十分な
+    マージンがあることを別途評価する。
+    """
+    sustained_w = per_mode.get("fine_three_axis", 0.0)
+    if gen_w <= 0.0:
+        return 0.0
+    return tb_power_margin_pct(gen_w, sustained_w)
+
+
+@analysis(
+    verify=True,
+    desc="持続運用負荷に対し EOL 発電が >= 20% マージンを持つか（ピークはバッテリ併用）",
+)
+def verify_sustained_power_margin(
+    margin_pct: Annotated[float, vq.Ref("@sustained_power_margin_pct")],
+) -> bool:
+    """持続運用（精三軸）の EOL 電力マージンが PDR 目安 >= 20% を満たすか。
+
+    撮像/X帯DL の瞬時ピーク（@worst_case_bus_power_w 46.88W）は EOL 発電 50.53W に
+    肉薄するが短時間イベントでバッテリが補填する設計（Power Overview §6）。
+    持続成立条件は精三軸負荷に対するマージンで判定する。
+    """
+    return margin_pct >= 20.0
+
+
 # ─── (ad-hoc 例) — veriq 非登録、API/CLI 専用 ─────────────────────────
 
 

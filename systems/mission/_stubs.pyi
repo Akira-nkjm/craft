@@ -26,8 +26,8 @@ class ImageSensorSpec(BaseModel):
     temp_min_c: float
     temp_max_c: float
     power_per_unit_w: float
-    x_pixels: int
-    y_pixels: int
+    tdi_direction_pixels: int
+    cross_track_pixels: int
     pixel_size_m: float
     tdi_stages: int
     tdi_max_stages: int

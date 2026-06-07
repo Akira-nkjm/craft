@@ -38,6 +38,9 @@ class MissionProfile(Config):
     primary_payload: str = fld(desc="主ペイロード種別")
     contact_frequency_per_day: int = fld(ge=0, desc="1 日あたりの地上局可視回数")
     launch_window_start: str = fld(desc="打ち上げ窓開始 (ISO8601)")
+    flight_mass_kg: float = fld(
+        ge=0, default=0.0, unit="kg", desc="フライト確定全機質量（質量バジェット基準値）"
+    )
 
 
 class OrbitalParameters(Config):

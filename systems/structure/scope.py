@@ -20,9 +20,9 @@ def _build_and_attach() -> type:
     structure.root_model()(root_model)
     for adef in default_registry.analyses(system="structure"):
         if adef.verify:
-            structure.verification(adef.name)(adef.func)
+            structure.verification(adef.name, imports=adef.imports)(adef.func)
         else:
-            structure.calculation(adef.name)(adef.func)
+            structure.calculation(adef.name, imports=adef.imports)(adef.func)
     return root_model
 
 

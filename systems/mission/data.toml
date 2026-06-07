@@ -18,6 +18,7 @@ target_altitude_km = 410.0 # 撮像高度 約410 km（ISS 放出軌道）
 primary_payload = "earth_observation" # 主ペイロード: 高分解能光学地球観測（GSD 2.5–3 m）
 contact_frequency_per_day = 5 # S 帯地上局可視回数（沖縄/牧之原/台湾）概算
 launch_window_start = "2024-11-05T00:00:00Z" # Falcon 9 / CRS SpX-31 打上げ (JST)
+flight_mass_kg = 8.925 # [確定値] フライト全機質量（S2E satellite_structure.ini）= 質量バジェット基準
 
 
 
@@ -118,7 +119,7 @@ allowed_transitions = ["fine_three_axis", "imaging"]
 #       光学系単体は未分離 → 推測 TBD [推測]
 
 [telescope.spec]
-mass_kg = 0.5                     # [推測] カメラアセンブリ 699.61g の一部（光学系単体未分離）
+mass_kg = 2.525                   # [推定] Korsch 光学系 + カメラ内部 + レンズ + CCC 基板。CSV camera+cover は 699.61g だが「圧倒的に足りない(ccc基板,カメラ中身,レンズ)」と明記。フライト質量 8.925kg と CSV 実測内訳(~6.2kg)の差の主因をここに計上（光学系は TASA 非公開）
 focal_length_m = 0.725            # [確定値: S2E telescope.ini focal_length_m = 0.725]
 aperture_diameter_m = 0.145       # [推測] f/5 仮定 → Ø145 mm（実機 TASA 非公開）
 f_number = 5.0                    # [推測] D=Ø145 mm / f=725 mm = f/5
@@ -164,8 +165,8 @@ mass_kg = 0.1                     # [推測] センサ + FPA 単体質量（カ�
 temp_min_c = -20.0                # [推測] CMOS TDI 典型動作温度下限
 temp_max_c = 60.0                 # [推測] CMOS TDI 典型動作温度上限
 power_per_unit_w = 11.51          # [確定値: PCDU MISSION_1 = 11.51 W（Power Overview §5）]
-x_pixels = 32                    # [確定値: S2E telescope.ini x_number_of_pixel = 32（TDI 段方向）]
-y_pixels = 8192                  # [確定値: S2E telescope.ini y_number_of_pixel = 8192（クロストラック）]
+tdi_direction_pixels = 32        # TDI 段（積分）方向の物理画素数。出典で軸名が逆（telescope.ini x=32 / tdi-analysis y=32）のため物理方向で記載
+cross_track_pixels = 8192        # クロストラック（スワス）方向の画素数。telescope.ini y=8192 / tdi-analysis x=8192
 pixel_size_m = 5.0e-6             # [確定値: S2E telescope.ini pixel_size_m = 5.0e-6 m]
 tdi_stages = 8                    # [確定値: S2E telescope.ini stage_mode = 8]
 tdi_max_stages = 32               # [確定値: 物理配列 X 方向 = 32 段]

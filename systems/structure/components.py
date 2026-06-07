@@ -1,8 +1,8 @@
 """Structure system components.
 
-Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
-  - SEIRIOS_コンポ管理シート / 子衛星1 Structure セクション
-  - 子機分離機構設計
+Source: ONGLAISAT（6U 地球観測 CubeSat, ISSL 東大バス）
+  - 08_Structure/Structure and Configuration.md、00_System/Mass Budget.md
+  - mass_inertia_breakdown.csv「1.structure」、satellite_structure.ini
 
 設計判断:
 - 構造系は基本的に passive。HRM のみ pyro/burn-wire 駆動で電力を瞬時消費

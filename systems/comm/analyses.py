@@ -14,8 +14,15 @@ from toolbox.comm.link import eirp_dbw as tb_eirp_dbw
 from toolbox.comm.link import fspl_db as tb_fspl_db
 from toolbox.comm.link import g_over_t_db_k as tb_g_over_t_db_k
 from toolbox.comm.link import link_margin_db as tb_link_margin_db
+from toolbox.orbital.access import slant_range_km as tb_slant_range_km
 
 from craft.schema import analysis
+
+# 地上局の最小運用仰角 [deg]。仰角が低いほどスラントレンジが伸び（最悪）マージンが減る。
+# S 帯 TT&C は低仰角でも成立、X 帯高速回線は仰角を確保する運用 → 別値で保守評価。
+# [推定] 実運用の最小仰角は資料未確認（TBD）。
+_MIN_ELEVATION_SBAND_DEG = 5.0
+_MIN_ELEVATION_XBAND_DEG = 10.0
 
 
 def _loss_db(value: float) -> float:
@@ -130,10 +137,15 @@ def sband_link_margins_db(
     transceivers: Annotated[vq.Table, vq.Ref("$.transceivers")],
     altitude_km: Annotated[float, vq.Ref("$.missionprofile.target_altitude_km", scope="mission")],
 ) -> dict[str, float]:
-    """410 km 代表スラントレンジでの S-band uplink/downlink マージン [dB]。"""
+    """最小仰角での最大スラントレンジにおける S-band uplink/downlink マージン [dB]。
+
+    地上局リンクの距離は高度ではなく仰角依存のスラントレンジ。最小仰角
+    （最悪条件 = 最長距離）で評価する。
+    """
+    slant_km = float(tb_slant_range_km(altitude_km, _MIN_ELEVATION_SBAND_DEG))
     return {
-        "srx_uplink": _uplink_margin_db(transceivers["srx"], altitude_km),
-        "stx_downlink": _downlink_margin_db(transceivers["stx"], altitude_km),
+        "srx_uplink": float(_uplink_margin_db(transceivers["srx"], slant_km)),
+        "stx_downlink": float(_downlink_margin_db(transceivers["stx"], slant_km)),
     }
 
 
@@ -145,8 +157,12 @@ def xband_downlink_margin_db(
     transceivers: Annotated[vq.Table, vq.Ref("$.transceivers")],
     altitude_km: Annotated[float, vq.Ref("$.missionprofile.target_altitude_km", scope="mission")],
 ) -> float:
-    """410 km 代表スラントレンジでの X-band downlink マージン [dB]。"""
-    return _downlink_margin_db(transceivers["xtx"], altitude_km)
+    """最小仰角での最大スラントレンジにおける X-band downlink マージン [dB]。
+
+    高度ではなく仰角依存のスラントレンジ（最小仰角 = 最悪条件）で評価する。
+    """
+    slant_km = float(tb_slant_range_km(altitude_km, _MIN_ELEVATION_XBAND_DEG))
+    return float(_downlink_margin_db(transceivers["xtx"], slant_km))
 
 
 @analysis(desc="X帯 1 パスあたりダウンリンク容量 [MB/pass]（toolbox.comm.data）")

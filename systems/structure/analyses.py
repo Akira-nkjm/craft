@@ -30,9 +30,11 @@ def total_structure_mass_kg(
 ) -> float:
     """構体系の積み上げ質量合計 [kg]。
 
-    CSV §1.structure CAD-DD 列積み上げ値 ~1038g を再現することを意図する。
-    フライト確定質量 8.925kg (S2E ini) は全サブシステム込み（光学系・推進剤・ハーネス含む）の値。
-    この analysis は構体系単体の積み上げチェックに使う。
+    Frame/Panel/Bracket（CSV §1.structure CAD-DD ~1038g）に加え、Hinge/HRM/
+    Fastener/Harness の推定分を含む**構体サブシステム全体**の積み上げ。
+    CSV §1（frames 主体）より大きくなるのは展開機構・締結・配線を含むため。
+    フライト確定質量 8.925kg (S2E ini) は全サブシステム込みの全機質量で、別途
+    mission::total_bus_mass_kg と突き合わせる（mission::verify_mass_budget_reconciled）。
     """
     tables = [
         frames,
@@ -54,37 +56,39 @@ def total_structure_mass_kg(
 
 
 @analysis(
-    desc="フライト確定質量（S2E ini 値 8.925 kg）に対する構体系質量マージン [%]"
-    "（toolbox.structure.mass）",
+    desc="構体系質量がフライト全機質量に占める割合の余裕 [%]（toolbox.structure.mass）",
+    imports=["mission"],
 )
 def structure_mass_margin_pct(
     actual_mass_kg: Annotated[float, vq.Ref("@total_structure_mass_kg")],
+    flight_mass_kg: Annotated[float, vq.Ref("$.missionprofile.flight_mass_kg", scope="mission")],
 ) -> float:
-    """構体系積み上げ質量とフライト確定値（8.925 kg）の差を割合で表す。
+    """構体系質量が全機質量に占める割合の余裕 [%]。
 
-    フライト確定質量 8.925 kg は全サブシステム込みの値なので、構体系単体（~1038 g）との
-    比較では構体 mass_limit を 8.925 kg とし、残余（他サブシステム + 未計上分）のバジェットを
-    確認する用途に使う。正値 = 構体系が limit より軽い（余裕あり）。
-    mass_limit_kg は S2E フライト確定質量 [S2E satellite_structure.ini]。
+    `mass_margin_pct(structure, flight)` = (1 − structure/flight)×100。
+    基準の全機質量は data.toml の `missionprofile.flight_mass_kg` を参照する。
+    全機質量バジェットの突き合わせ自体は mission::verify_mass_budget_reconciled で行う。
     """
-    mass_limit_kg = 8.925  # [確定値 S2E satellite_structure.ini]
-    return tb_mass_margin_pct(actual_mass_kg, mass_limit_kg)
+    return tb_mass_margin_pct(actual_mass_kg, flight_mass_kg)
 
 
 @analysis(
     verify=True,
-    desc="構体系質量が全機フライト確定質量 8.925 kg を超えていないか",
+    desc="構体系質量が全機質量の妥当な割合（<= 40%）に収まるか",
+    imports=["mission"],
 )
-def verify_structure_mass_within_limit(
+def verify_structure_mass_fraction(
     actual_mass_kg: Annotated[float, vq.Ref("@total_structure_mass_kg")],
+    flight_mass_kg: Annotated[float, vq.Ref("$.missionprofile.flight_mass_kg", scope="mission")],
 ) -> bool:
-    """構体系積み上げ質量が全機フライト確定値 8.925 kg 以内か検証する。
+    """構体系質量が全機フライト質量の 40% 以内かを検証する。
 
-    構体系単体は ~1038 g の見込みなので通常 pass するが、
-    部品追加・見直しで構体系が突出していないかのガードとして機能する。
+    構体は通常 全機の 20–35% 程度。40% を超えるなら構体系の質量計上が過大
+    （または他サブシステムの未計上）を示すガード。基準の全機質量は data.toml の
+    `missionprofile.flight_mass_kg` を参照。全機質量そのものの整合は
+    mission::verify_mass_budget_reconciled が担う。
     """
-    mass_limit_kg = 8.925  # [確定値 S2E satellite_structure.ini]
-    return actual_mass_kg <= mass_limit_kg
+    return actual_mass_kg <= 0.40 * flight_mass_kg
 
 
 @analysis(

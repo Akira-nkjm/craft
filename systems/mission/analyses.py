@@ -11,6 +11,9 @@
   - scene_data_volume_mbyte : 1 ミッションあたり画像データ量 [MB]（toolbox.payload.data）
 """
 
+from typing import Annotated
+
+import veriq as vq
 from toolbox.payload.data import observation_data_volume_mbyte
 from toolbox.payload.imaging import swath_width_m
 
@@ -30,6 +33,36 @@ def total_bus_mass_kg(*tables) -> float:
 def total_component_count(*tables) -> int:
     """全テーブルの quantity 合計。"""
     return total_quantity(*tables)
+
+
+@analysis(desc="モデル積み上げ質量とフライト確定質量の差 [kg]（正 = モデルが軽い）")
+def mass_budget_delta_kg(
+    total_mass: Annotated[float, vq.Ref("@total_bus_mass_kg")],
+    flight_mass_kg: Annotated[float, vq.Ref("$.missionprofile.flight_mass_kg")],
+) -> float:
+    """フライト確定質量 − モデル積み上げ質量 [kg]。未計上分の指標。
+
+    基準値はハードコードせず `missionprofile.flight_mass_kg`（data.toml）を参照する。
+    """
+    return flight_mass_kg - total_mass
+
+
+@analysis(
+    verify=True,
+    desc="モデル積み上げ質量がフライト確定質量と ±5% 以内で整合するか",
+)
+def verify_mass_budget_reconciled(
+    total_mass: Annotated[float, vq.Ref("@total_bus_mass_kg")],
+    flight_mass_kg: Annotated[float, vq.Ref("$.missionprofile.flight_mass_kg")],
+) -> bool:
+    """全機モデル質量がフライト確定質量（`missionprofile.flight_mass_kg`）と ±5% 以内か。
+
+    構体系単体ではなく**全機の積み上げ**を data.toml の確定値と突き合わせる。
+    出典 CSV 内訳は ~6.2kg しか積み上がらず、光学系内部等は推定で補完している。
+    """
+    if flight_mass_kg <= 0.0:
+        return False
+    return abs(total_mass - flight_mass_kg) / flight_mass_kg <= 0.05
 
 
 # ─── ペイロード光学・撮像解析（ad-hoc、veriq 非登録）─────────────────────────
@@ -63,17 +96,17 @@ def swath_width_km(
     altitude_m: float = 410_000.0,
     pixel_size_m: float = 5.0e-6,
     focal_length_m: float = 0.725,
-    y_pixels: int = 8192,
+    cross_track_pixels: int = 8192,
 ) -> float:
     """クロストラック方向のスワス幅 [km] を返す。
 
-    FoV = y_pixels × IFOV（rad）として toolbox.swath_width_m で計算。
+    FoV = cross_track_pixels × IFOV（rad）として toolbox.swath_width_m で計算。
     ONGLAISAT 確定値: 8192 × 6.897e-6 rad → FoV ≈ 0.05651 rad → 約 23.2 km。
-    Source: [確定値] S2E telescope.ini
-            （y_number_of_pixel=8192, pixel_size_m=5e-6, focal_length_m=0.725）
+    Source: [確定値] クロストラック画素 8192（telescope.ini / tdi-analysis、
+            pixel_size_m=5e-6, focal_length_m=0.725）
     """
     ifov_rad = pixel_size_m / focal_length_m
-    fov_rad = float(y_pixels) * ifov_rad
+    fov_rad = float(cross_track_pixels) * ifov_rad
     return float(swath_width_m(altitude_m, fov_rad)) / 1000.0
 
 
@@ -102,7 +135,7 @@ def tdi_snr_factor(
     cache=True,
 )
 def scene_data_volume_mbyte(
-    y_pixels: int = 8192,
+    cross_track_pixels: int = 8192,
     lines_per_frame: int = 378,
     bits_per_pixel: int = 10,
     frames_per_mission: int = 10,
@@ -113,12 +146,12 @@ def scene_data_volume_mbyte(
     生データ（圧縮なし）: 8192 × 378 × 10 bit × 10 frames ÷ 8e6 ≈ 38.8 MB / mission。
     X バンド DL 帯域との比較に使う。compression_ratio > 1 で圧縮後データ量を返す。
     Source: [確定値] TDI-analysis lines_per_frame=378, S2E number_of_frames=10
-            [確定値] S2E y_number_of_pixel=8192
+            [確定値] クロストラック画素 8192
             [推測] bits_per_pixel=10
     """
     return float(
         observation_data_volume_mbyte(
-            horizontal_pixels=float(y_pixels),
+            horizontal_pixels=float(cross_track_pixels),
             vertical_pixels=float(lines_per_frame),
             bits_per_pixel=float(bits_per_pixel),
             frame_count=float(frames_per_mission),

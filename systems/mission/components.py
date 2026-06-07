@@ -93,10 +93,12 @@ class ImageSensor(Component, MultiInstance, PowerConsuming, TemperatureSensitive
     """
 
     # --- センサ配列 ---
-    x_pixels: int = fld(ge=1, desc="X 方向（TDI 段方向）画素数 [確定値: S2E x_number_of_pixel=32]")
-    y_pixels: int = fld(
-        ge=1, desc="Y 方向（クロストラック方向）画素数 [確定値: S2E y_number_of_pixel=8192]"
+    # 軸名は出典で逆（telescope.ini: x=32/y=8192、tdi-analysis/telescope.toml: x=8192/y=32）。
+    # 混乱回避のため craft では物理方向で命名する。
+    tdi_direction_pixels: int = fld(
+        ge=1, desc="TDI 段（積分/アロングトラック）方向の物理画素数 [確定値: 32]"
     )
+    cross_track_pixels: int = fld(ge=1, desc="クロストラック（スワス）方向の画素数 [確定値: 8192]")
     pixel_size_m: float = fld(
         ge=0, unit="m", desc="画素ピッチ [m] [確定値: S2E pixel_size_m=5.0e-6]"
     )

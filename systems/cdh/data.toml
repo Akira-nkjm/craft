@@ -76,12 +76,15 @@ notes = "MOBC board1&2。Data source: MOBC.md / CDH Overview.md / mass_inertia_b
 
 # === OBC: AOBC (AOCS OBC) ===
 # [確定値] PIC32MX7 80MHz, 128KiB RAM, 512KiB ROM, 512KiB FRAM.
-# [S2E] mass_inertia_breakdown.csv gives AOBC/AOCS module all-assy 1124.29g (includes AOCS hardware).
+# 質量の所有境界: CSV「5.AOCS」の AOBC all-assy 1124.29g は RW×3/MTQ×3/STT/gyro/
+#   磁気センサ/GNSS-rx（= aocs system で個別計上、計 723g）を内包する。二重計上を避け、
+#   ここでは AOBC 基板＋AOCS モジュール統合構造のみ（all-assy 1124.29 − 723 = 401.3g）を計上。
+#   → cdh(AOBC 401.3g) + aocs(機器 786.9g) = CSV 5.AOCS 合計 1188.14g に一致。
 # [確定値] PCDU ch1 AOBC_5V 1.94W + ch2 AOBC_BUS 3.56W = 5.50W, all 8 operation modes ON.
 
 
 [obcs.aobc.spec]
-mass_kg = 1.12429 # [S2E] AOCS module total; AOBC board-only mass TBD
+mass_kg = 0.40129 # AOBC 基板＋AOCS モジュール統合構造（all-assy 1124.29g − aocs 個別計上 723g）
 temp_min_c = -20.0 # [推定] 動作温度下限 [degC] TBD
 temp_max_c = 60.0 # [推定] 動作温度上限 [degC] TBD
 power_per_unit_w = 5.50 # AOBC_5V + AOBC_BUS [W]

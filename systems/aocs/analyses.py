@@ -82,18 +82,18 @@ def mtq_available_torque_nm(
 def gravity_gradient_disturbance_nm(
     reaction_wheels: Annotated[vq.Table, vq.Ref("$.reaction_wheels")],
 ) -> float:
-    """重力傾斜外乱トルク [N·m]（保守推定）。
+    """重力傾斜外乱トルク [N·m]（最大主慣性差で保守評価）。
 
     toolbox.aocs.disturbances.gravity_gradient_torque_nm を使用。
-    ONGLAISAT 6U CubeSat 慣性 推定値:
-      - Iz ≈ 0.03 kg·m²（長軸 = Z軸 = カメラ光軸方向）
-      - Ix ≈ 0.005 kg·m²（短軸）
-      - attitude_error = 5 deg (worst-case 指向誤差)
-    [推定] 慣性テンソルは mass_inertia_breakdown.csv 由来の概算値を使用。TBD 詳細解析必要。
+    慣性は [S2E] satellite_structure.ini の確定値（衛星座標系・対角）:
+      - Ixx = 0.151, Iyy = 0.164, Izz = 0.108 kg·m²
+    重力傾斜は |I_max − I_min| に比例するため、最大差を取る軸ペア
+    （Iyy = 0.164 を z 相当 / Izz = 0.108 を x 相当）で worst-case 評価する。
+    attitude_error = 5 deg（worst-case 指向誤差）。
     """
     orbit_r = R_EARTH + 410e3  # [確定値] ONGLAISAT 410 km 軌道
-    inertia_z = 0.03  # [推定] 6U CubeSat Iz [kg·m²]
-    inertia_x = 0.005  # [推定] 6U CubeSat Ix [kg·m²]
+    inertia_z = 0.164  # [S2E] 最大主慣性 Iyy [kg·m²]
+    inertia_x = 0.108  # [S2E] 最小主慣性 Izz [kg·m²]
     attitude_error_rad = 5.0 * 3.14159265358979 / 180.0  # 5 deg worst-case
     torque = tb_gravity_gradient_torque_nm(
         orbit_radius_m=orbit_r,
@@ -140,25 +140,49 @@ def aerodynamic_disturbance_nm(
 
 
 @analysis(
-    verify=True,
-    desc="RW 角運動量容量が重力傾斜外乱の飽和時間 > 1 軌道（92 min）を満たすか",
+    desc="RW 単独の角運動量飽和時間 [h]（総外乱 = 重力傾斜 + 空気抵抗）",
     imports=["aocs"],
 )
-def verify_rw_momentum_sufficient(
+def rw_saturation_time_h(
     h_rw: Annotated[float, vq.Ref("@rw_momentum_capacity_nms")],
     t_gg: Annotated[float, vq.Ref("@gravity_gradient_disturbance_nm")],
-) -> bool:
-    """RW の角運動量容量が重力傾斜外乱による飽和時間 >= 1 軌道周期（1.54 h）を満たすか。
+    t_aero: Annotated[float, vq.Ref("@aerodynamic_disturbance_nm")],
+) -> float:
+    """RW が総 secular 外乱で飽和するまでの時間 [h]。
 
-    toolbox.aocs.actuators.rw_saturation_time_h を使用して飽和時間を計算。
-    飽和時間 >= 1.54 h（92 min = ONGLAISAT 410 km 円軌道周期）で OK。
+    低高度 410 km では空気抵抗外乱が支配的（重力傾斜の ~230 倍）。
+    総外乱（重力傾斜 + 空気抵抗）を secular 外乱として飽和時間を計算する。
+    LEO では通常 1 軌道未満で飽和するため、MTQ による定期 desat が前提。
     """
-    if t_gg <= 0.0:
-        return False
-    sat_time_h = tb_rw_saturation_time_h(
-        rw_momentum_capacity_nms=h_rw,
-        secular_disturbance_torque_nm=t_gg,
-        momentum_margin=0.2,  # 20% マージン
+    total_disturbance_nm = t_gg + t_aero
+    if total_disturbance_nm <= 0.0:
+        return 0.0
+    return float(
+        tb_rw_saturation_time_h(
+            rw_momentum_capacity_nms=h_rw,
+            secular_disturbance_torque_nm=total_disturbance_nm,
+            momentum_margin=0.2,  # 20% マージン
+        )
     )
-    orbit_period_h = 92.62 / 60.0  # [確定値] 410 km 軌道周期 92.62 min
-    return bool(sat_time_h >= orbit_period_h)
+
+
+@analysis(
+    verify=True,
+    desc="MTQ が総外乱（重力傾斜+空気抵抗）に対し RW を desat できるトルク余裕を持つか",
+    imports=["aocs"],
+)
+def verify_mtq_can_desaturate_rw(
+    t_mtq: Annotated[float, vq.Ref("@mtq_available_torque_nm")],
+    t_gg: Annotated[float, vq.Ref("@gravity_gradient_disturbance_nm")],
+    t_aero: Annotated[float, vq.Ref("@aerodynamic_disturbance_nm")],
+) -> bool:
+    """MTQ の発生トルクが総 secular 外乱（重力傾斜 + 空気抵抗）を上回るか。
+
+    LEO（410 km）では空気抵抗が支配的で RW は 1 軌道未満で飽和するため、
+    AOCS 成立条件は「RW 単独保持」ではなく「**MTQ が外乱以上のトルクで RW を
+    定期 desat できる**」こと。MTQ 平均トルク >= 総外乱 × (1 + 20% margin) で OK。
+    """
+    total_disturbance_nm = t_gg + t_aero
+    if t_mtq <= 0.0:
+        return False
+    return t_mtq >= total_disturbance_nm * 1.2
