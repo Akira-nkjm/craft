@@ -23,7 +23,7 @@ from toolbox.power.battery import (
     usable_capacity_wh as tb_usable_capacity_wh,
 )
 
-from craft.analyses import auto_inject_refs, power_per_mode
+from craft.analyses import power_per_mode
 from craft.schema import analysis
 
 
@@ -65,14 +65,19 @@ def pdm_power_per_mode_w(
     return result
 
 
-@analysis(desc="モード別 全バス消費電力 [W] — 全 PowerConsuming コンポを集計")
-@auto_inject_refs(
-    trait="PowerConsuming",
-    extra_refs=[("mission", "operation_mode_configs")],
+@analysis(
+    desc="モード別 全バス消費電力 [W] — 全 PowerConsuming コンポを集計",
+    imports=["mission"],
 )
-def bus_power_per_mode_w(mode_configs, *tables) -> dict[str, float]:
+def bus_power_per_mode_w(
+    mode_configs: Annotated[
+        vq.Table,
+        vq.Ref("$.operation_mode_configs", scope="mission"),
+    ],
+    loads: Annotated[dict, vq.Collect(tag="PowerConsuming")],
+) -> dict[str, float]:
     """各運用モードにおける全 PowerConsuming コンポの消費電力合計 [W]。"""
-    return power_per_mode(mode_configs, *tables)
+    return power_per_mode(mode_configs, *loads.values())
 
 
 @analysis(desc="最悪ケース（全モード中最大）のバス消費電力 [W]")

@@ -1,8 +1,7 @@
 """Mission-level analyses（衛星全体ビュー + ペイロード解析）。
 
-`@auto_inject_refs` が registry から全 component を列挙して
-`Annotated[vq.Table, vq.Ref(...)]` 引数を一括注入する。元関数は
-`*tables` で受け取り、body は 1 行で書ける。
+全 component 横断の集計は root model の `vq.Tag("Component")` と
+analysis 引数の `vq.Collect` で受け取り、body では既存 aggregation helper に渡す。
 
 ペイロード解析（toolbox.payload）:
   - pixel_gsd_m     : 画素 IFOV から GSD [m] を計算（toolbox.payload.imaging）
@@ -17,22 +16,24 @@ import veriq as vq
 from toolbox.payload.data import observation_data_volume_mbyte
 from toolbox.payload.imaging import swath_width_m
 
-from craft.analyses import auto_inject_refs, total_mass_kg, total_quantity
+from craft.analyses import total_mass_kg, total_quantity
 from craft.schema import analysis
 
 
 @analysis(desc="衛星全体の総質量 [kg]（コンポ + 構造体 + 推進剤）= wet mass 相当")
-@auto_inject_refs()
-def total_bus_mass_kg(*tables) -> float:
+def total_bus_mass_kg(
+    loads: Annotated[dict, vq.Collect(tag="Component")],
+) -> float:
     """全 instance の spec.mass_kg × design.quantity を合算 [kg]。"""
-    return total_mass_kg(*tables)
+    return total_mass_kg(*loads.values())
 
 
 @analysis(desc="衛星全体の搭載コンポ個数（quantity 合計、debug 用）")
-@auto_inject_refs()
-def total_component_count(*tables) -> int:
+def total_component_count(
+    loads: Annotated[dict, vq.Collect(tag="Component")],
+) -> int:
     """全テーブルの quantity 合計。"""
-    return total_quantity(*tables)
+    return total_quantity(*loads.values())
 
 
 @analysis(desc="モデル積み上げ質量とフライト確定質量の差 [kg]（正 = モデルが軽い）")

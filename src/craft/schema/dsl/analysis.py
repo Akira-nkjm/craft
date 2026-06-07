@@ -42,11 +42,7 @@ def analysis(
         else:
             inferred = system  # type: ignore[assignment]
 
-        # 下位 decorator（e.g. @auto_inject_refs）が必要な scope を提示していれば
-        # `imports=` 未指定時はそれを採用する。
-        effective_imports = (
-            tuple(imports) if imports else tuple(getattr(func, "__craft_imports__", ()))
-        )
+        effective_imports = tuple(imports)
 
         default_registry.register_analysis(
             AnalysisDefinition(

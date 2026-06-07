@@ -38,6 +38,8 @@ def _describe(adef: AnalysisDefinition) -> dict[str, Any]:
                     "scope": ref.scope,
                 }
             )
+        elif _extract_collect(param.annotation) is not None:
+            continue
         else:
             direct_params.append(
                 {
@@ -65,6 +67,14 @@ def _extract_ref(annotation: Any) -> vq.Ref | None:
     if get_origin(annotation) is Annotated:
         for arg in get_args(annotation)[1:]:
             if isinstance(arg, vq.Ref):
+                return arg
+    return None
+
+
+def _extract_collect(annotation: Any) -> vq.Collect | None:
+    if get_origin(annotation) is Annotated:
+        for arg in get_args(annotation)[1:]:
+            if isinstance(arg, vq.Collect):
                 return arg
     return None
 

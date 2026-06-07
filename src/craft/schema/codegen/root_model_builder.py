@@ -13,7 +13,7 @@
 import tomllib
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import veriq as vq
 from pydantic import BaseModel, ConfigDict, create_model, model_validator
@@ -88,14 +88,15 @@ def build_system_root_model(system: str, data_path: Path) -> type[BaseModel]:
     multi_plurals: list[str] = []
 
     for cdef in components:
+        tags = [vq.Tag("Component"), *[vq.Tag(t) for t in cdef.traits]]
         if cdef.cardinality == "multi":
             keys = _load_instance_keys(data_path, cdef.plural)
             name_enum = _make_name_enum(cdef.plural, keys)
             table_type = vq.Table[name_enum, cdef.entry]
-            fields[cdef.plural] = (table_type, ...)
+            fields[cdef.plural] = (Annotated[table_type, *tags], ...)
             multi_plurals.append(cdef.plural)
         else:
-            fields[cdef.name] = (cdef.entry, ...)
+            fields[cdef.name] = (Annotated[cdef.entry, *tags], ...)
 
     for cfg in configs:
         if cfg.cardinality == "multi":
