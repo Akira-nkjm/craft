@@ -7,6 +7,7 @@ from craft.schema import build_system_root_model, default_registry
 
 # components / analyses を先に登録させる
 from systems.mission import analyses as _analyses  # noqa: F401
+from systems.mission import components as _components  # noqa: F401
 from systems.mission import configs as _configs  # noqa: F401
 
 mission = vq.Scope("mission")
