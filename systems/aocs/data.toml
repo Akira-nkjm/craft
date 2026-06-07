@@ -10,36 +10,47 @@
 
 
 
-# === Sun Sensor (nanoSSOC-D60 × 4) ===
-# [確定値] 質量 6.7 g/個 (mass_inertia_breakdown.csv 5.AOCS)
-# [S2E] 消費電力 0.07 W / FOV 60 deg (nanossoc_d60.ini)
-# 搭載面: PY/MY/PZ/MZ の 4 面。rough_sun_pointing 以降全モードで ON。
+# === Disturbance Model（外乱解析モデルパラメータ）===
+# 高度は orbital.altitude_km、慣性は mission.massproperties を参照。ここは機体固有の
+# 空力・指向モデル値（[推定] 含む）の single source。
+
+[disturbancemodel]
+reference_area_m2 = 0.02 # 空力基準面積（6U 側面 ≈ 0.02 m²）[推定] [m^2]
+drag_coefficient = 2.2 # 抗力係数（CubeSat 標準値）
+cp_cg_offset_m = 0.05 # 圧力中心-重心オフセット [推定] [m]
+atmospheric_density_kg_m3 = 3.0e-11 # 軌道高度の大気密度（NRLMSISE-00 中活動期）[推定] [kg/m^3]
+pointing_error_deg = 5.0 # 重力傾斜評価用 worst-case 指向誤差 [deg]
+momentum_margin = 0.2 # RW 飽和/MTQ desat 判定のマージン率
+
+
+
+# === Sun Senser ===
 
 [sun_sensers.spec]
-mass_kg = 0.0067          # [確定値] 6.7 g/個 (mass_inertia_breakdown.csv)
-power_per_unit_w = 0.07   # [S2E] nanossoc_d60.ini assumed_power_consumption_W
-fov_deg = 60.0            # [S2E] nanossoc_d60.ini field_of_view 60 deg (半角)
+mass_kg = 0.0067 # 質量 [kg]
+power_per_unit_w = 0.07 # 単位あたりの想定消費電力 [W]
+fov_deg = 60.0 # 視野角（半角） [deg]
 
 [sun_sensers.main.design]
-quantity = 4              # PY/MY/PZ/MZ 4 面 [S2E number_of_mounted_sensors=4]
+quantity = 4 # 搭載個数
 
-[sun_sensers.main.design.placement]
-face = "PY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 27.0
-dy = 14.0
-dz = 5.9
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[sun_sensers.main.design.placement] # 搭載位置・CAD パラメータ
+face = "PY" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 27.0 # Bounding box x dimension [mm]
+dy = 14.0 # Bounding box y dimension [mm]
+dz = 5.9 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "OUT" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[sun_sensers.main.design.power_modes]
+[sun_sensers.main.design.power_modes] # OperationMode 別の on/off
 initial = false
 bdot = false
 rough_sun_pointing = true
@@ -55,36 +66,40 @@ xband_downlink = true
 # [S2E] 全値 rw0003.ini より。Sinclair Interplanetary / Rocket Lab
 # 最大トルク 4 mNm、ロータ慣性 3.372e-6 kg·m², 最大 8500 rpm
 
+
+
+# === Reaction Wheel ===
+
 [reaction_wheels.spec]
-mass_kg = 0.068
-temp_min_c = -30.0
-temp_max_c = 60.0
-power_per_unit_w = 0.88       # [S2E] rw0003.ini 0.88 W/台
-max_torque_nms = 0.004        # [S2E] rw0003.ini max_output_torque = 0.004 N·m
-max_momentum_nms = 0.002999   # [推定] I*ω_max = 3.372e-6*890 rad/s ≈ 3e-3 N·m·s [TBD]
-rotor_inertia_kg_m2 = 3.372e-6  # [S2E] rw0003.ini moment_of_inertia
-max_speed_rpm = 8500.0        # [S2E] rw0003.ini max_angular_velocity
+mass_kg = 0.068 # 質量 [kg]
+temp_min_c = -30.0 # 動作温度下限 [degC]
+temp_max_c = 60.0 # 動作温度上限 [degC]
+power_per_unit_w = 0.88 # 単位あたりの想定消費電力 [W]
+max_torque_nms = 0.004 # 最大出力トルク [N*m]
+max_momentum_nms = 0.002999 # 角運動量容量（ω_max × I_rotor） [N*m*s]
+rotor_inertia_kg_m2 = 3.372e-6 # ロータ慣性モーメント [S2E rw0003.ini] [kg*m^2]
+max_speed_rpm = 8500.0 # 最大回転速度 [S2E rw0003.ini] [rpm]
 
 [reaction_wheels.main.design]
-quantity = 3                  # [確定値] 3軸直交 (X/Y/Z 軸)
+quantity = 3 # 搭載個数
 
-[reaction_wheels.main.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 33.5
-dy = 33.5
-dz = 17.0
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[reaction_wheels.main.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 33.5 # Bounding box x dimension [mm]
+dy = 33.5 # Bounding box y dimension [mm]
+dz = 17.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[reaction_wheels.main.design.power_modes]
+[reaction_wheels.main.design.power_modes] # OperationMode 別の on/off
 initial = false
 bdot = false
 rough_sun_pointing = false
@@ -100,31 +115,35 @@ xband_downlink = true
 # [S2E] mtq_seiren.ini — 5.0 V / 0.65 W、各軸 ±0.32 A·m²
 # 設計: ISSL (東京大学 中須賀・船瀬研)
 
+
+
+# === Magnetic Torquer ===
+
 [magnetic_torquers.spec]
-mass_kg = 0.050               # [推定] TBD
-power_per_unit_w = 0.65       # [S2E] mtq_seiren.ini 0.65 W
-max_dipole_moment_am2 = 0.32  # [S2E] mtq_seiren.ini ±0.32 A·m²
+mass_kg = 0.050 # 質量 [kg]
+power_per_unit_w = 0.65 # 単位あたりの想定消費電力 [W]
+max_dipole_moment_am2 = 0.32 # 最大磁気モーメント（片軸） [A*m^2]
 
 [magnetic_torquers.main.design]
-quantity = 3                  # 3軸 (X/Y/Z)
+quantity = 3 # 搭載個数
 
-[magnetic_torquers.main.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 100.0
-dy = 10.0
-dz = 10.0
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[magnetic_torquers.main.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 100.0 # Bounding box x dimension [mm]
+dy = 10.0 # Bounding box y dimension [mm]
+dz = 10.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[magnetic_torquers.main.design.power_modes]
+[magnetic_torquers.main.design.power_modes] # OperationMode 別の on/off
 initial = false
 bdot = true
 rough_sun_pointing = true
@@ -140,37 +159,41 @@ xband_downlink = false
 # [確定値] Sagitta: 270 g, 1.0 W
 # [S2E] sagitta.ini — 視軸直交 ≈ 2 arcsec (3σ), 5 Hz, 太陽排他 40 deg
 
+
+
+# === Star Tracker ===
+
 [star_trackers.spec]
-mass_kg = 0.270               # [確定値] Sagitta datasheet 270 g
-temp_min_c = -30.0
-temp_max_c = 50.0
-power_per_unit_w = 1.0        # [S2E] sagitta.ini 1.0 W
-accuracy_arcsec = 2.0         # [S2E] 視軸直交ノイズ 9.6963e-6 rad ≈ 2 arcsec (3σ)
-fov_deg = 12.7                # [推定] Sagitta FOV 半角 12.7 deg [TBD]
-update_rate_hz = 5.0          # [S2E] output_interval = 0.2 s → 5 Hz
-sun_exclusion_deg = 40.0      # [S2E] sagitta.ini sun_exclusion = 40 deg
-earth_exclusion_deg = 30.0    # [S2E] sagitta.ini earth_exclusion = 30 deg
+mass_kg = 0.270 # 質量 [kg]
+temp_min_c = -30.0 # 動作温度下限 [degC]
+temp_max_c = 50.0 # 動作温度上限 [degC]
+power_per_unit_w = 1.0 # 単位あたりの想定消費電力 [W]
+accuracy_arcsec = 2.0 # 姿勢決定精度（視軸直交 3σ） [arcsec]
+fov_deg = 12.7 # 視野角（半角） [deg]
+update_rate_hz = 5.0 # 更新周波数 [S2E prescaler=10] [Hz]
+sun_exclusion_deg = 40.0 # 太陽排他角（半角） [deg]
+earth_exclusion_deg = 30.0 # 地球排他角（半角） [deg]
 
 [star_trackers.main.design]
-quantity = 1
+quantity = 1 # 搭載個数
 
-[star_trackers.main.design.placement]
-face = "MY"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 95.0
-dy = 50.0
-dz = 44.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[star_trackers.main.design.placement] # 搭載位置・CAD パラメータ
+face = "MY" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 95.0 # Bounding box x dimension [mm]
+dy = 50.0 # Bounding box y dimension [mm]
+dz = 44.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "OUT" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[star_trackers.main.design.power_modes]
+[star_trackers.main.design.power_modes] # OperationMode 別の on/off
 initial = false
 bdot = false
 rough_sun_pointing = false
@@ -185,6 +208,10 @@ xband_downlink = true
 # === Gyroscope — 精 (STIM210 × 1) ===
 # [S2E] stim210.ini — 1.5 W、ノイズ 4.36e-5 rad/s
 
+
+
+# === Gyroscope ===
+
 [gyroscopes.fine.spec]
 mass_kg = 0.055               # [推定] ~55 g [TBD]
 temp_min_c = -40.0
@@ -194,25 +221,25 @@ bias_stability_deg_per_h = 0.5  # [推定] STIM210 ~0.5 deg/h [TBD]
 grade = "fine"
 
 [gyroscopes.fine.design]
-quantity = 1
+quantity = 1 # 搭載個数
 
-[gyroscopes.fine.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 44.8
-dy = 38.6
-dz = 21.5
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[gyroscopes.fine.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 44.8 # Bounding box x dimension [mm]
+dy = 38.6 # Bounding box y dimension [mm]
+dz = 21.5 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[gyroscopes.fine.design.power_modes]
+[gyroscopes.fine.design.power_modes] # OperationMode 別の on/off
 initial = false
 bdot = false
 rough_sun_pointing = false
@@ -227,6 +254,7 @@ xband_downlink = true
 # === Gyroscope — 粗 (MPU9250 × 1, Coarse IMU) ===
 # [S2E] mpu9250.ini — I2C 0x68, 0.001 W
 
+
 [gyroscopes.coarse.spec]
 mass_kg = 0.003               # [推定] QFN パッケージ ~3 g
 temp_min_c = -40.0
@@ -236,25 +264,25 @@ bias_stability_deg_per_h = 1000.0  # [推定] 粗 IMU 典型 [TBD]
 grade = "coarse"
 
 [gyroscopes.coarse.design]
-quantity = 1
+quantity = 1 # 搭載個数
 
-[gyroscopes.coarse.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 9.0
-dy = 9.0
-dz = 1.0
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[gyroscopes.coarse.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 9.0 # Bounding box x dimension [mm]
+dy = 9.0 # Bounding box y dimension [mm]
+dz = 1.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[gyroscopes.coarse.design.power_modes]
+[gyroscopes.coarse.design.power_modes] # OperationMode 別の on/off
 initial = true
 bdot = true
 rough_sun_pointing = true
@@ -269,6 +297,18 @@ xband_downlink = false
 # === Magnetometer — 内部 (RM3100 AOBC) ===
 # [S2E] rm3100_aobc.ini — I2C 0x20, 0.03 W, ノイズ 15 nT
 
+[gyroscopes.spec]
+mass_kg = 0.0 # 質量 [kg]
+temp_min_c = 0.0 # 動作温度下限 [degC]
+temp_max_c = 0.0 # 動作温度上限 [degC]
+power_per_unit_w = 0.0 # 単位あたりの想定消費電力 [W]
+bias_stability_deg_per_h = 0.0 # バイアス安定度（1σ） [deg/h]
+grade = "fine" # 精度等級: fine / coarse
+
+
+
+# === Magnetometer ===
+
 [magnetometers.aobc.spec]
 mass_kg = 0.005               # [推定] ~5 g
 power_per_unit_w = 0.03       # [S2E] rm3100_aobc.ini 0.03 W
@@ -276,25 +316,25 @@ range_ut = 1000.0             # [S2E] range_to_constant = 1.0e6 nT
 noise_nt = 15.0               # [S2E] white_noise_standard_deviation = 15 nT
 
 [magnetometers.aobc.design]
-quantity = 1
+quantity = 1 # 搭載個数
 
-[magnetometers.aobc.design.placement]
-face = "MZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 18.0
-dy = 18.0
-dz = 3.0
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[magnetometers.aobc.design.placement] # 搭載位置・CAD パラメータ
+face = "MZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 18.0 # Bounding box x dimension [mm]
+dy = 18.0 # Bounding box y dimension [mm]
+dz = 3.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[magnetometers.aobc.design.power_modes]
+[magnetometers.aobc.design.power_modes] # OperationMode 別の on/off
 initial = true
 bdot = true
 rough_sun_pointing = true
@@ -310,6 +350,7 @@ xband_downlink = true
 # [S2E] rm3100_external.ini — I2C 0x23, 0.03 W, ノイズ 15 nT
 # 離隔搭載で機体磁場干渉低減
 
+
 [magnetometers.external.spec]
 mass_kg = 0.005               # [推定] ~5 g
 power_per_unit_w = 0.03       # [S2E] rm3100_external.ini 0.03 W
@@ -317,25 +358,25 @@ range_ut = 1000.0             # [S2E] range_to_constant = 1.0e6 nT
 noise_nt = 15.0               # [S2E] white_noise_standard_deviation = 15 nT
 
 [magnetometers.external.design]
-quantity = 1
+quantity = 1 # 搭載個数
 
-[magnetometers.external.design.placement]
-face = "PZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 18.0
-dy = 18.0
-dz = 3.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[magnetometers.external.design.placement] # 搭載位置・CAD パラメータ
+face = "PZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 18.0 # Bounding box x dimension [mm]
+dy = 18.0 # Bounding box y dimension [mm]
+dz = 3.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "OUT" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[magnetometers.external.design.power_modes]
+[magnetometers.external.design.power_modes] # OperationMode 別の on/off
 initial = true
 bdot = true
 rough_sun_pointing = true
@@ -351,36 +392,46 @@ xband_downlink = true
 # [S2E] oem7600.ini — UART 0x02, 3.3 V, 1.0 W
 # gnss_id = GJ (GPS + QZSS)、12 ch、prescaler=100 → ~1 Hz
 
+[magnetometers.spec]
+mass_kg = 0.0 # 質量 [kg]
+power_per_unit_w = 0.0 # 単位あたりの想定消費電力 [W]
+range_ut = 0.0 # 計測レンジ [uT]
+noise_nt = 0.0 # ノイズフロア（3σ/軸） [nT]
+
+
+
+# === GNSS Receiver ===
+
 [aocs_gnss_receivers.spec]
-mass_kg = 0.031               # [確定値] OEM7600 ~31 g
-temp_min_c = -40.0
-temp_max_c = 85.0
-power_per_unit_w = 1.0        # [S2E] oem7600.ini 1.0 W
-constellation = "GPS+QZSS"    # [S2E] gnss_id = GJ
-channel_count = 12            # [S2E] maximum_channel = 12
-update_rate_hz = 1.0          # [S2E] prescaler = 100 → ~1 Hz
-position_noise_m = 1.5        # [S2E] white_noise_std_eci = 1.5 m
+mass_kg = 0.031 # 質量 [kg]
+temp_min_c = -40.0 # 動作温度下限 [degC]
+temp_max_c = 85.0 # 動作温度上限 [degC]
+power_per_unit_w = 1.0 # 単位あたりの想定消費電力 [W]
+constellation = "GPS+QZSS" # 対応コンステレーション（S2E gnss_id=GJ）
+channel_count = 12 # 同時追尾チャネル数 [S2E maximum_channel]
+update_rate_hz = 1.0 # 測位更新周波数（prescaler=100 → ~1 Hz）[S2E] [Hz]
+position_noise_m = 1.5 # 位置ノイズ標準偏差（ECI）[S2E white_noise_std=1.5 m] [m]
 
 [aocs_gnss_receivers.oem7600.design]
-quantity = 1
+quantity = 1 # 搭載個数
 
-[aocs_gnss_receivers.oem7600.design.placement]
-face = "PZ"
-u = 0.0
-v = 0.0
-w = 0.0
-dx = 71.0
-dy = 46.0
-dz = 11.0
-rz = 0.0
-side = "IN"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[aocs_gnss_receivers.oem7600.design.placement] # 搭載位置・CAD パラメータ
+face = "PZ" # Panel face to mount on
+u = 0.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 71.0 # Bounding box x dimension [mm]
+dy = 46.0 # Bounding box y dimension [mm]
+dz = 11.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "IN" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[aocs_gnss_receivers.oem7600.design.power_modes]
+[aocs_gnss_receivers.oem7600.design.power_modes] # OperationMode 別の on/off
 initial = false
 bdot = false
 rough_sun_pointing = false
@@ -396,27 +447,31 @@ xband_downlink = true
 # [確定値] 質量 37.05 g (mass_inertia_breakdown.csv 5.AOCS GPS-A TW1889)
 # [S2E] oem7600.ini antenna_half_width_deg = 60 deg
 
+
+
+# === GNSS Antenna ===
+
 [aocs_gnss_antennas.spec]
-mass_kg = 0.03705             # [確定値] mass_inertia_breakdown.csv 5.AOCS GPS-A 37.05 g
-band = "L1+L2"
-gain_dbi = 0.0
-half_angle_deg = 60.0         # [S2E] oem7600.ini antenna_half_width_deg = 60
+mass_kg = 0.03705 # 質量 [kg]
+band = "L1+L2" # 対応バンド
+gain_dbi = 0.0 # アンテナ利得（公称） [dBi]
+half_angle_deg = 60.0 # アンテナ半値幅 [S2E antenna_half_width_deg=60] [deg]
 
 [aocs_gnss_antennas.tw1889.design]
-quantity = 1
+quantity = 1 # 搭載個数
 
-[aocs_gnss_antennas.tw1889.design.placement]
-face = "PZ"
-u = 12.5    # [S2E] antenna_position_b_m(0) = 0.0125 m → 12.5 mm
-v = 0.0
-w = 181.5   # [S2E] antenna_position_b_m(2) = 0.1815 m → 181.5 mm
-dx = 30.0
-dy = 30.0
-dz = 8.0
-rz = 0.0
-side = "OUT"
-cad_file = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox = 0
+[aocs_gnss_antennas.tw1889.design.placement] # 搭載位置・CAD パラメータ
+face = "PZ" # Panel face to mount on
+u = 12.5 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 181.5 # Offset from face surface [mm]
+dx = 30.0 # Bounding box x dimension [mm]
+dy = 30.0 # Bounding box y dimension [mm]
+dz = 8.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "OUT" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD

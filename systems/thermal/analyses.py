@@ -27,32 +27,31 @@ from craft.schema import analysis
 # ──────────────────────────────────────────────────────────────────────────────
 
 
+_SOLAR_CONSTANT_W_M2 = 1367.0  # 太陽定数 [W/m²]（物理定数）
+_SIGMA_W_M2_K4 = 5.67e-8  # ステファン・ボルツマン定数（物理定数）
+
+
 @analysis(
-    system=None,
-    desc="SAP 発電面への軌道平均太陽熱入力 [W]（toolbox.thermal.orbit_heat）",
-    cache=True,
+    desc="SAP 発電面への軌道平均太陽熱入力 [W]（α=panel_surfaces, 日照=orbital 参照）",
+    imports=["thermal", "orbital"],
 )
 def orbit_solar_heat_on_sap_w(
-    altitude_km: float = 410.0,
-    beta_angle_deg: float = 0.0,
-    absorptivity: float = 0.90,
-    area_m2: float = 0.1312,
-    solar_constant_w_m2: float = 1367.0,
+    panel_surfaces: Annotated[vq.Table, vq.Ref("$.panel_surfaces")],
+    area_m2: Annotated[float, vq.Ref("$.thermalmodel.sap_thermal_area_m2")],
+    eclipse_s: Annotated[float, vq.Ref("$.orbitalparams.eclipse_duration_s", scope="orbital")],
+    period_min: Annotated[float, vq.Ref("$.orbitalparams.period_min", scope="orbital")],
 ) -> float:
     """SAP 発電面（PZ 向き）への軌道平均太陽熱入力 [W] を推算する。
 
-    β=0 最悪条件、面法線 = [0, 0, 1]（+Z = SAP 向き）の単純化近似。
-    軌道 1 周の日照区間で cos θ を積分した平均値を使用。
-    式: Q = S * A * α * (1 / π)（β=0 平均係数）
-
-    出典: ThermalMD §1 SAP ノード alpha=0.85（MAIN_SAP_MX.1）/0.918（MAIN_SAP_MX.2）
-    ここでは S2E-AOBC front 値 α=0.90 を採用。
+    β=0 最悪条件、面法線 = +Z の単純化近似。日照平均 cos θ ≈ 1/π。
+    吸収率は panel_surfaces.sap_front、受熱面積は thermalmodel、日照割合は
+    orbital（1 − eclipse/period）を参照（ハードコードしない）。
     """
-    # β=0 円形軌道の日照平均 cos θ ≈ 1/π （法線方向 PZ 向き）
-    cos_avg = 1.0 / math.pi
-    # 日照時間割合: β=0, h=410km → eclipse_fraction ≈ 0.39 → sunlit ≈ 0.61
-    sunlit_fraction = 0.61  # [S2E / orbital 解析値 1 - 0.389]
-    return solar_constant_w_m2 * area_m2 * absorptivity * cos_avg * sunlit_fraction
+    absorptivity = panel_surfaces["sap_front"].spec.absorptivity
+    cos_avg = 1.0 / math.pi  # β=0 円形軌道の日照平均 cos θ
+    period_s = period_min * 60.0
+    sunlit_fraction = 1.0 - (eclipse_s / period_s) if period_s > 0.0 else 0.0
+    return _SOLAR_CONSTANT_W_M2 * area_m2 * absorptivity * cos_avg * sunlit_fraction
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -62,36 +61,25 @@ def orbit_solar_heat_on_sap_w(
 
 
 @analysis(
-    system=None,
-    desc="機体放熱面（PX/MX）の放射平衡温度 [degC]（Stefan-Boltzmann 則）",
-    cache=True,
+    desc="機体放熱面（PX/MX）の放射平衡温度 [degC]（ε/A=data 参照, Stefan-Boltzmann）",
+    imports=["thermal"],
 )
 def radiator_equilibrium_temp_c(
-    internal_dissipation_w: float = 10.57,
-    radiator_area_m2: float = 0.08,
-    emissivity: float = 0.85,
-    absorptivity: float = 0.20,
-    solar_heat_w: float = 0.0,
-    sigma_w_m2_k4: float = 5.67e-8,
+    panel_surfaces: Annotated[vq.Table, vq.Ref("$.panel_surfaces")],
+    internal_dissipation_w: Annotated[float, vq.Ref("$.thermalmodel.internal_dissipation_w")],
+    radiator_area_m2: Annotated[float, vq.Ref("$.thermalmodel.radiator_area_m2")],
 ) -> float:
-    """機体外面の放射平衡温度 [degC]。
+    """機体外面（PX/MX）の放射平衡温度 [degC]（蝕中・最悪低温条件 = 太陽入力 0）。
 
-    内部発熱 + 太陽熱入力 = 放射排熱 を Stefan-Boltzmann 則で解く。
-    Q_in = Q_rad → T = ((Q_solar + Q_internal) / (σ ε A))^(1/4)
-
-    デフォルト値:
-        - 内部発熱 10.57W: S2E heatload.csv 合計
-          (AOCS 5.5 + BOARD 3.5 + BP 0.6 + COMM 0.77 + BAT 0.2) [S2E]
-        - 放熱面積 0.08m²: S2E-AOBC satellite_structure.ini
-          PX/MX 面（area_0_m2/area_1_m2）[S2E-AOBC]
-        - ε=0.85, α=0.20: ThermalMD §4・S2E-AOBC 推定値
-
-    外部太陽熱入力 solar_heat_w はデフォルト 0（蝕中 / 最悪低温条件）。
+    内部発熱 = 放射排熱 を Stefan-Boltzmann 則で解く: T = (Q / (σ ε A))^(1/4)。
+    内部発熱・放熱面積は thermalmodel、放射率は panel_surfaces.body_px_mx を参照
+    （ハードコードしない）。外部太陽熱入力は 0（蝕中 = 最悪低温）。
     """
-    q_in = internal_dissipation_w + solar_heat_w
+    emissivity = panel_surfaces["body_px_mx"].spec.emissivity
+    q_in = internal_dissipation_w
     if q_in <= 0.0 or radiator_area_m2 <= 0.0 or emissivity <= 0.0:
         return -273.15
-    t_k = (q_in / (sigma_w_m2_k4 * emissivity * radiator_area_m2)) ** 0.25
+    t_k = (q_in / (_SIGMA_W_M2_K4 * emissivity * radiator_area_m2)) ** 0.25
     return t_k - 273.15
 
 

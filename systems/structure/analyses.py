@@ -92,21 +92,17 @@ def verify_structure_mass_fraction(
 
 
 @analysis(
-    desc="慣性テンソル対角成分 (Ixx, Iyy, Izz) [kg m²]（S2E ini 確定値）",
+    desc="慣性テンソル対角成分 (Ixx, Iyy, Izz) [kg m²]（mission.massproperties 参照）",
+    imports=["mission"],
 )
 def inertia_tensor_diagonal_kg_m2(
-    frames: Annotated[vq.Table, vq.Ref("$.frames")],  # noqa: ARG001
+    ixx: Annotated[float, vq.Ref("$.massproperties.ixx_kg_m2", scope="mission")],
+    iyy: Annotated[float, vq.Ref("$.massproperties.iyy_kg_m2", scope="mission")],
+    izz: Annotated[float, vq.Ref("$.massproperties.izz_kg_m2", scope="mission")],
 ) -> dict[str, float]:
-    """フライト確定慣性テンソル対角成分を返す。
+    """全機慣性テンソル対角成分を返す。
 
-    値は S2E satellite_structure.ini から直接引用（全機慣性テンソル）。
-    frames を引数として取るのは veriq の依存グラフ登録のためであり、計算には使用しない。
+    値はハードコードせず `mission.massproperties`（data.toml、S2E 確定値）を参照する。
     TODO: 将来的には mass_inertia_breakdown.csv 各部品慣性テンソルを積み上げる実装に置換。
-    出典: S2E satellite_structure.ini [KINEMATIC_PARAMETERS]
     """
-    # フライト確定値 [S2E satellite_structure.ini]
-    return {
-        "Ixx": 0.151,  # [確定値 S2E]
-        "Iyy": 0.164,  # [確定値 S2E]（最大慣性軸）
-        "Izz": 0.108,  # [確定値 S2E]（最小 = 長軸 Z）
-    }
+    return {"Ixx": ixx, "Iyy": iyy, "Izz": izz}

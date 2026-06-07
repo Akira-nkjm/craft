@@ -10,6 +10,15 @@
 
 
 
+# === Thermal Model（熱解析モデルパラメータ）===
+# α/ε は panel_surfaces、日照割合は orbital を参照。ここは面積・内部発熱の single source。
+
+[thermalmodel]
+sap_thermal_area_m2 = 0.1312    # [推定] SAP 受熱面積
+radiator_area_m2 = 0.08         # [S2E-AOBC] 機体放熱面（PX/MX）面積
+internal_dissipation_w = 10.57  # [S2E heatload.csv] 内部発熱合計（AOCS+BOARD+BP+COMM+BAT）
+
+
 # ─── Heaters ────────────────────────────────────────────────────────────────
 #
 # 質量シート「7.thermal」はヒーター×7 を計上するが個別質量の記載なし（TBD）。

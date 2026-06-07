@@ -88,12 +88,18 @@ class TelescopeEntry(BaseModel):
     design: TelescopeDesign
     meta: dict[str, object] | None
 
+class MassPropertiesModel(BaseModel):
+    ixx_kg_m2: float
+    iyy_kg_m2: float
+    izz_kg_m2: float
+
 class MissionProfileModel(BaseModel):
     duration_years: float
     target_altitude_km: float
     primary_payload: str
     contact_frequency_per_day: int
     launch_window_start: str
+    flight_mass_kg: float
 
 class OperationModeConfigModel(BaseModel):
     description: str

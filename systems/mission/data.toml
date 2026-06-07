@@ -22,6 +22,16 @@ flight_mass_kg = 8.925 # [確定値] フライト全機質量（S2E satellite_st
 
 
 
+# === Mass Properties（全機慣性テンソル対角・衛星座標系）===
+# [確定値] S2E satellite_structure.ini [KINEMATIC_PARAMETERS]。AOCS 外乱・構体解析の共通参照源。
+
+[massproperties]
+ixx_kg_m2 = 0.151 # [確定値 S2E]
+iyy_kg_m2 = 0.164 # [確定値 S2E]（最大主慣性軸）
+izz_kg_m2 = 0.108 # [確定値 S2E]（最小 = 長軸 Z）
+
+
+
 # === Orbital Parameters ===
 # TLE (NORAD 62299):
 #   2 62299  51.6304 175.9676 0010096 289.2373  70.7536 15.81807777 10864

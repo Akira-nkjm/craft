@@ -10,6 +10,7 @@ from craft.core.paths import system_data_path
 from craft.schema import build_system_root_model, default_registry
 from systems.aocs import analyses as _analyses  # noqa: F401
 from systems.aocs import components as _components  # noqa: F401
+from systems.aocs import configs as _configs  # noqa: F401
 
 aocs = vq.Scope("aocs")
 

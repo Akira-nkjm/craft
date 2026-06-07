@@ -8,6 +8,7 @@ from craft.schema import build_system_root_model, default_registry
 # components / analyses を先に登録させる
 from systems.thermal import analyses as _analyses  # noqa: F401
 from systems.thermal import components as _components  # noqa: F401
+from systems.thermal import configs as _configs  # noqa: F401
 
 thermal = vq.Scope("thermal")
 

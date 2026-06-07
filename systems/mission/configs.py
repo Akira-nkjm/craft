@@ -55,6 +55,18 @@ class OrbitalParameters(Config):
     epoch_utc: str = fld(desc="元期 (ISO8601 UTC)")
 
 
+class MassProperties(Config):
+    """全機（フライト）の慣性特性。AOCS 外乱・構体解析の共通参照源。
+
+    値は [確定値] S2E satellite_structure.ini [KINEMATIC_PARAMETERS]（衛星座標系・対角）。
+    flight_mass_kg は MissionProfile 側に置く（質量バジェット基準）。
+    """
+
+    ixx_kg_m2: float = fld(ge=0, unit="kg*m^2", desc="慣性モーメント Ixx")
+    iyy_kg_m2: float = fld(ge=0, unit="kg*m^2", desc="慣性モーメント Iyy（最大主慣性軸）")
+    izz_kg_m2: float = fld(ge=0, unit="kg*m^2", desc="慣性モーメント Izz（最小 = 長軸 Z）")
+
+
 class OperationModeConfig(Config, MultiInstance):
     """運用モードの定義。key = OperationMode の値（同ファイル内 StrEnum と対応）。
 

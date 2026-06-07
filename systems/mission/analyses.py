@@ -65,96 +65,82 @@ def verify_mass_budget_reconciled(
     return abs(total_mass - flight_mass_kg) / flight_mass_kg <= 0.05
 
 
-# ─── ペイロード光学・撮像解析（ad-hoc、veriq 非登録）─────────────────────────
+# ─── ペイロード光学・撮像解析（telescope/image_sensors/orbital を data 参照）───
 
 
 @analysis(
-    system=None,
-    desc="画素 IFOV から GSD [m] を計算（H × pixel_size / focal_length）",
-    cache=True,
+    desc="画素 IFOV から GSD [m]（光学=telescope, 高度=orbital 参照）",
+    imports=["orbital"],
 )
 def pixel_gsd_m(
-    altitude_m: float = 410_000.0,
-    pixel_size_m: float = 5.0e-6,
-    focal_length_m: float = 0.725,
+    pixel_size_m: Annotated[float, vq.Ref("$.telescope.spec.pixel_size_m")],
+    focal_length_m: Annotated[float, vq.Ref("$.telescope.spec.focal_length_m")],
+    altitude_km: Annotated[float, vq.Ref("$.orbitalparams.altitude_km", scope="orbital")],
 ) -> float:
     """画素 IFOV（= pixel_size / focal_length）から地表 GSD [m] を返す。
 
-    ONGLAISAT 確定値: GSD = 410,000 × 5e-6 / 0.725 ≈ 2.828 m（2.5–3 m 要求内）。
-    Source: [確定値] S2E telescope.ini（pixel_size_m=5e-6, focal_length_m=0.725）
+    光学諸元は telescope、高度は orbital を参照（ハードコードしない）。
+    ONGLAISAT: GSD = 410,000 × 5e-6 / 0.725 ≈ 2.828 m（2.5–3 m 要求内）。
     """
     ifov_rad = pixel_size_m / focal_length_m
-    return altitude_m * ifov_rad
+    return altitude_km * 1000.0 * ifov_rad
 
 
 @analysis(
-    system=None,
-    desc="クロストラック スワス幅 [km]（toolbox.payload.imaging.swath_width_m を利用）",
-    cache=True,
+    desc="クロストラック スワス幅 [km]（telescope/image_sensors/orbital 参照）",
+    imports=["orbital"],
 )
 def swath_width_km(
-    altitude_m: float = 410_000.0,
-    pixel_size_m: float = 5.0e-6,
-    focal_length_m: float = 0.725,
-    cross_track_pixels: int = 8192,
+    image_sensors: Annotated[vq.Table, vq.Ref("$.image_sensors")],
+    pixel_size_m: Annotated[float, vq.Ref("$.telescope.spec.pixel_size_m")],
+    focal_length_m: Annotated[float, vq.Ref("$.telescope.spec.focal_length_m")],
+    altitude_km: Annotated[float, vq.Ref("$.orbitalparams.altitude_km", scope="orbital")],
 ) -> float:
     """クロストラック方向のスワス幅 [km] を返す。
 
-    FoV = cross_track_pixels × IFOV（rad）として toolbox.swath_width_m で計算。
-    ONGLAISAT 確定値: 8192 × 6.897e-6 rad → FoV ≈ 0.05651 rad → 約 23.2 km。
-    Source: [確定値] クロストラック画素 8192（telescope.ini / tdi-analysis、
-            pixel_size_m=5e-6, focal_length_m=0.725）
+    FoV = cross_track_pixels × IFOV として toolbox.swath_width_m で計算。
+    画素数は image_sensors、光学は telescope、高度は orbital を参照。
+    ONGLAISAT: 8192 × 6.897e-6 rad → FoV ≈ 0.0565 rad → 約 23.2 km。
     """
+    sensor = image_sensors["rsi_tdi"]
     ifov_rad = pixel_size_m / focal_length_m
-    fov_rad = float(cross_track_pixels) * ifov_rad
-    return float(swath_width_m(altitude_m, fov_rad)) / 1000.0
+    fov_rad = float(sensor.spec.cross_track_pixels) * ifov_rad
+    return float(swath_width_m(altitude_km * 1000.0, fov_rad)) / 1000.0
 
 
-@analysis(
-    system=None,
-    desc="TDI 積分段数による SNR 向上倍率（= √tdi_stages 、ショットノイズ律速近似）",
-    cache=True,
-)
+@analysis(desc="TDI 積分段数による SNR 向上倍率（= √tdi_stages, image_sensors 参照）")
 def tdi_snr_factor(
-    tdi_stages: int = 8,
+    image_sensors: Annotated[vq.Table, vq.Ref("$.image_sensors")],
 ) -> float:
-    """TDI の SNR 向上倍率 [−] を返す。
+    """TDI の SNR 向上倍率 [−] を返す（ショットノイズ律速近似 SNR ∝ √N）。
 
-    ショットノイズ律速近似: SNR ∝ √N（N = TDI 段数）。
+    TDI 段数は image_sensors を参照（ハードコードしない）。
     ONGLAISAT: stage_mode = 8 → SNR 向上 ≈ 2.828×（単段比）。
-    Source: [確定値] S2E telescope.ini stage_mode=8 / TDI-analysis
     """
     import math
 
-    return math.sqrt(tdi_stages)
+    return math.sqrt(image_sensors["rsi_tdi"].spec.tdi_stages)
 
 
-@analysis(
-    system=None,
-    desc="1 ミッションあたり画像データ量 [MB]（toolbox.payload.data）",
-    cache=True,
-)
+@analysis(desc="1 ミッションあたりダウンリンク画像データ量 [MB]（image_sensors/processor 参照）")
 def scene_data_volume_mbyte(
-    cross_track_pixels: int = 8192,
-    lines_per_frame: int = 378,
-    bits_per_pixel: int = 10,
-    frames_per_mission: int = 10,
-    compression_ratio: float = 1.0,
+    image_sensors: Annotated[vq.Table, vq.Ref("$.image_sensors")],
+    image_processors: Annotated[vq.Table, vq.Ref("$.image_processors")],
 ) -> float:
-    """1 ミッション（10 フレーム）あたり画像データ量 [MB] を返す。
+    """1 ミッション（全フレーム）あたりの圧縮後（DL）画像データ量 [MB] を返す。
 
-    生データ（圧縮なし）: 8192 × 378 × 10 bit × 10 frames ÷ 8e6 ≈ 38.8 MB / mission。
-    X バンド DL 帯域との比較に使う。compression_ratio > 1 で圧縮後データ量を返す。
-    Source: [確定値] TDI-analysis lines_per_frame=378, S2E number_of_frames=10
-            [確定値] クロストラック画素 8192
-            [推測] bits_per_pixel=10
+    画素数・ライン数・フレーム数・量子化ビットは image_sensors、圧縮率は
+    image_processors.design を参照（ハードコードしない）。X バンド DL 帯域との比較用。
+    生データ: 8192 × 378 × 10 bit × 10 frames ÷ 8e6 ≈ 38.8 MB（圧縮率 1 相当）。
     """
+    sensor = image_sensors["rsi_tdi"]
+    processor = image_processors["mobc_imaging"]
     return float(
         observation_data_volume_mbyte(
-            horizontal_pixels=float(cross_track_pixels),
-            vertical_pixels=float(lines_per_frame),
-            bits_per_pixel=float(bits_per_pixel),
-            frame_count=float(frames_per_mission),
-            compression_ratio=compression_ratio,
+            horizontal_pixels=float(sensor.spec.cross_track_pixels),
+            vertical_pixels=float(sensor.spec.lines_per_frame),
+            bits_per_pixel=float(sensor.design.bits_per_pixel),
+            frame_count=float(sensor.spec.frames_per_mission),
+            compression_ratio=processor.design.compression_ratio,
         )
     )

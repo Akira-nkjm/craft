@@ -29,3 +29,8 @@ class PanelSurfaceSpec(BaseModel):
 class PanelSurfaceEntry(BaseModel):
     spec: PanelSurfaceSpec
     meta: dict[str, object] | None
+
+class ThermalModelModel(BaseModel):
+    sap_thermal_area_m2: float
+    radiator_area_m2: float
+    internal_dissipation_w: float

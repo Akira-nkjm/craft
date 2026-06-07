@@ -142,3 +142,11 @@ class SunSenserEntry(BaseModel):
     spec: SunSenserSpec
     design: SunSenserDesign
     meta: dict[str, object] | None
+
+class DisturbanceModelModel(BaseModel):
+    reference_area_m2: float
+    drag_coefficient: float
+    cp_cg_offset_m: float
+    atmospheric_density_kg_m3: float
+    pointing_error_deg: float
+    momentum_margin: float
