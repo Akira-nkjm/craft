@@ -92,9 +92,9 @@ face         = "PX"
 u            = 0.0
 v            = 0.0
 w            = 0.0
-dx           = 100.0
+dx           = 5.0
 dy           = 226.3
-dz           = 5.0
+dz           = 340.0
 rz           = 0.0
 side         = "OUT"
 cad_file     = ""
@@ -120,9 +120,9 @@ face         = "PY"
 u            = 0.0
 v            = 0.0
 w            = 0.0
-dx           = 226.3
-dy           = 100.0
-dz           = 5.0
+dx           = 100.0
+dy           = 5.0
+dz           = 340.0
 rz           = 0.0
 side         = "OUT"
 cad_file     = ""
@@ -148,9 +148,9 @@ face         = "MY"
 u            = 0.0
 v            = 0.0
 w            = 0.0
-dx           = 226.3
-dy           = 100.0
-dz           = 5.0
+dx           = 100.0
+dy           = 5.0
+dz           = 340.0
 rz           = 0.0
 side         = "OUT"
 cad_file     = ""
@@ -232,9 +232,9 @@ face         = "MY"
 u            = 0.0
 v            = 0.0
 w            = 0.0
-dx           = 100.0
-dy           = 50.0
-dz           = 5.0
+dx           = 60.0
+dy           = 5.0
+dz           = 60.0
 rz           = 0.0
 side         = "OUT"
 cad_file     = ""
@@ -245,370 +245,3 @@ update_bbox  = 0
 
 [structural_panels.my_cover.meta]
 notes = "MY_Cover_2 12.15g [確定値 CAD-DD]"
-
-
-
-# === Brackets ===
-# コーナーフレーム × 4 + SS_bracket_MZ。CSV §1.structure CAD-DD 列から採用。
-# [CSV §1.structure]
-
-[brackets.spec]
-mass_kg  = 0.01104   # CornerFrame1 PYPZ 代表 spec [確定値 CAD-DD]
-material = "Al"
-
-[brackets.corner_pypz.design]
-quantity = 1
-
-[brackets.corner_pypz.design.placement]
-face         = "PZ"
-u            = 113.0
-v            = 0.0
-w            = 0.0
-dx           = 30.0
-dy           = 30.0
-dz           = 30.0
-rz           = 0.0
-side         = "IN"
-cad_file     = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox  = 0
-
-[brackets.corner_pypz.meta]
-notes = "PYPZ_cornerFrame 11.04g [確定値 CAD-DD]"
-
-
-[brackets.corner_pymz.spec]
-mass_kg  = 0.02026   # CornerFrame2 PYMZ + SS bracket [確定値 CAD-DD]
-material = "Al"
-
-[brackets.corner_pymz.design]
-quantity = 1
-
-[brackets.corner_pymz.design.placement]
-face         = "MZ"
-u            = 113.0
-v            = 0.0
-w            = 0.0
-dx           = 30.0
-dy           = 30.0
-dz           = 30.0
-rz           = 0.0
-side         = "IN"
-cad_file     = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox  = 0
-
-[brackets.corner_pymz.meta]
-notes = "PYMZ_cornerFrame_SS_bracket 20.26g [確定値 CAD-DD]"
-
-
-[brackets.corner_mymz.spec]
-mass_kg  = 0.01442   # CornerFrame3 MYMZ + SS bracket [確定値 CAD-DD]
-material = "Al"
-
-[brackets.corner_mymz.design]
-quantity = 1
-
-[brackets.corner_mymz.design.placement]
-face         = "MZ"
-u            = 0.0
-v            = 0.0
-w            = 0.0
-dx           = 30.0
-dy           = 30.0
-dz           = 30.0
-rz           = 0.0
-side         = "IN"
-cad_file     = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox  = 0
-
-[brackets.corner_mymz.meta]
-notes = "MYMZ_cornerFrame_SS_bracket 14.42g [確定値 CAD-DD]"
-
-
-[brackets.corner_mypz.spec]
-mass_kg  = 0.03508   # CornerFrame4 MYPZ + bracket [確定値 CAD-DD]
-material = "Al"
-
-[brackets.corner_mypz.design]
-quantity = 1
-
-[brackets.corner_mypz.design.placement]
-face         = "PZ"
-u            = 0.0
-v            = 0.0
-w            = 0.0
-dx           = 30.0
-dy           = 30.0
-dz           = 30.0
-rz           = 0.0
-side         = "IN"
-cad_file     = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox  = 0
-
-[brackets.corner_mypz.meta]
-notes = "MYPZ_cornerFrame_with_bracket 35.08g [確定値 CAD-DD]"
-
-
-[brackets.ss_bracket_mz.spec]
-mass_kg  = 0.01099   # SS_bracket_MZ [確定値 CAD-DD]
-material = "SUS"
-
-[brackets.ss_bracket_mz.design]
-quantity = 1
-
-[brackets.ss_bracket_mz.design.placement]
-face         = "MZ"
-u            = 0.0
-v            = 0.0
-w            = 0.0
-dx           = 30.0
-dy           = 30.0
-dz           = 10.0
-rz           = 0.0
-side         = "IN"
-cad_file     = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox  = 0
-
-[brackets.ss_bracket_mz.meta]
-notes = "SS_bracket_MZ 10.99g — ステンレスブラケット [確定値 CAD-DD]"
-
-
-
-# === Hinges ===
-# SAP 展開ヒンジ。個別 CAD データ未掲載のため推定質量。TBD。[推定]
-
-[hinges.spec]
-mass_kg          = 0.03000   # 推定 30g/個（TBD）[推定]
-deploy_angle_deg = 180.0     # SAP 展開角度
-
-[hinges.sap_hinge.design]
-quantity = 4   # TBD — SAP × 2 wing, 各 2 ヒンジ想定 [推定]
-
-[hinges.sap_hinge.design.placement]
-face         = "PZ"
-u            = 0.0
-v            = 0.0
-w            = 0.0
-dx           = 30.0
-dy           = 30.0
-dz           = 30.0
-rz           = 0.0
-side         = "OUT"
-cad_file     = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox  = 0
-
-[hinges.sap_hinge.meta]
-notes = "SAP 展開ヒンジ — 質量・数量 TBD [推定]"
-
-
-
-# === Hold/Release Mechanisms ===
-# HRM-008-HRM ASSY × 2（SAP 拘束・解放）。
-# PCDU ch12 経由 5.19W 駆動（12V × 3.6A 電流制限）。展開後 1 回のみ駆動。
-# HRM-DCDC PCB ASSY1(19.02g)/ASSY2(19.18g) は power.data.toml 側で別計上。
-# [CSV §3.Power / PCDU.md §4 ch12]
-
-[hold_release_mechanisms.spec]
-mass_kg           = 0.14150   # HRM-008-HRM ASSY 単体 141.5g [確定値 CSV]
-power_per_unit_w  = 5.19      # ch12 PCDU 定格 5.19W [PCDU.md §4]
-release_mechanism = "burn_wire"
-
-[hold_release_mechanisms.sap_hrm.design]
-quantity = 2  # HRM-008-HRM ASSY × 2 [確定値 CSV]
-
-[hold_release_mechanisms.sap_hrm.design.placement]
-face         = "PZ"
-u            = 0.0
-v            = 0.0
-w            = 0.0
-dx           = 60.0
-dy           = 60.0
-dz           = 40.0
-rz           = 0.0
-side         = "OUT"
-cad_file     = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox  = 0
-
-# 展開後 1 回のみ駆動 — 通常運用中は全モード OFF
-[hold_release_mechanisms.sap_hrm.design.power_modes]
-initial              = false
-bdot                 = false
-rough_sun_pointing   = false
-rough_three_axis_mtq = false
-rough_three_axis_rw  = false
-fine_three_axis      = false
-imaging              = false
-xband_downlink       = false
-
-[hold_release_mechanisms.sap_hrm.meta]
-notes = "HRM-008-HRM ASSY ×2 = 283g。PCDU ch12 5.19W は展開時瞬時消費。DCDC PCB ASSY1/2 は power 系で別計上 [CSV / PCDU.md §4]"
-
-
-
-# === Separation Brackets / Connectors ===
-# ONGLAISAT は子機分離機構なし。スキーマ必須フィールドのため最小エントリを置く。
-# [推定 — ONGLAISAT 非搭載]
-
-[separation_brackets.spec]
-mass_kg = 0.001  # 実質ゼロ質量プレースホルダ（ONGLAISAT 子機分離機構なし）[推定]
-side    = "child"
-
-[separation_brackets.placeholder.design]
-quantity = 1
-
-[separation_brackets.placeholder.design.placement]
-face         = "PX"
-u            = 0.0
-v            = 0.0
-w            = 0.0
-dx           = 1.0
-dy           = 1.0
-dz           = 1.0
-rz           = 0.0
-side         = "OUT"
-cad_file     = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox  = 0
-
-[separation_brackets.placeholder.meta]
-notes = "ONGLAISAT 非搭載 — 子機分離機構なし。スキーマ必須フィールドのプレースホルダ"
-
-
-[separation_connectors.spec]
-mass_kg        = 0.001  # 実質ゼロ質量プレースホルダ（ONGLAISAT 子機分離機構なし）[推定]
-connector_type = "electrical"
-contact_count  = 0
-
-[separation_connectors.placeholder.design]
-quantity = 1
-
-[separation_connectors.placeholder.design.placement]
-face         = "PX"
-u            = 0.0
-v            = 0.0
-w            = 0.0
-dx           = 1.0
-dy           = 1.0
-dz           = 1.0
-rz           = 0.0
-side         = "OUT"
-cad_file     = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox  = 0
-
-[separation_connectors.placeholder.meta]
-notes = "ONGLAISAT 非搭載 — 子機分離機構なし。スキーマ必須フィールドのプレースホルダ"
-
-
-
-# === Baffles ===
-# Korsch 望遠鏡バッフル（光学系）。質量は mission 系に含まれるが構体として計上。
-# 個別質量未確定 → 推定 50g（TBD）。[推定]
-
-[baffles.spec]
-mass_kg    = 0.05000   # 推定 50g（TBD）[推定]
-instrument = "korsch_telescope"
-
-[baffles.telescope.design]
-quantity = 1
-
-[baffles.telescope.design.placement]
-face         = "PX"    # 望遠鏡開口方向（機体 LoS 折り返し後） [MD §2]
-u            = 0.0
-v            = 0.0
-w            = 0.0
-dx           = 80.0
-dy           = 80.0
-dz           = 50.0
-rz           = 0.0
-side         = "OUT"
-cad_file     = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox  = 0
-
-[baffles.telescope.meta]
-notes = "Korsch 望遠鏡バッフル — 質量 TBD [推定]"
-
-
-
-# === Counter Masses ===
-# 重心調整マス。個別設計値未確定 → 推定 50g（TBD）。[推定]
-
-[counter_masses.spec]
-mass_kg = 0.05000   # 推定 50g（TBD）[推定]
-
-[counter_masses.balance.design]
-quantity = 1
-
-[counter_masses.balance.design.placement]
-face         = "MX"
-u            = 0.0
-v            = 0.0
-w            = 0.0
-dx           = 40.0
-dy           = 40.0
-dz           = 10.0
-rz           = 0.0
-side         = "IN"
-cad_file     = ""
-cad_offset_x = 0.0
-cad_offset_y = 0.0
-cad_offset_z = 0.0
-update_bbox  = 0
-
-[counter_masses.balance.meta]
-notes = "重心調整マス — 質量・位置 TBD [推定]"
-
-
-
-# === Fasteners ===
-# CSV §6.fastener: ボルト・ナット類 79.77g。[CSV §6.fastener]
-
-[fasteners.spec]
-mass_kg  = 0.07977   # CSV §6 fastener 合計 [確定値 CSV]
-material = "A286"    # 推定（宇宙機標準ボルト鋼）[推定]
-
-[fasteners.main.design]
-quantity = 1
-
-
-
-# === Harness ===
-# フライト確定値 8.925kg に含まれる「ハーネス等込み」分（配線・コネクタ・二次構造）。
-# 個別質量は CSV 未掲載。フライト 8.925kg と他の積み上げの差を吸収する推定値。
-# [推定 / S2E satellite_structure.ini コメント]
-
-[harnesses.spec]
-mass_kg = 0.50040   # [推定] フル 6U ハーネス/配線/二次構造。CSV 未掲載分を含めフライト 8.925kg に整合
-
-[harnesses.main.design]
-quantity = 1
-
-[harnesses.main.meta]
-notes = "フライト確定質量 8.925kg に含まれる配線類。個別質量 CSV 未掲載 — TBD [推定]"

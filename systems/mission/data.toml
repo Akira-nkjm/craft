@@ -146,7 +146,7 @@ quantity = 1                      # RSI × 1 台
 
 [telescope.design.placement]
 face = "PX"                       # LoS = +X（telescope.ini quaternion_b2c から）
-u = 0.0
+u = 50.0
 v = 0.0
 w = 0.0
 dx = 100.0                        # [TBD] 6U 短辺 100 mm
@@ -191,10 +191,10 @@ quantity = 1
 bits_per_pixel = 10               # [推測] 10–12 bit 典型
 
 [image_sensors.rsi_tdi.design.placement]
-face = "PX"
+face = "PZ"
 u = 0.0
-v = 0.0
-w = 0.0
+v = 50.0
+w = 50.0
 dx = 50.0                         # [TBD] FPA アセンブリ寸法
 dy = 50.0                         # [TBD]
 dz = 30.0                         # [TBD]
@@ -239,10 +239,10 @@ manufacturer = "ISSL"
 quantity = 1
 
 [mission_interfaces.mif.design.placement]
-face = "MY"
+face = "PZ"
 u = 0.0
-v = 0.0
-w = 0.0
+v = 50.0
+w = 25.0
 dx = 90.0                         # [推測] PC-104 互換ボード相当
 dy = 96.0                         # [推測]
 dz = 20.0                         # [推測]

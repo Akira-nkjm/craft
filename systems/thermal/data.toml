@@ -43,7 +43,7 @@ hysteresis_c = 2.5  # (15-10)/2 = 2.5degC [S2E: lower=10, upper=15]
 [heaters.bat_htr.design.placement]
 face = "MY"         # バッテリ搭載面に倣う [推定]
 u = 0.0
-v = 0.0
+v = 20.0
 w = 0.0
 dx = 84.0   # バッテリモジュール X [mm] [確定値: BatteryMD]
 dy = 83.0   # バッテリモジュール Y [mm] [確定値: BatteryMD]

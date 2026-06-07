@@ -40,7 +40,7 @@ control_period_s = 1.0 # 主要周期処理の周期 [s]
 [obcs.mobc.design.placement] # 搭載位置・CAD パラメータ
 face = "MY" # Panel face to mount on
 u = 0.0 # [S2E] CG x=-44.2mm; Placement u is constrained non-negative
-v = 62.4 # Position along face v-axis [mm]
+v = -30.0 # Position along face v-axis [mm]
 w = 0.0 # [S2E] CG z=-0.25mm; Placement w is constrained non-negative
 dx = 90.0 # Bounding box x dimension [mm]
 dy = 90.0 # Bounding box y dimension [mm]
@@ -110,7 +110,7 @@ control_period_s = 1.0 # 主要周期処理の周期 [s]
 [obcs.aobc.design.placement] # 搭載位置・CAD パラメータ
 face = "MY" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = 100.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 95.0 # Bounding box x dimension [mm]
 dy = 95.0 # Bounding box y dimension [mm]
@@ -177,7 +177,7 @@ control_period_s = 1.0 # 主要周期処理の周期 [s]
 [obcs.tobc.design.placement] # 搭載位置・CAD パラメータ
 face = "MY" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = -50.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 50.0 # Bounding box x dimension [mm]
 dy = 50.0 # Bounding box y dimension [mm]

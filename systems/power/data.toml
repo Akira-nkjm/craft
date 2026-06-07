@@ -32,7 +32,7 @@ depth_of_discharge = 0.3 # 設計時 DoD（初期）
 [batteries.main.design.placement] # 搭載位置・CAD パラメータ
 face = "MY" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = 50.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 84.0 # Bounding box x dimension [mm]
 dy = 83.0 # Bounding box y dimension [mm]
@@ -72,18 +72,18 @@ eol_power_w = 50.53 # EOL 発生電力（MPPT 込み） [W]
 efficiency = 0.288 # セル効率 @AM0
 cell_type = "CESI CTJ30 SCA (InGaP/GaAs/Ge)" # セル品種
 
-[solar_panels.sap_array.design]
+[solar_panels.sap_array_px.design]
 quantity = 1 # 搭載個数
-cell_count = 56 # 7 直 × 8 並
+cell_count = 28 # 7 直 × 4 並
 string_count = 8
 
-[solar_panels.sap_array.design.placement] # 搭載位置・CAD パラメータ
+[solar_panels.sap_array_px.design.placement] # 搭載位置・CAD パラメータ
 face = "PZ" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
+u = 233.0 # Position along face u-axis [mm]
 v = 0.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 366.0 # Bounding box x dimension [mm]
-dy = 100.0 # Bounding box y dimension [mm]
+dy = 453.0 # Bounding box y dimension [mm]
 dz = 2.0 # Bounding box z dimension [mm]
 rz = 0.0 # Rotation around face normal [degrees]
 side = "OUT" # Mount on inner or outer face
@@ -93,13 +93,34 @@ cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
 cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
 update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
-[solar_panels.sap_array.meta]
+[solar_panels.sap_array_mx.design]
+quantity = 1 # 搭載個数
+cell_count = 28 # 7 直 × 4 並
+string_count = 8
+
+[solar_panels.sap_array_mx.design.placement] # 搭載位置・CAD パラメータ
+face = "PZ" # Panel face to mount on
+u = -233.0 # Position along face u-axis [mm]
+v = 0.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
+dx = 366.0 # Bounding box x dimension [mm]
+dy = 453.0 # Bounding box y dimension [mm]
+dz = 2.0 # Bounding box z dimension [mm]
+rz = 0.0 # Rotation around face normal [degrees]
+side = "OUT" # Mount on inner or outer face
+cad_file = "" # CAD document name (empty = generate box)
+cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
+cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
+cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
+update_bbox = 0 # Set to 1 to auto-update bbox from CAD
+
+[solar_panels.sap_array_mx.meta]
 notes = "MPPT 制御（ストリング毎 DCDC）。±Z 面配置(84セル)は参考、電気設計は56セル/マスターシート"
 
 
 
 # === PCDU (PCDU_rev3 × 1) ===
-# 267.52g, 13ch, 12V/5V バス, RS422(PCU_PIC1) で MOBC 接続。SAP→バス伝送効率 0.9。
+# 267.52g, 13ch, 12V/5V バス, RS422(PCU_PIC1) で MOBC 接続。SAP→バス伝送効率 0.9.
 
 
 

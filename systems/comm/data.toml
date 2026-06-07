@@ -53,9 +53,9 @@ link_efficiency = 0.9 # [推定] toolbox comm.data 既定値
 quantity = 1 # 搭載個数
 
 [transceivers.srx.design.placement] # 搭載位置・CAD パラメータ
-face = "MZ" # Panel face to mount on
+face = "MY" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = -90.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 80.0 # Bounding box x dimension [mm]
 dy = 80.0 # Bounding box y dimension [mm]
@@ -129,9 +129,9 @@ link_efficiency = 0.9 # [推定]
 quantity = 1 # 搭載個数
 
 [transceivers.stx.design.placement] # 搭載位置・CAD パラメータ
-face = "MZ" # Panel face to mount on
+face = "MY" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = -110.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 80.0 # Bounding box x dimension [mm]
 dy = 80.0 # Bounding box y dimension [mm]
@@ -212,7 +212,7 @@ quantity = 1 # 搭載個数
 [transceivers.xtx.design.placement] # 搭載位置・CAD パラメータ
 face = "MZ" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = -50.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 80.0 # Bounding box x dimension [mm]
 dy = 80.0 # Bounding box y dimension [mm]
@@ -286,9 +286,9 @@ link_efficiency = 0.8 # [推定] 低速パケット・再送余裕
 quantity = 1 # 搭載個数
 
 [transceivers.lora.design.placement] # 搭載位置・CAD パラメータ
-face = "MZ" # Panel face to mount on
+face = "MY" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = -55.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 50.0 # Bounding box x dimension [mm]
 dy = 50.0 # Bounding box y dimension [mm]
@@ -372,13 +372,13 @@ radiation_pattern = "ong_sup.csv" # [S2E]
 quantity = 2 # 搭載個数
 
 [antennas.srx_patch.design.placement] # 搭載位置・CAD パラメータ
-face = "MZ" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+face = "MY" # Panel face to mount on
+u = 0.5 # Position along face u-axis [mm]
+v = -128.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 45.0 # Bounding box x dimension [mm]
-dy = 45.0 # Bounding box y dimension [mm]
-dz = 2.0 # Bounding box z dimension [mm]
+dy = 2.0 # Bounding box y dimension [mm]
+dz = 45.0 # Bounding box z dimension [mm]
 rz = 0.0 # Rotation around face normal [degrees]
 side = "OUT" # Mount on inner or outer face
 cad_file = "" # CAD document name (empty = generate box)
@@ -401,13 +401,13 @@ radiation_pattern = "ong_sdown.csv" # [S2E]
 quantity = 2 # 搭載個数
 
 [antennas.stx_patch.design.placement] # 搭載位置・CAD パラメータ
-face = "MZ" # Panel face to mount on
+face = "MY" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = -80.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 45.0 # Bounding box x dimension [mm]
-dy = 45.0 # Bounding box y dimension [mm]
-dz = 2.0 # Bounding box z dimension [mm]
+dy = 2.0 # Bounding box y dimension [mm]
+dz = 45.0 # Bounding box z dimension [mm]
 rz = 0.0 # Rotation around face normal [degrees]
 side = "OUT" # Mount on inner or outer face
 cad_file = "" # CAD document name (empty = generate box)
@@ -431,11 +431,11 @@ quantity = 2 # 搭載個数
 
 [antennas.xtx_patch.design.placement] # 搭載位置・CAD パラメータ
 face = "MZ" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+u = -25.0 # Position along face u-axis [mm]
+v = -80.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
-dx = 80.0 # Bounding box x dimension [mm]
-dy = 80.0 # Bounding box y dimension [mm]
+dx = 50.0 # Bounding box x dimension [mm]
+dy = 50.0 # Bounding box y dimension [mm]
 dz = 2.0 # Bounding box z dimension [mm]
 rz = -90.0 # Rotation around face normal [degrees]
 side = "OUT" # Mount on inner or outer face
@@ -459,13 +459,13 @@ radiation_pattern = "" # [S2E対象外]
 quantity = 1 # 搭載個数
 
 [antennas.lora_patch.design.placement] # 搭載位置・CAD パラメータ
-face = "MZ" # Panel face to mount on
+face = "PY" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = 120.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 82.0 # Bounding box x dimension [mm]
-dy = 82.0 # Bounding box y dimension [mm]
-dz = 3.2 # Bounding box z dimension [mm]
+dy = 3.0 # Bounding box y dimension [mm]
+dz = 82.0 # Bounding box z dimension [mm]
 rz = 0.0 # Rotation around face normal [degrees]
 side = "OUT" # Mount on inner or outer face
 cad_file = "" # CAD document name (empty = generate box)

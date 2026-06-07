@@ -13,7 +13,6 @@ from craft.schema import (
     Component,
     MultiInstance,
     Placeable,
-    PowerConsuming,
     fld,
 )
 
@@ -33,88 +32,6 @@ class StructuralPanel(Component, MultiInstance, Placeable):
 
     material: str = fld(default="Al honeycomb", desc="材料: Al honeycomb / CFRP 等")
     thickness_mm: float = fld(ge=0, default=0.0, unit="mm", desc="厚さ")
-
-    class Design:
-        pass
-
-
-class Bracket(Component, MultiInstance, Placeable):
-    """搭載ブラケット（コンポ取り付け用）。"""
-
-    material: str = fld(default="Al7075", desc="材料")
-
-    class Design:
-        pass
-
-
-class Hinge(Component, MultiInstance, Placeable):
-    """展開ヒンジ。SAP / アンテナ展開などで使用。"""
-
-    deploy_angle_deg: float = fld(ge=0, le=360, default=180.0, unit="deg", desc="展開角度")
-
-    class Design:
-        pass
-
-
-class HoldReleaseMechanism(Component, MultiInstance, PowerConsuming, Placeable):
-    """HRM（Hold/Release Mechanism）。打ち上げ拘束を軌道上で解放。
-
-    PowerConsuming: pyro / burn-wire 式は瞬時電力消費。
-    SEIRIOS HRM = 5.0W/個 × 2、分離後 1 回のみ駆動。
-    """
-
-    release_mechanism: str = fld(default="burn_wire", desc="release 方式: pyro / burn_wire / motor")
-
-    class Design:
-        pass
-
-
-class SeparationBracket(Component, MultiInstance, Placeable):
-    """子衛星分離ブラケット。打ち上げ時の親-子拘束、軌道上で分離。"""
-
-    side: str = fld(default="child", desc="設置側: parent / child")
-
-    class Design:
-        pass
-
-
-class SeparationConnector(Component, MultiInstance, Placeable):
-    """分離コネクタ（電源 / 信号）。"""
-
-    connector_type: str = fld(default="electrical", desc="electrical / fluid / RF")
-    contact_count: int = fld(ge=0, default=0, desc="接点数")
-
-    class Design:
-        pass
-
-
-class Baffle(Component, MultiInstance, Placeable):
-    """光学バッフル（迷光遮蔽）。Mission / STT 等で使用。"""
-
-    instrument: str = fld(default="", desc="対象光学機器名")
-
-    class Design:
-        pass
-
-
-class CounterMass(Component, MultiInstance, Placeable):
-    """質量バランス用ダミーマス。"""
-
-    class Design:
-        pass
-
-
-class Fastener(Component, MultiInstance):
-    """ボルト・ナット類の総量（個別配置を持たない）。"""
-
-    material: str = fld(default="A286", desc="材料")
-
-    class Design:
-        pass
-
-
-class Harness(Component, MultiInstance):
-    """ハーネス・計装類の総量（個別配置を持たない）。"""
 
     class Design:
         pass
