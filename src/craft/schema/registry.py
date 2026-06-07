@@ -67,6 +67,7 @@ class AnalysisDefinition:
     cache: bool
     source: SourceLocation
     desc: str | None = None
+    transient: bool = False
 
 
 class RegistryError(Exception):

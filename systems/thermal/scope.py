@@ -20,7 +20,9 @@ def _build_and_attach() -> type:
         if adef.verify:
             thermal.verification(adef.name, imports=adef.imports)(adef.func)
         else:
-            thermal.calculation(adef.name, imports=adef.imports)(adef.func)
+            thermal.calculation(adef.name, imports=adef.imports, transient=adef.transient)(
+                adef.func
+            )
     return root_model
 
 

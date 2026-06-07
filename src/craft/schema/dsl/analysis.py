@@ -22,6 +22,7 @@ def analysis(
     imports: Iterable[str] = (),
     cache: bool = False,
     desc: str | None = None,
+    transient: bool = False,
 ) -> Any:
     """Analysis 関数を登録する decorator。
 
@@ -33,6 +34,8 @@ def analysis(
         imports: cross-scope import するスコープ名のリスト。
         cache: 結果をキャッシュするか（現状はメタ情報のみ）。
         desc: 説明。
+        transient: True なら veriq calculation を transient として登録する
+            （結果は Python オブジェクトとして下流計算に渡されるが、TOML には出力しない）。
     """
 
     def wrap(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -54,6 +57,7 @@ def analysis(
                 cache=cache,
                 source=SourceLocation.of(func),
                 desc=desc or func.__doc__,
+                transient=transient,
             )
         )
         return func

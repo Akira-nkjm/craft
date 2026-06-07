@@ -22,7 +22,9 @@ def _build_and_attach() -> type:
         if adef.verify:
             structure.verification(adef.name, imports=adef.imports)(adef.func)
         else:
-            structure.calculation(adef.name, imports=adef.imports)(adef.func)
+            structure.calculation(adef.name, imports=adef.imports, transient=adef.transient)(
+                adef.func
+            )
     return root_model
 
 

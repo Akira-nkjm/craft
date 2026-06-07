@@ -24,7 +24,7 @@ def _build_and_attach() -> type:
         if adef.verify:
             power.verification(adef.name, imports=adef.imports)(adef.func)
         else:
-            power.calculation(adef.name, imports=adef.imports)(adef.func)
+            power.calculation(adef.name, imports=adef.imports, transient=adef.transient)(adef.func)
     return root_model
 
 

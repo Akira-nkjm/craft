@@ -17,7 +17,7 @@ def _build_and_attach() -> type:
         if adef.verify:
             comm.verification(adef.name, imports=adef.imports)(adef.func)
         else:
-            comm.calculation(adef.name, imports=adef.imports)(adef.func)
+            comm.calculation(adef.name, imports=adef.imports, transient=adef.transient)(adef.func)
     return root_model
 
 

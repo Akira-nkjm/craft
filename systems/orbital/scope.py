@@ -17,7 +17,9 @@ def _build_and_attach() -> type:
         if adef.verify:
             orbital.verification(adef.name, imports=adef.imports)(adef.func)
         else:
-            orbital.calculation(adef.name, imports=adef.imports)(adef.func)
+            orbital.calculation(adef.name, imports=adef.imports, transient=adef.transient)(
+                adef.func
+            )
     return root_model
 
 
