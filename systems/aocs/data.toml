@@ -1,29 +1,34 @@
-# AOCS system instance data
+# AOCS system instance data — ONGLAISAT (6U 地球観測 CubeSat)
 #
-# Source: SEIRIOS 子衛星 (shared drive: SEIRIOS)
-#   - SEIRIOS_コンポ管理シート / 子衛星1
-#   - 電源モード検討 / 子衛星電力消費
+# Source: ONGLAISAT AOCS
+#   - S2E ini: 99_Sources/raw/s2e-aobc-initialize_files/components/
+#   - 質量表: 99_Sources/raw/mass_inertia_breakdown.csv (「5.AOCS」行)
+#   - MD: 02_AOCS/*.md
+#
+# 運用モード (8 mode): initial / bdot / rough_sun_pointing / rough_three_axis_mtq /
+#                      rough_three_axis_rw / fine_three_axis / imaging / xband_downlink
 
 
 
 # === Sun Sensor (nanoSSOC-D60 × 4) ===
-# 子衛星電力消費 行17 / コンポ管理 行: サンセンサ/SS
-# Model: nanoSSOC-D60 (SolarMems), 43 × 14 × 5.9 mm, 6.5g, 0.076W/個
+# [確定値] 質量 6.7 g/個 (mass_inertia_breakdown.csv 5.AOCS)
+# [S2E] 消費電力 0.07 W / FOV 60 deg (nanossoc_d60.ini)
+# 搭載面: PY/MY/PZ/MZ の 4 面。rough_sun_pointing 以降全モードで ON。
 
 [sun_sensers.spec]
-mass_kg = 0.0065
-power_per_unit_w = 0.076
-fov_deg = 60.0 # nanoSSOC-D60 conical FOV ±60°
+mass_kg = 0.0067          # [確定値] 6.7 g/個 (mass_inertia_breakdown.csv)
+power_per_unit_w = 0.07   # [S2E] nanossoc_d60.ini assumed_power_consumption_W
+fov_deg = 60.0            # [S2E] nanossoc_d60.ini field_of_view 60 deg (半角)
 
 [sun_sensers.main.design]
-quantity = 4 # PX/MX/PZ/MZ 4 面に分散
+quantity = 4              # PY/MY/PZ/MZ 4 面 [S2E number_of_mounted_sensors=4]
 
 [sun_sensers.main.design.placement]
-face = "PX"
+face = "PY"
 u = 0.0
 v = 0.0
 w = 0.0
-dx = 43.0
+dx = 27.0
 dy = 14.0
 dz = 5.9
 rz = 0.0
@@ -35,36 +40,36 @@ cad_offset_z = 0.0
 update_bbox = 0
 
 [sun_sensers.main.design.power_modes]
-safe = false
-sun_acquisition = true
-coarse_3axis = true
-fine_3axis = true
-propulsion = true
-mated_check = false
-mated_calibration = false
-mated_actuator = true
-coarse_ff = true
-fine_ff = true
+initial = false
+bdot = false
+rough_sun_pointing = true
+rough_three_axis_mtq = true
+rough_three_axis_rw = true
+fine_three_axis = true
+imaging = true
+xband_downlink = true
 
 
 
-# === Reaction Wheel (RW-0.003 × 3) ===
-# 子衛星電力消費 行15 / コンポ管理: (ユニット内部)RW
-# Model: RW-0.003, 33.5 × 33.5 × 17 mm, 0.44W/個
+# === Reaction Wheel (RW0003 × 3 — 3軸直交配置) ===
+# [S2E] 全値 rw0003.ini より。Sinclair Interplanetary / Rocket Lab
+# 最大トルク 4 mNm、ロータ慣性 3.372e-6 kg·m², 最大 8500 rpm
 
 [reaction_wheels.spec]
-mass_kg = 0.130 # 推定（コンポシートはユニット合算 1200g）
-temp_min_c = -20.0
+mass_kg = 0.068
+temp_min_c = -30.0
 temp_max_c = 60.0
-power_per_unit_w = 0.44
-max_torque_nms = 0.003 # 型番から（3 mNm）
-max_momentum_nms = 0.020 # 3 mNm class typical
+power_per_unit_w = 0.88       # [S2E] rw0003.ini 0.88 W/台
+max_torque_nms = 0.004        # [S2E] rw0003.ini max_output_torque = 0.004 N·m
+max_momentum_nms = 0.002999   # [推定] I*ω_max = 3.372e-6*890 rad/s ≈ 3e-3 N·m·s [TBD]
+rotor_inertia_kg_m2 = 3.372e-6  # [S2E] rw0003.ini moment_of_inertia
+max_speed_rpm = 8500.0        # [S2E] rw0003.ini max_angular_velocity
 
 [reaction_wheels.main.design]
-quantity = 3 # 3 軸制御
+quantity = 3                  # [確定値] 3軸直交 (X/Y/Z 軸)
 
 [reaction_wheels.main.design.placement]
-face = "MY"
+face = "MZ"
 u = 0.0
 v = 0.0
 w = 0.0
@@ -80,37 +85,35 @@ cad_offset_z = 0.0
 update_bbox = 0
 
 [reaction_wheels.main.design.power_modes]
-safe = false
-sun_acquisition = false
-coarse_3axis = true
-fine_3axis = true
-propulsion = true
-mated_check = false
-mated_calibration = false
-mated_actuator = true
-coarse_ff = true
-fine_ff = true
+initial = false
+bdot = false
+rough_sun_pointing = false
+rough_three_axis_mtq = false
+rough_three_axis_rw = true
+fine_three_axis = true
+imaging = true
+xband_downlink = true
 
 
 
-# === Magnetic Torquer (EMA04 × 3) ===
-# 子衛星電力消費 行16 / コンポ管理: (ユニット内部)MTQ
-# Model: EMA04, 0.38W/個
+# === Magnetic Torquer (MTQ SEIREN × 3軸) ===
+# [S2E] mtq_seiren.ini — 5.0 V / 0.65 W、各軸 ±0.32 A·m²
+# 設計: ISSL (東京大学 中須賀・船瀬研)
 
 [magnetic_torquers.spec]
-mass_kg = 0.045 # EMA04 typical
-power_per_unit_w = 0.38
-max_dipole_moment_am2 = 4.0 # EMA04 ~ 4 A·m²
+mass_kg = 0.050               # [推定] TBD
+power_per_unit_w = 0.65       # [S2E] mtq_seiren.ini 0.65 W
+max_dipole_moment_am2 = 0.32  # [S2E] mtq_seiren.ini ±0.32 A·m²
 
 [magnetic_torquers.main.design]
-quantity = 3
+quantity = 3                  # 3軸 (X/Y/Z)
 
 [magnetic_torquers.main.design.placement]
-face = "MY"
+face = "MZ"
 u = 0.0
 v = 0.0
 w = 0.0
-dx = 80.0
+dx = 100.0
 dy = 10.0
 dz = 10.0
 rz = 0.0
@@ -122,37 +125,37 @@ cad_offset_z = 0.0
 update_bbox = 0
 
 [magnetic_torquers.main.design.power_modes]
-safe = false
-sun_acquisition = true
-coarse_3axis = true
-fine_3axis = true
-propulsion = true
-mated_check = false
-mated_calibration = false
-mated_actuator = true
-coarse_ff = true
-fine_ff = true
+initial = false
+bdot = true
+rough_sun_pointing = true
+rough_three_axis_mtq = true
+rough_three_axis_rw = false
+fine_three_axis = false
+imaging = false
+xband_downlink = false
 
 
 
 # === Star Tracker (Sagitta × 1) ===
-# 子衛星電力消費 行14 / コンポ管理: (ユニット内部)STT
-# Model: Sagitta (Arcsec), 95 × 50 × 44 mm, 1.5W
+# [確定値] Sagitta: 270 g, 1.0 W
+# [S2E] sagitta.ini — 視軸直交 ≈ 2 arcsec (3σ), 5 Hz, 太陽排他 40 deg
 
 [star_trackers.spec]
-mass_kg = 0.270 # Sagitta data sheet 270g
+mass_kg = 0.270               # [確定値] Sagitta datasheet 270 g
 temp_min_c = -30.0
 temp_max_c = 50.0
-power_per_unit_w = 1.5
-accuracy_arcsec = 2.0 # Sagitta cross-axis 3σ
-fov_deg = 25.4
-update_rate_hz = 5.0
+power_per_unit_w = 1.0        # [S2E] sagitta.ini 1.0 W
+accuracy_arcsec = 2.0         # [S2E] 視軸直交ノイズ 9.6963e-6 rad ≈ 2 arcsec (3σ)
+fov_deg = 12.7                # [推定] Sagitta FOV 半角 12.7 deg [TBD]
+update_rate_hz = 5.0          # [S2E] output_interval = 0.2 s → 5 Hz
+sun_exclusion_deg = 40.0      # [S2E] sagitta.ini sun_exclusion = 40 deg
+earth_exclusion_deg = 30.0    # [S2E] sagitta.ini earth_exclusion = 30 deg
 
 [star_trackers.main.design]
 quantity = 1
 
 [star_trackers.main.design.placement]
-face = "PY"
+face = "MY"
 u = 0.0
 v = 0.0
 w = 0.0
@@ -168,36 +171,33 @@ cad_offset_z = 0.0
 update_bbox = 0
 
 [star_trackers.main.design.power_modes]
-safe = false
-sun_acquisition = false
-coarse_3axis = false
-fine_3axis = true
-propulsion = true
-mated_check = false
-mated_calibration = true
-mated_actuator = true
-coarse_ff = true
-fine_ff = true
+initial = false
+bdot = false
+rough_sun_pointing = false
+rough_three_axis_mtq = false
+rough_three_axis_rw = false
+fine_three_axis = true
+imaging = true
+xband_downlink = true
 
 
 
-# === Gyroscope — 精ジャイロ (STIM377H × 1) ===
-# 子衛星電力消費 行13 / コンポ管理: (ユニット内部)精ジャイロ
-# Model: STIM377H (Sensonor), 44.8 × 38.6 × 21.5 mm, 1.5W
+# === Gyroscope — 精 (STIM210 × 1) ===
+# [S2E] stim210.ini — 1.5 W、ノイズ 4.36e-5 rad/s
 
 [gyroscopes.fine.spec]
-mass_kg = 0.055 # STIM377H 55g
+mass_kg = 0.055               # [推定] ~55 g [TBD]
 temp_min_c = -40.0
-temp_max_c = 80.0
-power_per_unit_w = 1.5
-bias_stability_deg_per_h = 0.3
+temp_max_c = 85.0
+power_per_unit_w = 1.5        # [S2E] stim210.ini 1.5 W
+bias_stability_deg_per_h = 0.5  # [推定] STIM210 ~0.5 deg/h [TBD]
 grade = "fine"
 
 [gyroscopes.fine.design]
 quantity = 1
 
 [gyroscopes.fine.design.placement]
-face = "MY"
+face = "MZ"
 u = 0.0
 v = 0.0
 w = 0.0
@@ -213,40 +213,120 @@ cad_offset_z = 0.0
 update_bbox = 0
 
 [gyroscopes.fine.design.power_modes]
-safe = false
-sun_acquisition = false
-coarse_3axis = true
-fine_3axis = true
-propulsion = true
-mated_check = false
-mated_calibration = true
-mated_actuator = true
-coarse_ff = true
-fine_ff = true
+initial = false
+bdot = false
+rough_sun_pointing = false
+rough_three_axis_mtq = false
+rough_three_axis_rw = false
+fine_three_axis = true
+imaging = true
+xband_downlink = true
 
 
 
-# === Magnetometer (RM3100 × 1) ===
-# 子衛星電力消費 行18 / コンポ管理: 外部磁気センサ
-# Model: RM3100, 18g, 0.03W
+# === Gyroscope — 粗 (MPU9250 × 1, Coarse IMU) ===
+# [S2E] mpu9250.ini — I2C 0x68, 0.001 W
 
-[magnetometers.spec]
-mass_kg = 0.018
-power_per_unit_w = 0.03
-range_ut = 800.0 # RM3100 typical
-noise_nt = 13.0 # RM3100 noise floor
+[gyroscopes.coarse.spec]
+mass_kg = 0.003               # [推定] QFN パッケージ ~3 g
+temp_min_c = -40.0
+temp_max_c = 85.0
+power_per_unit_w = 0.001      # [S2E] mpu9250.ini 0.001 W
+bias_stability_deg_per_h = 1000.0  # [推定] 粗 IMU 典型 [TBD]
+grade = "coarse"
 
-[magnetometers.main.design]
+[gyroscopes.coarse.design]
 quantity = 1
 
-[magnetometers.main.design.placement]
-face = "MY"
+[gyroscopes.coarse.design.placement]
+face = "MZ"
 u = 0.0
 v = 0.0
 w = 0.0
-dx = 25.0
-dy = 25.0
-dz = 5.0
+dx = 9.0
+dy = 9.0
+dz = 1.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[gyroscopes.coarse.design.power_modes]
+initial = true
+bdot = true
+rough_sun_pointing = true
+rough_three_axis_mtq = true
+rough_three_axis_rw = true
+fine_three_axis = false
+imaging = false
+xband_downlink = false
+
+
+
+# === Magnetometer — 内部 (RM3100 AOBC) ===
+# [S2E] rm3100_aobc.ini — I2C 0x20, 0.03 W, ノイズ 15 nT
+
+[magnetometers.aobc.spec]
+mass_kg = 0.005               # [推定] ~5 g
+power_per_unit_w = 0.03       # [S2E] rm3100_aobc.ini 0.03 W
+range_ut = 1000.0             # [S2E] range_to_constant = 1.0e6 nT
+noise_nt = 15.0               # [S2E] white_noise_standard_deviation = 15 nT
+
+[magnetometers.aobc.design]
+quantity = 1
+
+[magnetometers.aobc.design.placement]
+face = "MZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 18.0
+dy = 18.0
+dz = 3.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[magnetometers.aobc.design.power_modes]
+initial = true
+bdot = true
+rough_sun_pointing = true
+rough_three_axis_mtq = true
+rough_three_axis_rw = true
+fine_three_axis = true
+imaging = true
+xband_downlink = true
+
+
+
+# === Magnetometer — 外部 (RM3100 External) ===
+# [S2E] rm3100_external.ini — I2C 0x23, 0.03 W, ノイズ 15 nT
+# 離隔搭載で機体磁場干渉低減
+
+[magnetometers.external.spec]
+mass_kg = 0.005               # [推定] ~5 g
+power_per_unit_w = 0.03       # [S2E] rm3100_external.ini 0.03 W
+range_ut = 1000.0             # [S2E] range_to_constant = 1.0e6 nT
+noise_nt = 15.0               # [S2E] white_noise_standard_deviation = 15 nT
+
+[magnetometers.external.design]
+quantity = 1
+
+[magnetometers.external.design.placement]
+face = "PZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 18.0
+dy = 18.0
+dz = 3.0
 rz = 0.0
 side = "OUT"
 cad_file = ""
@@ -255,14 +335,88 @@ cad_offset_y = 0.0
 cad_offset_z = 0.0
 update_bbox = 0
 
-[magnetometers.main.design.power_modes]
-safe = false
-sun_acquisition = true
-coarse_3axis = true
-fine_3axis = true
-propulsion = true
-mated_check = false
-mated_calibration = false
-mated_actuator = true
-coarse_ff = true
-fine_ff = true
+[magnetometers.external.design.power_modes]
+initial = true
+bdot = true
+rough_sun_pointing = true
+rough_three_axis_mtq = true
+rough_three_axis_rw = true
+fine_three_axis = true
+imaging = true
+xband_downlink = true
+
+
+
+# === GNSS Receiver (OEM7600 × 1) ===
+# [S2E] oem7600.ini — UART 0x02, 3.3 V, 1.0 W
+# gnss_id = GJ (GPS + QZSS)、12 ch、prescaler=100 → ~1 Hz
+
+[aocs_gnss_receivers.spec]
+mass_kg = 0.031               # [確定値] OEM7600 ~31 g
+temp_min_c = -40.0
+temp_max_c = 85.0
+power_per_unit_w = 1.0        # [S2E] oem7600.ini 1.0 W
+constellation = "GPS+QZSS"    # [S2E] gnss_id = GJ
+channel_count = 12            # [S2E] maximum_channel = 12
+update_rate_hz = 1.0          # [S2E] prescaler = 100 → ~1 Hz
+position_noise_m = 1.5        # [S2E] white_noise_std_eci = 1.5 m
+
+[aocs_gnss_receivers.oem7600.design]
+quantity = 1
+
+[aocs_gnss_receivers.oem7600.design.placement]
+face = "PZ"
+u = 0.0
+v = 0.0
+w = 0.0
+dx = 71.0
+dy = 46.0
+dz = 11.0
+rz = 0.0
+side = "IN"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
+
+[aocs_gnss_receivers.oem7600.design.power_modes]
+initial = false
+bdot = false
+rough_sun_pointing = false
+rough_three_axis_mtq = false
+rough_three_axis_rw = false
+fine_three_axis = true
+imaging = true
+xband_downlink = true
+
+
+
+# === GNSS Antenna (Tallysman TW1889/TW1829 × 1) ===
+# [確定値] 質量 37.05 g (mass_inertia_breakdown.csv 5.AOCS GPS-A TW1889)
+# [S2E] oem7600.ini antenna_half_width_deg = 60 deg
+
+[aocs_gnss_antennas.spec]
+mass_kg = 0.03705             # [確定値] mass_inertia_breakdown.csv 5.AOCS GPS-A 37.05 g
+band = "L1+L2"
+gain_dbi = 0.0
+half_angle_deg = 60.0         # [S2E] oem7600.ini antenna_half_width_deg = 60
+
+[aocs_gnss_antennas.tw1889.design]
+quantity = 1
+
+[aocs_gnss_antennas.tw1889.design.placement]
+face = "PZ"
+u = 12.5    # [S2E] antenna_position_b_m(0) = 0.0125 m → 12.5 mm
+v = 0.0
+w = 181.5   # [S2E] antenna_position_b_m(2) = 0.1815 m → 181.5 mm
+dx = 30.0
+dy = 30.0
+dz = 8.0
+rz = 0.0
+side = "OUT"
+cad_file = ""
+cad_offset_x = 0.0
+cad_offset_y = 0.0
+cad_offset_z = 0.0
+update_bbox = 0
