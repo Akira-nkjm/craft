@@ -75,9 +75,6 @@ _DEFAULT_FACE = "PZ"
 _INSIDE_ALPHA = 0.9
 _INSIDE_EPSILON = 0.85
 
-# モジュールレベルのメモ化キャッシュ。複数 @analysis が同じ run 結果を共有する。
-_RESULT_CACHE: dict[Any, dict[str, tuple[float, float]]] = {}
-
 
 def _mapped_face(inst: Any) -> str:
     """コンポの placement.face を機体 6 面 box にマップ（不明は天頂 PZ）。"""
@@ -228,14 +225,10 @@ def _run_all_modes(
 
     モード一覧は収集コンポの power_modes キー和集合。各モードで一軌道
     （run_earth_orbit_analysis, duration_s=None=1 周期）を解き、全モード横断の
-    最小・最大温度を集める。複数 @analysis から呼ばれるため module レベルで
-    メモ化する（入力は読み取り専用なので副作用なし）。
+    最小・最大温度を集める。純粋関数（入力は読み取り専用）。重複実行の抑止は
+    呼び出し側の `thermal_node_temps`（veriq transient calc）が担い、その結果を
+    下流の scalar / verify が `vq.Ref("@thermal_node_temps")` で共有する。
     """
-    cache_key = (id(loads), id(thermalmodel), id(panel_surfaces), altitude_km)
-    cached = _RESULT_CACHE.get(cache_key)
-    if cached is not None:
-        return cached
-
     beta = thermalmodel.beta_angle_deg
     modes = _all_modes(loads) or ["__static__"]
     agg: dict[str, tuple[float, float]] = {}
@@ -253,7 +246,6 @@ def _run_all_modes(
             else:
                 agg[name] = (lo_c, hi_c)
 
-    _RESULT_CACHE[cache_key] = agg
     return agg
 
 
@@ -288,21 +280,39 @@ def _component_node_ranges(
 
 
 @analysis(
-    desc="バッテリノードの一軌道最低温度 [degC]（多ノード過渡, 全モード横断）",
+    transient=True,
+    desc="多ノード過渡解析の全モード横断ノード温度域 [degC]（Python オブジェクト, TOML 非出力）",
     imports=["thermal", "orbital"],
 )
-def battery_min_temp_c(
+def thermal_node_temps(
     loads: Annotated[dict, vq.Collect(tag="Component")],
     thermalmodel: Annotated[Any, vq.Ref("$.thermalmodel")],
     panel_surfaces: Annotated[vq.Table, vq.Ref("$.panel_surfaces")],
     altitude_km: Annotated[float, vq.Ref("$.orbitalparams.altitude_km", scope="orbital")],
-) -> float:
-    """バッテリ搭載ノードの一軌道最低温度 [degC]。
+) -> dict[str, tuple[float, float]]:
+    """多ノード過渡ソルバを全モードで 1 回だけ走らせ、ノード温度域を返す。
 
-    多ノード過渡ソルバ（toolbox.thermal）を全モードで実行し、ノード名に "batter"
-    を含むノードの全モード横断 min を返す。バッテリノードが無い場合は初期温度。
+    戻り値は {ノード名: (min_c, max_c)} の dict（外面・MLI・各コンポノードを含む）。
+    transient=True なので結果は下流計算に Python オブジェクトとして渡されるが、
+    merged.toml には出力されない。scalar / verify はこれを `vq.Ref("@thermal_node_temps")`
+    で参照し、多ノード過渡解析が評価グラフ上で 1 回だけ評価されることを保証する。
     """
-    node_temps = _run_all_modes(loads, thermalmodel, panel_surfaces, altitude_km)
+    return _run_all_modes(loads, thermalmodel, panel_surfaces, altitude_km)
+
+
+@analysis(
+    desc="バッテリノードの一軌道最低温度 [degC]（多ノード過渡, 全モード横断）",
+    imports=["thermal"],
+)
+def battery_min_temp_c(
+    node_temps: Annotated[dict, vq.Ref("@thermal_node_temps")],
+    thermalmodel: Annotated[Any, vq.Ref("$.thermalmodel")],
+) -> float:
+    """バッテリ搭載ノードの一軌道最低温度 [degC]（全モード横断 min）。
+
+    ノード名に "batter" を含むノードの統合 min を返す。バッテリノードが無い場合は
+    初期温度にフォールバックする。
+    """
     rng = _battery_range(node_temps)
     if rng is None:
         return thermalmodel.initial_temperature_c
@@ -311,16 +321,13 @@ def battery_min_temp_c(
 
 @analysis(
     desc="バッテリノードの一軌道最高温度 [degC]（多ノード過渡, 全モード横断）",
-    imports=["thermal", "orbital"],
+    imports=["thermal"],
 )
 def battery_max_temp_c(
-    loads: Annotated[dict, vq.Collect(tag="Component")],
+    node_temps: Annotated[dict, vq.Ref("@thermal_node_temps")],
     thermalmodel: Annotated[Any, vq.Ref("$.thermalmodel")],
-    panel_surfaces: Annotated[vq.Table, vq.Ref("$.panel_surfaces")],
-    altitude_km: Annotated[float, vq.Ref("$.orbitalparams.altitude_km", scope="orbital")],
 ) -> float:
     """バッテリ搭載ノードの一軌道最高温度 [degC]（全モード横断 max）。"""
-    node_temps = _run_all_modes(loads, thermalmodel, panel_surfaces, altitude_km)
     rng = _battery_range(node_temps)
     if rng is None:
         return thermalmodel.initial_temperature_c
@@ -329,16 +336,13 @@ def battery_max_temp_c(
 
 @analysis(
     desc="全コンポノードの一軌道最高温度 [degC]（多ノード過渡, 全モード横断）",
-    imports=["thermal", "orbital"],
+    imports=["thermal"],
 )
 def max_component_temp_c(
-    loads: Annotated[dict, vq.Collect(tag="Component")],
+    node_temps: Annotated[dict, vq.Ref("@thermal_node_temps")],
     thermalmodel: Annotated[Any, vq.Ref("$.thermalmodel")],
-    panel_surfaces: Annotated[vq.Table, vq.Ref("$.panel_surfaces")],
-    altitude_km: Annotated[float, vq.Ref("$.orbitalparams.altitude_km", scope="orbital")],
 ) -> float:
     """全コンポノード横断の一軌道最高温度 [degC]（外面・MLI を除く）。"""
-    node_temps = _run_all_modes(loads, thermalmodel, panel_surfaces, altitude_km)
     comp = _component_node_ranges(node_temps)
     if not comp:
         return thermalmodel.initial_temperature_c
@@ -347,16 +351,13 @@ def max_component_temp_c(
 
 @analysis(
     desc="全コンポノードの一軌道最低温度 [degC]（多ノード過渡, 全モード横断）",
-    imports=["thermal", "orbital"],
+    imports=["thermal"],
 )
 def min_component_temp_c(
-    loads: Annotated[dict, vq.Collect(tag="Component")],
+    node_temps: Annotated[dict, vq.Ref("@thermal_node_temps")],
     thermalmodel: Annotated[Any, vq.Ref("$.thermalmodel")],
-    panel_surfaces: Annotated[vq.Table, vq.Ref("$.panel_surfaces")],
-    altitude_km: Annotated[float, vq.Ref("$.orbitalparams.altitude_km", scope="orbital")],
 ) -> float:
     """全コンポノード横断の一軌道最低温度 [degC]（外面・MLI を除く）。"""
-    node_temps = _run_all_modes(loads, thermalmodel, panel_surfaces, altitude_km)
     comp = _component_node_ranges(node_temps)
     if not comp:
         return thermalmodel.initial_temperature_c
@@ -366,20 +367,17 @@ def min_component_temp_c(
 @analysis(
     verify=True,
     desc="各 TemperatureSensitive コンポの一軌道温度が動作温度範囲内に収まるか",
-    imports=["thermal", "orbital"],
+    imports=["thermal"],
 )
 def verify_components_within_temp_limits(
+    node_temps: Annotated[dict, vq.Ref("@thermal_node_temps")],
     loads: Annotated[dict, vq.Collect(tag="Component")],
-    thermalmodel: Annotated[Any, vq.Ref("$.thermalmodel")],
-    panel_surfaces: Annotated[vq.Table, vq.Ref("$.panel_surfaces")],
-    altitude_km: Annotated[float, vq.Ref("$.orbitalparams.altitude_km", scope="orbital")],
 ) -> bool:
     """temp_min_c / temp_max_c を持つコンポの一軌道 min/max が範囲内か検証する。
 
     対応するコンポノードが無いもの（質量・発熱ともゼロでノード化されない等）は
     スキップする。一つでも範囲外があれば False。
     """
-    node_temps = _run_all_modes(loads, thermalmodel, panel_surfaces, altitude_km)
     for node_name, inst in _iter_thermal_nodes(loads):
         spec = getattr(inst, "spec", None)
         tmin = getattr(spec, "temp_min_c", None)

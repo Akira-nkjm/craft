@@ -22,14 +22,13 @@ from craft.core.analysis.runner import run_analysis
 def ta(real_systems_restored):
     """実 systems reload 後に `systems.thermal.analyses` を lazy import して返す。
 
-    多ノード解析のメモ化もクリアする（合成入力が混ざらないように）。private ヘルパや
-    veriq 経由 @analysis を使うテストはこの fixture を引数で受け取る。
+    多ノード過渡解析は veriq transient calc（`thermal_node_temps`）に集約され、
+    手製メモ化（旧 `_RESULT_CACHE`）は廃止された。private ヘルパや veriq 経由
+    @analysis を使うテストはこの fixture を引数で受け取る。
     """
     import systems.thermal.analyses as module  # noqa: PLC0415  lazy（上記 NOTE 参照）
 
-    module._RESULT_CACHE.clear()
-    yield module
-    module._RESULT_CACHE.clear()
+    return module
 
 
 # ─── 合成入力ヘルパ ────────────────────────────────────────────────────────────
@@ -93,6 +92,38 @@ def _loads(*instances):
 
 
 # ─── 公開 @analysis（実データ・veriq 経由）─────────────────────────────────────
+
+
+def test_thermal_node_temps_returns_dict_of_ranges(ta):
+    """thermal_node_temps（transient calc）が {ノード名: (min, max)} の dict を返す。"""
+    node_temps = run_analysis("thermal", "thermal_node_temps", {}).value
+    assert isinstance(node_temps, dict)
+    assert node_temps, "node_temps should not be empty"
+    # 6 外面ノードを含む。
+    assert {"PX", "MX", "PY", "MY", "PZ", "MZ"} <= set(node_temps)
+    # NOTE: veriq は結果を tree に round-trip する際 tuple を list に変換するため、
+    # 値は (min, max) の 2 要素シーケンス（tuple or list）として受け取る。
+    for name, rng in node_temps.items():
+        assert isinstance(rng, list | tuple) and len(rng) == 2, name
+        lo, hi = rng
+        assert lo <= hi, name
+    # 少なくとも 1 つはコンポノード（外面・MLI 以外）を含む。
+    assert ta._component_node_ranges(node_temps), "expected at least one component node"
+
+
+def test_scalars_match_thermal_node_temps(ta):
+    """scalar @analysis が thermal_node_temps から正しく min/max を抽出する。"""
+    node_temps = run_analysis("thermal", "thermal_node_temps", {}).value
+    comp = ta._component_node_ranges(node_temps)
+    expected_max = max(hi for _, hi in comp.values())
+    expected_min = min(lo for lo, _ in comp.values())
+    assert run_analysis("thermal", "max_component_temp_c", {}).value == pytest.approx(expected_max)
+    assert run_analysis("thermal", "min_component_temp_c", {}).value == pytest.approx(expected_min)
+
+    rng = ta._battery_range(node_temps)
+    if rng is not None:
+        assert run_analysis("thermal", "battery_min_temp_c", {}).value == pytest.approx(rng[0])
+        assert run_analysis("thermal", "battery_max_temp_c", {}).value == pytest.approx(rng[1])
 
 
 def test_battery_temps_in_reasonable_range(ta):
@@ -161,7 +192,6 @@ def test_heat_on_raises_node_temperature_vs_off(ta):
     cold = _component(mass_kg=0.5, power_w=20.0, face="MY", modes={"imaging": False})
 
     res_hot = ta._run_all_modes(_loads(hot), tm, ps, altitude_km=410.0)
-    ta._RESULT_CACHE.clear()
     res_cold = ta._run_all_modes(_loads(cold), tm, ps, altitude_km=410.0)
 
     comp_hot = ta._component_node_ranges(res_hot)
