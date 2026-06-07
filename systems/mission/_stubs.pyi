@@ -69,9 +69,9 @@ class MissionInterfaceEntry(BaseModel):
 class TelescopeSpec(BaseModel):
     mass_kg: float
     focal_length_m: float
+    pixel_size_m: float
     aperture_diameter_m: float
     f_number: float
-    pixel_size_m: float
     ifov_rad: float
     sun_exclusion_angle_deg: float
     earth_exclusion_angle_deg: float
