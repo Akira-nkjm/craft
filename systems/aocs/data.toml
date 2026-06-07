@@ -144,14 +144,16 @@ cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
 update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
 [magnetic_torquers.main.design.power_modes] # OperationMode 別の on/off
+# RW 制御モードでも MTQ は ON（間欠 desat duty）。RW は ~20分で飽和するため
+# fine/imaging/xband でも MTQ で角運動量を継続アンロードする（verify_mtq_can_desaturate_rw）。
 initial = false
 bdot = true
 rough_sun_pointing = true
 rough_three_axis_mtq = true
-rough_three_axis_rw = false
-fine_three_axis = false
-imaging = false
-xband_downlink = false
+rough_three_axis_rw = true
+fine_three_axis = true
+imaging = true
+xband_downlink = true
 
 
 

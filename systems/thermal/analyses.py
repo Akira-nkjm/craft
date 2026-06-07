@@ -1,6 +1,11 @@
 """Thermal system analyses。
 
-ONGLAISAT 熱制御解析。toolbox.thermal の軌道熱入力・放射平衡計算を利用。
+ONGLAISAT 熱制御解析。軌道平均太陽熱入力・放射平衡温度を **単純解析モデル**
+（β=0 近似、Stefan-Boltzmann 則）で手計算する。toolbox.thermal は使わない
+（対応する一般化関数が無いため、本機固有の簡易モデルを直接実装）。
+
+入力（α/ε・面積・発熱・日照率）は全て data 参照（panel_surfaces / thermalmodel /
+orbital）で、Python 側に物理値をハードコードしない。
 
 veriq 制約: scope に貼られる calculation / verification の引数は全て
 `Annotated[..., vq.Ref(...)]` であること。生のパラメータが必要なら

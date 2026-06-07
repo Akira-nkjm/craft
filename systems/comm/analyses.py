@@ -38,7 +38,9 @@ def _effective_required_ebn0_db(transceiver) -> float:
     )
 
 
-def _downlink_margin_db(transceiver, distance_km: float) -> float:
+def _downlink_margin_db(transceiver, distance_km: float, data_rate_kbps: float = 0.0) -> float:
+    # data_rate_kbps=0 のとき transceiver の設計レートを使用。明示時はそのレートで評価。
+    rate_kbps = data_rate_kbps if data_rate_kbps > 0.0 else transceiver.spec.data_rate_kbps
     eirp_dbw = tb_eirp_dbw(
         transmit_power_w=transceiver.spec.tx_power_w,
         transmit_gain_db=transceiver.spec.tx_gain_dbi,
@@ -69,7 +71,7 @@ def _downlink_margin_db(transceiver, distance_km: float) -> float:
     )
     return tb_link_margin_db(
         cn0_dbhz=cn0_dbhz,
-        data_rate_bps=transceiver.spec.data_rate_kbps * 1000.0,
+        data_rate_bps=rate_kbps * 1000.0,
         required_ebn0_db=_effective_required_ebn0_db(transceiver),
     )
 
@@ -130,17 +132,17 @@ def comm_power_per_mode_w(
 
 
 @analysis(
-    desc="S帯 TT&C リンクマージン [dB]（SRx uplink / STx downlink, toolbox.comm.link）",
-    imports=["mission"],
+    desc="S帯 TT&C リンクマージン [dB]（SRx uplink / STx downlink, 高度=orbital 参照）",
+    imports=["orbital"],
 )
 def sband_link_margins_db(
     transceivers: Annotated[vq.Table, vq.Ref("$.transceivers")],
-    altitude_km: Annotated[float, vq.Ref("$.missionprofile.target_altitude_km", scope="mission")],
+    altitude_km: Annotated[float, vq.Ref("$.orbitalparams.altitude_km", scope="orbital")],
 ) -> dict[str, float]:
     """最小仰角での最大スラントレンジにおける S-band uplink/downlink マージン [dB]。
 
     地上局リンクの距離は高度ではなく仰角依存のスラントレンジ。最小仰角
-    （最悪条件 = 最長距離）で評価する。
+    （最悪条件 = 最長距離）で評価する。高度は orbital.altitude_km を参照。
     """
     slant_km = float(tb_slant_range_km(altitude_km, _MIN_ELEVATION_SBAND_DEG))
     return {
@@ -150,19 +152,37 @@ def sband_link_margins_db(
 
 
 @analysis(
-    desc="X帯 36 Mbps ダウンリンクマージン [dB]（toolbox.comm.link）",
-    imports=["mission"],
+    desc="X帯ダウンリンクマージン [dB]（S2E フライトレート 10Mbps, 高度=orbital 参照）",
+    imports=["orbital"],
 )
 def xband_downlink_margin_db(
     transceivers: Annotated[vq.Table, vq.Ref("$.transceivers")],
-    altitude_km: Annotated[float, vq.Ref("$.missionprofile.target_altitude_km", scope="mission")],
+    altitude_km: Annotated[float, vq.Ref("$.orbitalparams.altitude_km", scope="orbital")],
 ) -> float:
     """最小仰角での最大スラントレンジにおける X-band downlink マージン [dB]。
 
-    高度ではなく仰角依存のスラントレンジ（最小仰角 = 最悪条件）で評価する。
+    リンク成立判定は **S2E フライト設定レート（s2e_data_rate_kbps, 10 Mbps）**で評価する。
+    36 Mbps はピーク能力（高仰角・短距離限定）で別途 data に併記。高度は orbital を参照。
     """
+    xtx = transceivers["xtx"]
     slant_km = float(tb_slant_range_km(altitude_km, _MIN_ELEVATION_XBAND_DEG))
-    return float(_downlink_margin_db(transceivers["xtx"], slant_km))
+    return float(_downlink_margin_db(xtx, slant_km, data_rate_kbps=xtx.spec.s2e_data_rate_kbps))
+
+
+@analysis(
+    verify=True,
+    desc="X帯ダウンリンクマージン（フライトレート）が要求 margin_requirement_db を満たすか",
+)
+def verify_xband_link_margin(
+    transceivers: Annotated[vq.Table, vq.Ref("$.transceivers")],
+    margin_db: Annotated[float, vq.Ref("@xband_downlink_margin_db")],
+) -> bool:
+    """X帯リンクマージン（S2E フライトレート 10Mbps）が要求値以上か。
+
+    要求は xtx.spec.margin_requirement_db（[S2E]）。36 Mbps ピークは別評価。
+    """
+    required_db = transceivers["xtx"].spec.margin_requirement_db
+    return margin_db >= required_db
 
 
 @analysis(desc="X帯 1 パスあたりダウンリンク容量 [MB/pass]（toolbox.comm.data）")

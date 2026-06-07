@@ -1,7 +1,7 @@
 version = 1
 
 [sources."systems/aocs/data.toml"]
-sha256 = "80e5cb17aab6d2e57e3a974b078f2b36b10838ecb9556cd5be03aaaab6f1e1b7"
+sha256 = "fd162bba679380be28db3070083c4833c3341297dce97cf9f85b5bc33dbd4aa3"
 
 [sources."systems/cdh/data.toml"]
 sha256 = "63c5733a37b664204d84e98032b22b80bc41935a5ff982e453a0e7ab0af2ad0c"
@@ -10,7 +10,7 @@ sha256 = "63c5733a37b664204d84e98032b22b80bc41935a5ff982e453a0e7ab0af2ad0c"
 sha256 = "7a7b5d55ff16c14d621d1824b1913a512cab463d46bfa2150ae319823f41dd94"
 
 [sources."systems/mission/data.toml"]
-sha256 = "3580660b90e061ba1c34757c4c336fb63f5702b19bad5e9788786d4b94a7e363"
+sha256 = "c46047bcf72efef9b46782c829a20084eec8e169732ef805712c0e0eab4ab7d4"
 
 [sources."systems/orbital/data.toml"]
 sha256 = "a76c27b6d265d6c490adce290e195cbc57434bc630b2dfa15a2943ed303e0823"

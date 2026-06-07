@@ -312,4 +312,4 @@ imaging = true
 xband_downlink = false
 
 [image_processors.mobc_imaging.meta]
-notes = "MOBC 上の画像処理・圧縮機能。生データ概算: 8192×8192×10bit×10frames ≈ 840MB。圧縮方式非公開（推測: CCSDS-IDC/JPEG2000）"
+notes = "MOBC 上の画像処理・圧縮機能。生データ概算: 8192px × 378lines × 10bit × 10frames ÷ 8e6 ≈ 38.7MB（圧縮前）/ 圧縮率4で ≈ 9.68MB（DL）。圧縮方式非公開（推測: CCSDS-IDC/JPEG2000）"
