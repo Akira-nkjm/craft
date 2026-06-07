@@ -7,7 +7,7 @@ sha256 = "fd162bba679380be28db3070083c4833c3341297dce97cf9f85b5bc33dbd4aa3"
 sha256 = "63c5733a37b664204d84e98032b22b80bc41935a5ff982e453a0e7ab0af2ad0c"
 
 [sources."systems/comm/data.toml"]
-sha256 = "7a7b5d55ff16c14d621d1824b1913a512cab463d46bfa2150ae319823f41dd94"
+sha256 = "f8b6515e4c2df63de1b82a6da1e389ceacb2b8f23c53f7e7f346c6ea0f8e9676"
 
 [sources."systems/mission/data.toml"]
 sha256 = "c46047bcf72efef9b46782c829a20084eec8e169732ef805712c0e0eab4ab7d4"

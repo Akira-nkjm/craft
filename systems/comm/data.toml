@@ -145,13 +145,18 @@ cad_offset_z = 0.0 # CAD bounding box center offset z [mm]
 update_bbox = 0 # Set to 1 to auto-update bbox from CAD
 
 [transceivers.stx.design.power_modes] # OperationMode 別の on/off
+# STx = S帯テレメトリ下り（64kbps HK）。地上局接触時のみ送信する。
+#   - fine_three_axis: 定常 S帯 TT&C パスで HK 下り → ON
+#   - xband_downlink:  X帯 GS パス中に S帯 HK を併用 + XTx バックアップ → ON
+#   - imaging:         撮像は対象上空（GS 非接触）でデータは蓄積、下りは後続パス → OFF
+# 出典契約: Power Overview §5 は撮像時に S帯下りを含めない（撮像 ~29.5W）。
 initial = false
 bdot = false
 rough_sun_pointing = false
 rough_three_axis_mtq = false
 rough_three_axis_rw = false
 fine_three_axis = true
-imaging = true
+imaging = false
 xband_downlink = true
 
 [transceivers.stx.meta]
