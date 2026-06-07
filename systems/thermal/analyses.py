@@ -41,6 +41,7 @@ from toolbox.thermal import (
     run_earth_orbit_analysis,
 )
 from toolbox.thermal.nodes import InternalPanelNode
+from toolbox.thermal.orbit_heat import orbit_parameters
 
 from craft.analyses import face_of, heat_for_mode, iter_instances, mass_quantity_kg
 from craft.schema import analysis
@@ -221,25 +222,35 @@ def _build_config(
 def _run_all_modes(
     loads: dict, thermalmodel: Any, panel_surfaces: Any, altitude_km: float
 ) -> dict[str, tuple[float, float]]:
-    """全モード横断で各ノードの一軌道 (min_c, max_c) [degC] を集約する。
+    """全モード横断で各ノードの (min_c, max_c) [degC] を集約する。
 
-    モード一覧は収集コンポの power_modes キー和集合。各モードで一軌道
-    （run_earth_orbit_analysis, duration_s=None=1 周期）を解き、全モード横断の
-    最小・最大温度を集める。純粋関数（入力は読み取り専用）。重複実行の抑止は
-    呼び出し側の `thermal_node_temps`（veriq transient calc）が担い、その結果を
-    下流の scalar / verify が `vq.Ref("@thermal_node_temps")` で共有する。
+    モード一覧は収集コンポの power_modes キー和集合。各モードで
+    ``settle_orbits`` 周回して周期定常（periodic steady state）に近づけ、
+    **最終 1 周だけ**を評価対象とする（初期温度 20℃ からのコールドスタート
+    過渡を除去するため）。全モード横断の最小・最大温度を集める。純粋関数
+    （入力は読み取り専用）。重複実行の抑止は呼び出し側の `thermal_node_temps`
+    （veriq transient calc）が担い、下流の scalar / verify が
+    `vq.Ref("@thermal_node_temps")` で結果を共有する。
     """
     beta = thermalmodel.beta_angle_deg
+    n_orbits = max(1, int(thermalmodel.settle_orbits))
+    period_s = orbit_parameters(altitude_km, beta)[0]
+    duration_s = n_orbits * period_s
+    last_orbit_start_s = (n_orbits - 1) * period_s
+
     modes = _all_modes(loads) or ["__static__"]
     agg: dict[str, tuple[float, float]] = {}
     for mode in modes:
         config = _build_config(loads, thermalmodel, panel_surfaces, mode)
         result = run_earth_orbit_analysis(
-            config=config, altitude_km=altitude_km, beta_angle_deg=beta, duration_s=None
+            config=config, altitude_km=altitude_km, beta_angle_deg=beta, duration_s=duration_s
         )
+        # 最終 1 周のみで min/max を取る（周期定常近似）。
+        last_orbit = result.times_s >= last_orbit_start_s
         for name, series in result.temperatures_k.items():
-            lo_c = float(series.min()) - 273.15
-            hi_c = float(series.max()) - 273.15
+            window = series[last_orbit]
+            lo_c = float(window.min()) - 273.15
+            hi_c = float(window.max()) - 273.15
             if name in agg:
                 prev_lo, prev_hi = agg[name]
                 agg[name] = (min(prev_lo, lo_c), max(prev_hi, hi_c))

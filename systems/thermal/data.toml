@@ -32,6 +32,7 @@ node_conductance_w_k = 0.5     # [推定] コンポ⇔搭載面の代表熱コ�
 beta_angle_deg = 0.0           # 軌道面太陽角 β（0 = 最悪低温・最大食条件）
 time_step_s = 5.0              # 過渡ソルバ時間刻み [s]（explicit Euler 安定限界を満たす）
 initial_temperature_c = 20.0   # ノード初期温度 [degC]
+settle_orbits = 5              # 周回数。複数周回して最終1周を評価（周期定常近似 / 初期過渡除去）
 
 
 # ─── Heaters ────────────────────────────────────────────────────────────────

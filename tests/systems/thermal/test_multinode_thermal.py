@@ -47,6 +47,7 @@ def _thermalmodel(**overrides):
         "beta_angle_deg": 0.0,
         "time_step_s": 5.0,
         "initial_temperature_c": 20.0,
+        "settle_orbits": 1,
     }
     base.update(overrides)
     return SimpleNamespace(**base)
@@ -283,3 +284,20 @@ def test_verify_helper_false_when_limits_too_tight(ta):
         if lo < spec.temp_min_c or hi > spec.temp_max_c:
             out_of_range = True
     assert out_of_range is True
+
+
+def test_settle_orbits_is_honored(ta):
+    """settle_orbits を増やすと初期過渡が落ち、結果が変わる（複数周回が効く）。
+
+    1 周（コールドスタート）と複数周（周期定常近似・最終1周評価）で同一入力でも
+    ノード温度域が変化することを確認する。発熱体は 1 周では初期 20℃ から動き
+    切らないため、周回数で結果が一致しないはず。
+    """
+    ps = _FakePanelSurfaces()
+    inst = _component(mass_kg=1.5, power_w=8.0, face="MZ", modes={"imaging": True})
+    loads = _loads(inst)
+
+    one = ta._run_all_modes(loads, _thermalmodel(settle_orbits=1), ps, altitude_km=410.0)
+    multi = ta._run_all_modes(loads, _thermalmodel(settle_orbits=4), ps, altitude_km=410.0)
+
+    assert one != multi, "settle_orbits を変えても結果が変わらない（パラメータ未反映）"

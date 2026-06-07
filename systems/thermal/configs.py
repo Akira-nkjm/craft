@@ -80,3 +80,9 @@ class ThermalModel(Config):
     initial_temperature_c: float = fld(
         default=20.0, unit="degC", desc="ノード初期温度 [degC]（軌道投入前の機体温度）"
     )
+    settle_orbits: int = fld(
+        ge=1,
+        default=5,
+        desc="周回数 [周]。初期温度からの過渡を落として周期定常に近づけるため複数周"
+        "回し、最終 1 周だけを min/max 評価に使う（1 = 旧来の単周）",
+    )
