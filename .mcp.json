@@ -6,8 +6,9 @@
       "args": ["-y", "@colbymchenry/codegraph", "serve", "--mcp"]
     },
     "craft": {
+      "type": "stdio",
       "command": "uv",
-      "args": ["--directory", "/Users/akira/Documents/craft", "run", "craft-mcp"]
+      "args": ["run", "craft-mcp"]
     }
   }
 }
