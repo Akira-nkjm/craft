@@ -87,3 +87,6 @@ dmypy.json
 
 
 .sat-eval/
+
+# marimo session cache
+__marimo__/
