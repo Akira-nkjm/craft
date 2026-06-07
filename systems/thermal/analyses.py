@@ -131,4 +131,4 @@ def verify_heater_power_positive(
     BAT_HTR は eclipse 中バッテリを 10degC 以上に保持するために必要。
     定格 2.88W 以上あれば本 verify は pass。詳細な熱収支検証は ad-hoc 解析を参照。
     """
-    return bool(max_power_w > 0.0)
+    return max_power_w > 0.0

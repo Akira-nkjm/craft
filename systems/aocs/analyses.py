@@ -10,6 +10,7 @@ toolbox 注意: numpy を返す関数がある。verify の bool 返却は
 
 from typing import Annotated
 
+import numpy as np
 import veriq as vq
 from toolbox.aocs.actuators import (
     mtq_torque_nm as tb_mtq_torque_nm,
@@ -49,7 +50,7 @@ def rw_momentum_capacity_nms(
         return 0.0
     rw = next(iter(reaction_wheels.values()))
     inertia = rw.spec.rotor_inertia_kg_m2
-    max_speed_rad_s = rw.spec.max_speed_rpm * (2.0 * 3.14159265358979 / 60.0)
+    max_speed_rad_s = rw.spec.max_speed_rpm * (2.0 * np.pi / 60.0)
     h = tb_rw_momentum_capacity_nms(inertia, max_speed_rad_s)
     return float(h)
 
@@ -91,7 +92,7 @@ def gravity_gradient_disturbance_nm(
     aocs.disturbancemodel を参照。重力傾斜は |I_max − I_min| に比例するため最大差で評価。
     """
     orbit_r = R_EARTH + altitude_km * 1000.0
-    attitude_error_rad = pointing_error_deg * 3.14159265358979 / 180.0
+    attitude_error_rad = pointing_error_deg * np.pi / 180.0
     torque = tb_gravity_gradient_torque_nm(
         orbit_radius_m=orbit_r,
         inertia_z_kg_m2=iyy,
