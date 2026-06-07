@@ -153,12 +153,17 @@ def _build_surfaces(thermalmodel: Any, panel_surfaces: Any) -> tuple[SurfaceNode
         return (OpticalFinish(mat, 1.0),)
 
     # face → (normal, area, panel_surfaces キー)
+    # PZ は太陽指向面（sun_pointing 姿勢で +Z=太陽方向）。実機では展開 SAP が
+    # この面を覆うため、外面光学を発電面 sap_front（α=0.90, ε=0.85）で近似する。
+    # NOTE: 近似。展開 SAP を機体 +Z 面と一体扱いするため、SAP ウィング単体の
+    # 温度（機体から熱的に浮いた高温/低温振幅）は分離できない。SAP 単体温度が
+    # 要る場合は独立放熱ノード化（toolbox 拡張）が必要。
     defs = (
         ("PX", (1.0, 0.0, 0.0), ly * lz, "body_px_mx"),
         ("MX", (-1.0, 0.0, 0.0), ly * lz, "body_px_mx"),
         ("PY", (0.0, 1.0, 0.0), lx * lz, "body_py_my"),
         ("MY", (0.0, -1.0, 0.0), lx * lz, "body_py_my"),
-        ("PZ", (0.0, 0.0, 1.0), lx * ly, "body_pz_mz"),
+        ("PZ", (0.0, 0.0, 1.0), lx * ly, "sap_front"),
         ("MZ", (0.0, 0.0, -1.0), lx * ly, "body_pz_mz"),
     )
     return tuple(

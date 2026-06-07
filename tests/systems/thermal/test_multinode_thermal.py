@@ -61,6 +61,7 @@ class _FakePanelSurfaces:
             "body_px_mx": SimpleNamespace(absorptivity=0.20, emissivity=0.85),
             "body_py_my": SimpleNamespace(absorptivity=0.20, emissivity=0.85),
             "body_pz_mz": SimpleNamespace(absorptivity=0.30, emissivity=0.85),
+            "sap_front": SimpleNamespace(absorptivity=0.90, emissivity=0.85),
         }
 
     def __getitem__(self, key):
