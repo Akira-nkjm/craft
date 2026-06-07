@@ -35,14 +35,14 @@ fov_deg = 60.0 # 視野角（半角） [deg]
 quantity = 4 # 搭載個数
 
 [sun_sensers.main.design.placement] # 搭載位置・CAD パラメータ
-face = "PY" # Panel face to mount on
+face = "MZ" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = -30.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 27.0 # Bounding box x dimension [mm]
 dy = 14.0 # Bounding box y dimension [mm]
 dz = 5.9 # Bounding box z dimension [mm]
-rz = 0.0 # Rotation around face normal [degrees]
+rz = 90.0 # Rotation around face normal [degrees]
 side = "OUT" # Mount on inner or outer face
 cad_file = "" # CAD document name (empty = generate box)
 cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
@@ -84,13 +84,13 @@ max_speed_rpm = 8500.0 # 最大回転速度 [S2E rw0003.ini] [rpm]
 quantity = 3 # 搭載個数
 
 [reaction_wheels.main.design.placement] # 搭載位置・CAD パラメータ
-face = "MZ" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+face = "PX" # Panel face to mount on
+u = -90.0 # Position along face u-axis [mm]
+v = 150.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
-dx = 33.5 # Bounding box x dimension [mm]
-dy = 33.5 # Bounding box y dimension [mm]
-dz = 17.0 # Bounding box z dimension [mm]
+dx = 17.0 # Bounding box x dimension [mm]
+dy = 34.0 # Bounding box y dimension [mm]
+dz = 34.0 # Bounding box z dimension [mm]
 rz = 0.0 # Rotation around face normal [degrees]
 side = "IN" # Mount on inner or outer face
 cad_file = "" # CAD document name (empty = generate box)
@@ -128,12 +128,12 @@ max_dipole_moment_am2 = 0.32 # 最大磁気モーメント（片軸） [A*m^2]
 quantity = 3 # 搭載個数
 
 [magnetic_torquers.main.design.placement] # 搭載位置・CAD パラメータ
-face = "MZ" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+face = "MX" # Panel face to mount on
+u = -70.0 # Position along face u-axis [mm]
+v = 150.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
-dx = 100.0 # Bounding box x dimension [mm]
-dy = 10.0 # Bounding box y dimension [mm]
+dx = 10.0 # Bounding box x dimension [mm]
+dy = 50.0 # Bounding box y dimension [mm]
 dz = 10.0 # Bounding box z dimension [mm]
 rz = 0.0 # Rotation around face normal [degrees]
 side = "IN" # Mount on inner or outer face
@@ -182,13 +182,13 @@ quantity = 1 # 搭載個数
 [star_trackers.main.design.placement] # 搭載位置・CAD パラメータ
 face = "MY" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = 150.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
-dx = 95.0 # Bounding box x dimension [mm]
+dx = 50.0 # Bounding box x dimension [mm]
 dy = 50.0 # Bounding box y dimension [mm]
 dz = 44.0 # Bounding box z dimension [mm]
 rz = 0.0 # Rotation around face normal [degrees]
-side = "OUT" # Mount on inner or outer face
+side = "IN" # Mount on inner or outer face
 cad_file = "" # CAD document name (empty = generate box)
 cad_offset_x = 0.0 # CAD bounding box center offset x [mm]
 cad_offset_y = 0.0 # CAD bounding box center offset y [mm]
@@ -226,9 +226,9 @@ grade = "fine"
 quantity = 1 # 搭載個数
 
 [gyroscopes.fine.design.placement] # 搭載位置・CAD パラメータ
-face = "MZ" # Panel face to mount on
+face = "PZ" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = -30.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 44.8 # Bounding box x dimension [mm]
 dy = 38.6 # Bounding box y dimension [mm]
@@ -269,9 +269,9 @@ grade = "coarse"
 quantity = 1 # 搭載個数
 
 [gyroscopes.coarse.design.placement] # 搭載位置・CAD パラメータ
-face = "MZ" # Panel face to mount on
+face = "PZ" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = -70.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 9.0 # Bounding box x dimension [mm]
 dy = 9.0 # Bounding box y dimension [mm]
@@ -321,9 +321,9 @@ noise_nt = 15.0               # [S2E] white_noise_standard_deviation = 15 nT
 quantity = 1 # 搭載個数
 
 [magnetometers.aobc.design.placement] # 搭載位置・CAD パラメータ
-face = "MZ" # Panel face to mount on
+face = "PZ" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+v = -90.0 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 18.0 # Bounding box x dimension [mm]
 dy = 18.0 # Bounding box y dimension [mm]
@@ -364,8 +364,8 @@ quantity = 1 # 搭載個数
 
 [magnetometers.external.design.placement] # 搭載位置・CAD パラメータ
 face = "PZ" # Panel face to mount on
-u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
+u = -30 # Position along face u-axis [mm]
+v = 35 # Position along face v-axis [mm]
 w = 0.0 # Offset from face surface [mm]
 dx = 18.0 # Bounding box x dimension [mm]
 dy = 18.0 # Bounding box y dimension [mm]
@@ -420,8 +420,8 @@ quantity = 1 # 搭載個数
 [aocs_gnss_receivers.oem7600.design.placement] # 搭載位置・CAD パラメータ
 face = "PZ" # Panel face to mount on
 u = 0.0 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
-w = 0.0 # Offset from face surface [mm]
+v = -40.0 # Position along face v-axis [mm]
+w = 27.5 # Offset from face surface [mm]
 dx = 71.0 # Bounding box x dimension [mm]
 dy = 46.0 # Bounding box y dimension [mm]
 dz = 11.0 # Bounding box z dimension [mm]
@@ -464,9 +464,9 @@ quantity = 1 # 搭載個数
 
 [aocs_gnss_antennas.tw1889.design.placement] # 搭載位置・CAD パラメータ
 face = "PZ" # Panel face to mount on
-u = 12.5 # Position along face u-axis [mm]
-v = 0.0 # Position along face v-axis [mm]
-w = 181.5 # Offset from face surface [mm]
+u = 0.0 # Position along face u-axis [mm]
+v = -50.0 # Position along face v-axis [mm]
+w = 0.0 # Offset from face surface [mm]
 dx = 30.0 # Bounding box x dimension [mm]
 dy = 30.0 # Bounding box y dimension [mm]
 dz = 8.0 # Bounding box z dimension [mm]

@@ -16,34 +16,23 @@ from craft.schema import analysis
 
 
 @analysis(
-    desc="構体系コンポーネントの総質量 [kg]"
-    "（Frame + Panel + Bracket + Hinge + HRM + Fastener + Harness）",
+    desc="構体系コンポーネントの総質量 [kg]（Frame + Panel）",
 )
 def total_structure_mass_kg(
     frames: Annotated[vq.Table, vq.Ref("$.frames")],
     structural_panels: Annotated[vq.Table, vq.Ref("$.structural_panels")],
-    brackets: Annotated[vq.Table, vq.Ref("$.brackets")],
-    hinges: Annotated[vq.Table, vq.Ref("$.hinges")],
-    hold_release_mechanisms: Annotated[vq.Table, vq.Ref("$.hold_release_mechanisms")],
-    fasteners: Annotated[vq.Table, vq.Ref("$.fasteners")],
-    harnesses: Annotated[vq.Table, vq.Ref("$.harnesses")],
 ) -> float:
     """構体系の積み上げ質量合計 [kg]。
 
-    Frame/Panel/Bracket（CSV §1.structure CAD-DD ~1038g）に加え、Hinge/HRM/
-    Fastener/Harness の推定分を含む**構体サブシステム全体**の積み上げ。
-    CSV §1（frames 主体）より大きくなるのは展開機構・締結・配線を含むため。
+    現在の粒度では一次構造（Frame + Panel, CSV §1.structure CAD-DD ~1038g）のみを
+    対象とする。Bracket/Hinge/HRM/Fastener/Harness は data.toml から除外済みのため
+    集計に含めない（再投入する場合はここに対応する `$.<type>` Ref を追加する）。
     フライト確定質量 8.925kg (S2E ini) は全サブシステム込みの全機質量で、別途
     mission::total_bus_mass_kg と突き合わせる（mission::verify_mass_budget_reconciled）。
     """
     tables = [
         frames,
         structural_panels,
-        brackets,
-        hinges,
-        hold_release_mechanisms,
-        fasteners,
-        harnesses,
     ]
     total = 0.0
     for table in tables:

@@ -12,8 +12,20 @@ class Placement(BaseModel):
         Literal["PX", "MX", "PY", "MY", "PZ", "MZ", "C", "CY+", "CY-", "CX+", "CX-", "CZ+", "CZ-"],
         Field(description="Panel face to mount on"),
     ]
-    u: float = Field(default=0.0, ge=0.0, description="Position along face u-axis [mm]")
-    v: float = Field(default=0.0, ge=0.0, description="Position along face v-axis [mm]")
+    u: float = Field(
+        default=0.0,
+        description=(
+            "Position along face u-axis [mm]; signed offset from the panel "
+            "center (= body-frame in-plane coordinate)"
+        ),
+    )
+    v: float = Field(
+        default=0.0,
+        description=(
+            "Position along face v-axis [mm]; signed offset from the panel "
+            "center (= body-frame in-plane coordinate)"
+        ),
+    )
     w: float = Field(default=0.0, ge=0.0, description="Offset from face surface [mm]")
     dx: float = Field(default=0.0, ge=0.0, description="Bounding box x dimension [mm]")
     dy: float = Field(default=0.0, ge=0.0, description="Bounding box y dimension [mm]")
