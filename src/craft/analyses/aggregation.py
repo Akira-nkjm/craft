@@ -97,3 +97,37 @@ def total_mass_kg(*tables: Any) -> float:
 def total_quantity(*tables: Any) -> int:
     """全テーブル合計の搭載個数。Singleton は 1。"""
     return sum(_instance_quantity(inst) for tbl in tables for inst in iter_instances(tbl))
+
+
+def face_of(inst: Any) -> str | None:
+    """inst.design.placement.face を安全に取得（無ければ None）。
+
+    熱解析でコンポを機体 6 面のいずれかにマップするために使う。placement や
+    face を持たないコンポ（Placeable でない）では None を返す。
+    """
+    placement = _design_attr(inst, "placement")
+    if placement is None:
+        return None
+    return getattr(placement, "face", None)
+
+
+def heat_for_mode(inst: Any, mode_name: str) -> float:
+    """指定モードで ON のとき power_per_unit_w × quantity [W]、それ以外 0。
+
+    power_modes / power_per_unit_w を持たないコンポ（受動部品）は 0 とみなす。
+    多ノード熱解析で各コンポノードの内部発熱を求めるための単体版ヘルパ。
+    """
+    power_modes = _design_attr(inst, "power_modes")
+    if power_modes is None or not power_modes.get(mode_name, False):
+        return 0.0
+    power = getattr(getattr(inst, "spec", None), "power_per_unit_w", 0.0) or 0.0
+    return power * _instance_quantity(inst)
+
+
+def mass_quantity_kg(inst: Any) -> float:
+    """inst.spec.mass_kg × design.quantity [kg]（単体版）。
+
+    mass_kg を持たないコンポは 0。熱ノードの熱容量算出（mass × cp）に使う。
+    """
+    mass = getattr(getattr(inst, "spec", None), "mass_kg", 0.0) or 0.0
+    return mass * _instance_quantity(inst)
