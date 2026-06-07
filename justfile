@@ -28,6 +28,11 @@ api:
 craft-mcp:
     uv run craft-mcp
 
+# 衛星「箱配置」ビューアを marimo で開く
+# --no-token: 認証トークン無しで URL を開ける / --watch: ファイル変更で自動リロード
+marimo:
+    uv run marimo edit --no-token --watch
+
 # --- コード品質 ---
 
 # ruff で format 実行
