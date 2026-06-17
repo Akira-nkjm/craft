@@ -53,22 +53,23 @@ notes = "2P3S 6.6Ah ~73Wh。保護: 過充電12.6V/復帰12.2V, 過放電7.8V, �
 
 
 
-# === Solar Array Panel (CESI CTJ30, 7s8p = 56 cells) ===
-# SAP-ASSY-D1-4_OPEN ×2 wing = 984.56g。電気設計の正 = マスターシート(56セル)。
-# 1 アレイ（56 セル）として 1 インスタンスで電気モデル化（quantity=1）。
+# === Solar Array Panel (CESI CTJ30, 7s8p = 56 cells 合計) ===
+# SAP-ASSY-D1-4_OPEN ×2 wing = 984.56g（合計）。電気設計の正 = マスターシート(56セル)。
+# spec は 1 翼（28 セル）分の値。px/mx の 2 インスタンスで合計 56 セル・984.56g・EOL 50.53W。
 
 
 
 # === Solar Panel ===
 
 [solar_panels.spec]
-mass_kg = 0.98456 # 質量 [kg]
+# spec は 1 翼（28 セル）分。px/mx の 2 インスタンス合算で 56 セル分になる。
+mass_kg = 0.49228 # 質量 [kg]（1 翼分。×2 翼 = 984.56g）
 temp_min_c = -80.0 # 動作温度下限 [degC]
 temp_max_c = 100.0 # 動作温度上限 [degC]
-area_m2 = 0.148456 # アレイ総セル面積 [m^2]
-default_power_generation_per_unit_w = 52.56 # BOL 発生電力（MPPT 損失込み） [W]
-bol_power_w = 52.56 # BOL 発生電力（MPPT 込み） [W]
-eol_power_w = 50.53 # EOL 発生電力（MPPT 込み） [W]
+area_m2 = 0.074228 # 1 翼セル面積 [m^2]（×2 翼 = 0.148456）
+default_power_generation_per_unit_w = 26.28 # BOL 発生電力（1 翼, MPPT 損失込み） [W]
+bol_power_w = 26.28 # BOL 発生電力（1 翼, MPPT 込み） [W]
+eol_power_w = 25.265 # EOL 発生電力（1 翼, MPPT 込み） [W]
 efficiency = 0.288 # セル効率 @AM0
 cell_type = "CESI CTJ30 SCA (InGaP/GaAs/Ge)" # セル品種
 
